@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>กรอกข้อมูลส่วนตัว - UPaM</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+       body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .header {
+            background: white;
+            padding: 12px 24px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.477);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(135deg, #ffff 0%, #183ccbba 100%);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-img {
+            width: 60px;
+            height: 60px;
+            margin-right: 10px;
+        }
+
+        .logo-text {
+            line-height: 1;
+        }
+
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .phone-number {
+            color: #6B7280;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #F3F4F6;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #6B7280;
+        }
+
+        .icon-btn:hover {
+            background: #E5E7EB;
+            transform: translateY(-1px);
+        }
+
+        .notification-btn {
+            position: relative;
+        }
+
+        .notification-btn::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background: #EF4444;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            overflow: hidden;
+            border: 1px solid #183BCB;
+        }
+
+        .form-content {
+            padding: 40px;
+        }
+
+        .form-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1F2937;
+            margin-bottom: 32px;
+            
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group.half {
+            flex: 1;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .required {
+            color: #EF4444;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #1F2937;
+            background: white;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #9CA3AF;
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+            padding-right: 40px;
+            cursor: pointer;
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .optional {
+            color: #9CA3AF;
+            font-size: 12px;
+        }
+
+        .checkbox-container {
+            margin: 24px 0;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .custom-checkbox {
+            position: relative;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .custom-checkbox input {
+            width: 18px;
+            height: 18px;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 18px;
+            width: 18px;
+            background: white;
+            border: 2px solid #3B82F6;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        }
+
+        .custom-checkbox input:checked + .checkmark {
+            background: #3B82F6;
+        }
+
+        .checkmark::after {
+            content: "";
+            position: absolute;
+            display: none;
+            left: 5px;
+            top: 1px;
+            width: 4px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .custom-checkbox input:checked + .checkmark::after {
+            display: block;
+        }
+
+        .checkbox-text {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #374151;
+        }
+
+        .checkbox-text a {
+            color: #3B82F6;
+            text-decoration: none;
+        }
+
+        .checkbox-text a:hover {
+            text-decoration: underline;
+        }
+
+        .privacy-section {
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+
+        .privacy-title {
+            font-weight: 600;
+            color: #1F2937;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .privacy-text {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #4B5563;
+            margin-bottom: 16px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 32px;
+        }
+
+        .radio-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .custom-radio {
+            position: relative;
+        }
+
+        .custom-radio input {
+            width: 16px;
+            height: 16px;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .radio-mark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 16px;
+            width: 16px;
+            background: white;
+            border: 2px solid #3B82F6;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .custom-radio input:checked + .radio-mark {
+            background: #3B82F6;
+        }
+
+        .radio-mark::after {
+            content: "";
+            position: absolute;
+            display: none;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: white;
+            transform: translate(-50%, -50%);
+        }
+
+        .custom-radio input:checked + .radio-mark::after {
+            display: block;
+        }
+
+        .radio-label {
+            font-size: 14px;
+            color: #374151;
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: #3B82F6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 24px;
+        }
+
+        .submit-btn:hover {
+            background: #2563EB;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px;
+                border-radius: 12px;
+            }
+
+            .form-content {
+                padding: 24px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .radio-group {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .header {
+                padding: 10px 20px;
+            }
+
+            .phone-number {
+                display: none;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .submit-btn.loading::after {
+            content: "";
+            width: 16px;
+            height: 16px;
+            margin-left: 8px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <img src=".\img\UPaMLOGO.png" class="logo-img">
+        <div class="phone-number">
+                <i class="fas fa-phone"></i>
+                1234
+            </div>
+        </div>
+        
+
+        <div class="header-right">
+            
+            <div class="header-icons">
+                <button class="icon-btn" title="ค้นหา">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="icon-btn" title="เปลี่ยนภาษา">
+                    <i class="fas fa-globe"></i>
+                </button>
+                <button class="icon-btn notification-btn" title="การแจ้งเตือน">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <button class="icon-btn" title="บัญชีผู้ใช้">
+                    <i class="fas fa-user"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="form-content">
+            <h1 class="form-title">กรอกข้อมูลส่วนตัว</h1>
+            
+            <form id="registrationForm" novalidate>
+                <!-- คำนำหน้าและชื่อจริง -->
+                <div class="form-row">
+                    <div class="form-group half" style="max-width: 100px;">
+                        <label for="title" class="form-label">คำนำหน้า</label>
+                        <select name="title" id="title" class="form-select">
+                            <option value="">เลือก</option>
+                            <option value="นาย">นาย</option>
+                            <option value="นาง">นาง</option>
+                            <option value="นางสาว">นางสาว</option>
+                            <option value="เด็กชาย">เด็กชาย</option>
+                            <option value="เด็กหญิง">เด็กหญิง</option>
+                        </select>
+                    </div>
+                    <div class="form-group half" style="max-width: 600px;">
+                        <label for="firstName" class="form-label">ชื่อจริง<span class="required">*</span></label>
+                        <input type="text" name="firstName" id="firstName" class="form-input" placeholder="">
+                    </div>
+                    <div class="form-group half" style="max-width: 600px;">
+                        <label for="lastName" class="form-label">นามสกุล<span class="required">*</span></label>
+                        <input type="text" name="lastName" id="lastName" class="form-input" placeholder="">
+                    </div>
+                </div>
+
+                <!-- ที่อยู่ -->
+                <div class="form-group">
+                    <label for="address" class="form-label">ที่อยู่ตามทะเบียนบ้าน<span class="required">*</span></label>
+                    <textarea name="address" id="address" class="form-textarea" placeholder=""></textarea>
+                </div>
+
+                <!-- วันเกิด -->
+                <div class="form-group" style="max-width: 200px;">
+                    <label for="birthDate" class="form-label">วัน/เดือน/ปีเกิด<span class="required">*</span></label>
+                    <input type="date" name="birthDate" id="birthDate" class="form-input" required>
+                </div>
+
+
+                <!-- เบอร์โทร -->
+                <div class="form-group">
+                    <label for="phone" class="form-label">เบอร์โทร<span class="required">*</span></label>
+                    <input type="tel" name="phone" id="phone" class="form-input" placeholder="">
+                </div>
+
+                <!-- โรคประจำตัว -->
+                <div class="form-group">
+                    <label for="medicalCondition" class="form-label">
+                        โรคประจำตัว <span class="optional">(ถ้าไม่มี - )</span>
+                    </label>
+                    <input type="text" name="medicalCondition" id="medicalCondition" class="form-input" placeholder="">
+                </div>
+
+                <!-- แพ้ยา -->
+                <div class="form-group">
+                    <label for="drugAllergy" class="form-label">
+                        แพ้ยา <span class="optional">(ถ้าไม่มี - )</span>
+                    </label>
+                    <input type="text" name="drugAllergy" id="drugAllergy" class="form-input" placeholder="">
+                </div>
+
+                <!-- Checkbox สำหรับข่าวสาร -->
+                <div class="checkbox-container">
+                    <div class="checkbox-wrapper">
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="newsletter" id="newsletter">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="checkbox-text">
+                            ยินดีรับข่าวสารและข้อมูล <a href="#" target="_blank">ข้อกำหนดและเงื่อนไขการใช้งาน</a> และ<a href="#" target="_blank">นโยบายความเป็นส่วนตัว</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- นโยบายความเป็นส่วนตัว -->
+                <div class="privacy-section">
+                    <div class="privacy-title">นโยบายคุ้มครองข้อมูลการรักษาของสถานพยาบาล</div>
+                    <div class="privacy-text">
+                        ข้างต้นขอยืนยันข้อมูลที่ระบุในการศึก ระบบรวบรวย ใช้ และจะรักษาข้อมูลส่วนบุคคลของท่านเจียวกับกฎหมาย สิทธิแก่ผู้ขอข้อมูล และมีความปลอดภัยข้อมูลให้แก่ท่าน แบ่งปันการนักการแพทย์เทคนิคป่านขอป็นใช้ สิทธิ แบ่งปิดรับ
+                    </div>
+                    <div class="radio-group">
+                        <div class="radio-wrapper">
+                            <label class="custom-radio">
+                                <input type="radio" name="privacyConsent" value="accept" id="privacyAccept">
+                                <span class="radio-mark"></span>
+                            </label>
+                            <label for="privacyAccept" class="radio-label">ยินยอม</label>
+                        </div>
+                        <div class="radio-wrapper">
+                            <label class="custom-radio">
+                                <input type="radio" name="privacyConsent" value="decline" id="privacyDecline">
+                                <span class="radio-mark"></span>
+                            </label>
+                            <label for="privacyDecline" class="radio-label">ไม่ยินยอม</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ปุ่มยืนยัน -->
+                <button type="submit" class="submit-btn">
+                    ยืนยัน
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Generate birth date options
+        function generateBirthDateOptions() {
+            const select = document.getElementById('birthDate');
+            const currentYear = new Date().getFullYear();
+            const thaiYear = currentYear + 543;
+            
+            const months = [
+                'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+            ];
+
+            // สร้างตัวเลือกสำหรับปี
+            for (let year = thaiYear; year >= thaiYear - 100; year--) {
+                for (let month = 1; month <= 12; month++) {
+                    const daysInMonth = new Date(year - 543, month, 0).getDate();
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        const value = `${day}/${month}/${year}`;
+                        const text = `${day} ${months[month - 1]} ${year}`;
+                        const option = new Option(text, value);
+                        select.appendChild(option);
+                    }
+                }
+            }
+        }
+
+        // Phone number formatting
+        function formatPhoneNumber(input) {
+            let value = input.value.replace(/[^0-9]/g, '');
+            if (value.length > 10) {
+                value = value.substring(0, 10);
+            }
+            input.value = value;
+        }
+
+        // Form validation
+        function validateForm() {
+            const form = document.getElementById('registrationForm');
+            const requiredFields = form.querySelectorAll('input[required], select[required]');
+            let isValid = true;
+            let firstError = null;
+
+            // Remove previous error states
+            document.querySelectorAll('.form-input, .form-select').forEach(field => {
+                field.style.borderColor = '#D1D5DB';
+            });
+
+            // Check required fields
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.style.borderColor = '#EF4444';
+                    if (!firstError) firstError = field;
+                    isValid = false;
+                }
+            });
+
+            // Check phone number format
+            const phone = document.getElementById('phone');
+            if (phone.value && !/^[0-9]{10}$/.test(phone.value)) {
+                phone.style.borderColor = '#EF4444';
+                if (!firstError) firstError = phone;
+                isValid = false;
+            }
+
+            // Check privacy consent
+            const privacyConsent = document.querySelector('input[name="privacyConsent"]:checked');
+            if (!privacyConsent || privacyConsent.value === 'decline') {
+                alert('กรุณายินยอมนโยบายคุ้มครองข้อมูลส่วนบุคคล');
+                return false;
+            }
+
+            if (!isValid && firstError) {
+                firstError.focus();
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            return isValid;
+        }
+
+        // Form submission
+        function handleSubmit(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+
+            const btn = document.querySelector('.submit-btn');
+            btn.classList.add('loading');
+            btn.textContent = 'กำลังดำเนินการ...';
+
+            // Simulate form submission
+            setTimeout(() => {
+                alert('ลงทะเบียนสำเร็จ!');
+                btn.classList.remove('loading');
+                btn.textContent = 'ยืนยัน';
+                
+                // Redirect or reset form here
+                // window.location.href = '/success';
+            }, 2000);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            generateBirthDateOptions();
+            
+            // Form submission
+            document.getElementById('registrationForm').addEventListener('submit', handleSubmit);
+            
+            // Phone number formatting
+            document.getElementById('phone').addEventListener('input', function() {
+                formatPhoneNumber(this);
+            });
+            
+            // Real-time validation
+            document.querySelectorAll('.form-input, .form-select').forEach(field => {
+                field.addEventListener('blur', function() {
+                    if (this.hasAttribute('required') && !this.value.trim()) {
+                        this.style.borderColor = '#EF4444';
+                    } else {
+                        this.style.borderColor = '#D1D5DB';
+                    }
+                });
+            });
+
+            // Header button interactions
+            document.querySelectorAll('.icon-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    console.log('Clicked:', this.title || 'Header button');
+                });
+            });
+        });
+
+        // Prevent form submission on enter key in input fields
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+                e.preventDefault();
+                const form = e.target.form;
+                const inputs = Array.from(form.querySelectorAll('input, select, textarea'));
+                const currentIndex = inputs.indexOf(e.target);
+                const nextInput = inputs[currentIndex + 1];
+                
+                if (nextInput) {
+                    nextInput.focus();
+                } else {
+                    form.querySelector('.submit-btn').focus();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

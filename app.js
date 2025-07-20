@@ -11,8 +11,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 
 // Routes
-app.get('/', (req, res) => {
+app.get('/register', (req, res) => {
   res.render('register'); // render register.ejs
+});
+
+app.get('/date', (req, res) => {
+  res.render('Date'); // render register.ejs
 });
 
 // Start server

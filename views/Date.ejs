@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>การจองคิว - UPaM</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: #f8fafc;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .header {
+            background: white;
+            padding: 12px 24px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.477);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(135deg, #ffff 0%, #183ccbba 100%);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-img {
+            width: 60px;
+            height: 60px;
+            margin-right: 10px;
+        }
+
+        .logo-text {
+            line-height: 1;
+        }
+
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .phone-number {
+            color: #6B7280;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #F3F4F6;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #6B7280;
+        }
+
+        .icon-btn:hover {
+            background: #E5E7EB;
+            transform: translateY(-1px);
+        }
+
+        .notification-btn {
+            position: relative;
+        }
+
+        .notification-btn::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background: #EF4444;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 64px;
+            color: #3B82F6;
+            font-weight: 600;
+            margin-bottom: 40px;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 40px;
+            gap: 80px;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .step-circle.current {
+            background: #3B82F6;
+        }
+
+        .step-circle.completed {
+            background: #10B981;
+        }
+
+        .step-circle.inactive {
+            background: #D1D5DB;
+        }
+
+        .step-label {
+            font-size: 32px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .booking-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            padding: 40px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .month-nav {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #3B82F6;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .month-nav:hover {
+            background: #F3F4F6;
+        }
+
+        .month-year {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1F2937;
+        }
+
+        .calendar {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .calendar th,
+        .calendar td {
+            width: 14.28%;
+            height: 50px;
+            text-align: center;
+            vertical-align: middle;
+            position: relative;
+        }
+
+        .calendar th {
+            font-weight: 600;
+            color: #6B7280;
+            border-bottom: 1px solid #E5E7EB;
+            padding-bottom: 10px;
+        }
+
+        .calendar td {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            margin: 2px;
+        }
+
+        .date-cell {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .date-cell.today {
+            background: #FCD34D;
+            color: #92400E;
+        }
+
+        .date-cell.selected {
+            background: #3B82F6;
+            color: white;
+        }
+
+        .date-cell.available:hover {
+            background: #EBF4FF;
+            color: #3B82F6;
+        }
+
+        .date-cell.disabled {
+            color: #D1D5DB;
+            text-decoration: line-through;
+            cursor: not-allowed;
+        }
+
+        .date-cell.unavailable {
+            color: #9CA3AF;
+            cursor: not-allowed;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.today {
+            background: #FCD34D;
+        }
+
+        .legend-dot.selected {
+            background: #3B82F6;
+        }
+
+        .legend-dot.disabled {
+            background: #D1D5DB;
+            position: relative;
+        }
+
+        .legend-dot.disabled::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -2px;
+            right: -2px;
+            height: 1px;
+            background: #9CA3AF;
+        }
+
+        .time-selection {
+            display: none;
+        }
+
+        .time-selection.show {
+            display: block;
+        }
+
+        .time-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1F2937;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .time-slot {
+            padding: 12px 16px;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            background: white;
+        }
+
+        .time-slot.available {
+            border-color: #D1D5DB;
+            color: #374151;
+        }
+
+        .time-slot.available:hover {
+            border-color: #3B82F6;
+            background: #EBF4FF;
+        }
+
+        .time-slot.selected {
+            background: #3B82F6;
+            color: white;
+            border-color: #3B82F6;
+        }
+
+        .time-slot.unavailable {
+            background: #F3F4F6;
+            color: #9CA3AF;
+            cursor: not-allowed;
+            border-color: #E5E7EB;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #3B82F6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563EB;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #F3F4F6;
+            color: #374151;
+            border: 1px solid #E5E7EB;
+        }
+
+        .btn-secondary:hover {
+            background: #E5E7EB;
+        }
+
+        .selected-info {
+            background: #EBF4FF;
+            border: 1px solid #BFDBFE;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #1E40AF;
+            display: none;
+        }
+
+        .selected-info.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px auto;
+                padding: 0 15px;
+            }
+
+            .booking-card {
+                padding: 20px;
+            }
+
+            .steps {
+                gap: 20px;
+            }
+
+            .step-circle {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .time-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .header-right .phone-number {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <img src=".\img\UPaMLOGO.png" class="logo-img"> 
+            <div class="phone-number">
+                <i class="fas fa-phone"></i>
+                1234
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <div class="header-icons">
+                <button class="icon-btn" title="ค้นหา">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="icon-btn" title="เปลี่ยนภาษา">
+                    <i class="fas fa-globe"></i>
+                </button>
+                <button class="icon-btn notification-btn" title="การแจ้งเตือน">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <button class="icon-btn" title="บัญชีผู้ใช้">
+                    <i class="fas fa-user"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <h1 class="page-title">การจองคิว</h1>
+        
+        <!-- Steps -->
+        <div class="steps">
+            <div class="step">
+                <div class="step-circle completed">1</div>
+                <div class="step-label">เลือกบริการ</div>
+            </div>
+            <div class="step">
+                <div class="step-circle current">2</div>
+                <div class="step-label">วันและเวลานัดหมาย</div>
+            </div>
+            <div class="step">
+                <div class="step-circle inactive">3</div>
+                <div class="step-label">รายละเอียด</div>
+            </div>
+        </div>
+
+        <!-- Booking Card -->
+        <div class="booking-card">
+            <!-- Calendar Section -->
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <button class="month-nav" onclick="changeMonth(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="month-year" id="monthYear">เมษายน 2025</div>
+                    <button class="month-nav" onclick="changeMonth(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <table class="calendar">
+                    <thead>
+                        <tr>
+                            <th>อา</th>
+                            <th>จ</th>
+                            <th>อ</th>
+                            <th>พ</th>
+                            <th>พฤ</th>
+                            <th>ศ</th>
+                            <th>ส</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calendarBody">
+                    </tbody>
+                </table>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-dot today"></div>
+                        <span>วันที่ปัจจุบัน</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot selected"></div>
+                        <span>วันที่เลือก</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot disabled"></div>
+                        <span>ไม่สามารถจองได้</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Selection Section -->
+            <div class="time-selection" id="timeSelection">
+                <div class="selected-info" id="selectedInfo">
+                    <strong>วันที่เลือก: <span id="selectedDate"></span></strong>
+                </div>
+                
+                <h3 class="time-title">เลือกเวลานัดหมาย</h3>
+                
+                <div class="time-grid" id="timeGrid">
+                    <!-- Time slots will be generated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="goBack()">ย้อนกลับ</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextStep()" disabled>ถัดไป</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDate = new Date();
+        let selectedDate = null;
+        let selectedTime = null;
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+
+        const months = [
+            'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+            'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+        ];
+
+        const timeSlots = [
+            { start: '09:00', end: '10:00', available: true },
+            { start: '10:00', end: '11:00', available: true },
+            { start: '11:00', end: '12:00', available: false },
+            { start: '13:00', end: '14:00', available: true },
+            { start: '14:00', end: '15:00', available: true },
+            { start: '15:00', end: '16:00', available: false },
+            { start: '16:00', end: '17:00', available: true }
+        ];
+
+        function generateCalendar() {
+            const calendarBody = document.getElementById('calendarBody');
+            const monthYear = document.getElementById('monthYear');
+            
+            monthYear.textContent = `${months[currentMonth]} ${currentYear + 543}`;
+            
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+            
+            let html = '';
+            let date = 1;
+            
+            // Calculate the maximum bookable date (1 week from today)
+            const maxBookableDate = new Date(currentDate);
+            maxBookableDate.setDate(maxBookableDate.getDate() + 7);
+            
+            for (let week = 0; week < 6; week++) {
+                html += '<tr>';
+                
+                for (let day = 0; day < 7; day++) {
+                    if (week === 0 && day < startingDay) {
+                        html += '<td></td>';
+                    } else if (date > daysInMonth) {
+                        html += '<td></td>';
+                    } else {
+                        const cellDate = new Date(currentYear, currentMonth, date);
+                        const isToday = cellDate.toDateString() === currentDate.toDateString();
+                        const isSelected = selectedDate && cellDate.toDateString() === selectedDate.toDateString();
+                        const isPastOrToday = cellDate <= currentDate;
+                        const isBeyondWeek = cellDate > maxBookableDate;
+                        const isDisabled = isPastOrToday || isBeyondWeek;
+                        
+                        let cellClass = 'date-cell';
+                        if (isToday) cellClass += ' today';
+                        if (isSelected) cellClass += ' selected';
+                        if (isDisabled) cellClass += ' disabled';
+                        else cellClass += ' available';
+                        
+                        html += `<td onclick="selectDate(${date})" data-date="${date}">
+                                    <div class="${cellClass}">${date}</div>
+                                </td>`;
+                        date++;
+                    }
+                }
+                
+                html += '</tr>';
+                
+                if (date > daysInMonth) break;
+            }
+            
+            calendarBody.innerHTML = html;
+        }
+
+        function selectDate(day) {
+            const clickedDate = new Date(currentYear, currentMonth, day);
+            const maxBookableDate = new Date(currentDate);
+            maxBookableDate.setDate(maxBookableDate.getDate() + 7);
+            
+            // Check if date is selectable
+            if (clickedDate <= currentDate || clickedDate > maxBookableDate) {
+                return;
+            }
+            
+            selectedDate = clickedDate;
+            selectedTime = null;
+            
+            // Update calendar display
+            generateCalendar();
+            
+            // Show time selection
+            showTimeSelection();
+            
+            // Update selected date info
+            const selectedInfo = document.getElementById('selectedInfo');
+            const selectedDateSpan = document.getElementById('selectedDate');
+            selectedDateSpan.textContent = formatThaiDate(selectedDate);
+            selectedInfo.classList.add('show');
+            
+            // Update next button state
+            updateNextButton();
+        }
+
+        function showTimeSelection() {
+            document.getElementById('timeSelection').classList.add('show');
+            generateTimeSlots();
+        }
+
+        function generateTimeSlots() {
+            const timeGrid = document.getElementById('timeGrid');
+            let html = '';
+            
+            timeSlots.forEach(slot => {
+                const slotClass = slot.available ? 'time-slot available' : 'time-slot unavailable';
+                const onclick = slot.available ? `onclick="selectTime('${slot.start}-${slot.end}')"` : '';
+                
+                html += `<div class="${slotClass}" ${onclick} data-time="${slot.start}-${slot.end}">
+                            ${slot.start} - ${slot.end}
+                        </div>`;
+            });
+            
+            timeGrid.innerHTML = html;
+        }
+
+        function selectTime(timeRange) {
+            // Remove previous selection
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                slot.classList.remove('selected');
+            });
+            
+            // Add selection to clicked slot
+            const clickedSlot = document.querySelector(`[data-time="${timeRange}"]`);
+            if (clickedSlot && clickedSlot.classList.contains('available')) {
+                clickedSlot.classList.add('selected');
+                selectedTime = timeRange;
+                updateNextButton();
+            }
+        }
+
+        function updateNextButton() {
+            const nextBtn = document.getElementById('nextBtn');
+            if (selectedDate && selectedTime) {
+                nextBtn.disabled = false;
+            } else {
+                nextBtn.disabled = true;
+            }
+        }
+
+        function changeMonth(direction) {
+            currentMonth += direction;
+            
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            
+            // Don't allow going to past months
+            const displayDate = new Date(currentYear, currentMonth, 1);
+            const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            
+            if (displayDate < currentMonthStart) {
+                currentMonth = currentDate.getMonth();
+                currentYear = currentDate.getFullYear();
+                return;
+            }
+            
+            selectedDate = null;
+            selectedTime = null;
+            document.getElementById('timeSelection').classList.remove('show');
+            document.getElementById('selectedInfo').classList.remove('show');
+            updateNextButton();
+            generateCalendar();
+        }
+
+        function formatThaiDate(date) {
+            const day = date.getDate();
+            const month = months[date.getMonth()];
+            const year = date.getFullYear() + 543;
+            return `${day} ${month} ${year}`;
+        }
+
+        function nextStep() {
+            if (selectedDate && selectedTime) {
+                alert(`คุณเลือกวันที่: ${formatThaiDate(selectedDate)}\nเวลา: ${selectedTime}\n\nกำลังไปยังขั้นตอนถัดไป...`);
+                // Here you would typically navigate to the next page or step
+            }
+        }
+
+        function goBack() {
+            alert('กลับไปหน้าก่อนหน้า');
+            // Here you would typically navigate to the previous page
+        }
+
+        // Initialize calendar on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            generateCalendar();
+            
+            // Header button interactions
+            document.querySelectorAll('.icon-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    console.log('Clicked:', this.title || 'Header button');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
