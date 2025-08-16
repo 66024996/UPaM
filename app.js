@@ -19,6 +19,23 @@ app.get('/date', (req, res) => {
   res.render('Date'); // render register.ejs
 });
 
+app.get('', (req, res) => {
+  res.render('home'); // render date.ejs
+});
+
+
+app.get('/list', (req, res) => {
+  res.render('list'); // render date.ejs
+});
+
+app.get('/BookingCard', (req, res) => {
+  res.render('BookingCard'); // render date.ejs
+});
+
+app.get('/Booking', (req, res) => {
+  res.render('Booking'); // render date.ejs
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);

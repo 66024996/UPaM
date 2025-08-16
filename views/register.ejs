@@ -448,9 +448,6 @@
                 <button class="icon-btn" title="ค้นหา">
                     <i class="fas fa-search"></i>
                 </button>
-                <button class="icon-btn" title="เปลี่ยนภาษา">
-                    <i class="fas fa-globe"></i>
-                </button>
                 <button class="icon-btn notification-btn" title="การแจ้งเตือน">
                     <i class="fas fa-bell"></i>
                 </button>
@@ -490,11 +487,28 @@
                     </div>
                 </div>
 
-                <!-- ที่อยู่ -->
+                <!-- ที่อยู่ตามทะเบียนบ้าน -->
                 <div class="form-group">
                     <label for="address" class="form-label">ที่อยู่ตามทะเบียนบ้าน<span class="required">*</span></label>
-                    <textarea name="address" id="address" class="form-textarea" placeholder=""></textarea>
+                    <textarea name="address" id="address" class="form-textarea" required></textarea>
                 </div>
+
+                <!-- ที่อยู่อาศัยปัจจุบัน -->
+                <div class="form-group">
+                    <label for="currentAddress" class="form-label">ที่อยู่อาศัยปัจจุบัน<span class="required">*</span></label>
+                    <textarea name="currentAddress" id="currentAddress" class="form-textarea" required></textarea>
+                </div>
+
+                <!-- Checkbox ใช้ที่อยู่ตามบัตร -->
+                <div class="checkbox-wrapper" style="margin-bottom:20px;">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="sameAddress">
+                        <span class="checkmark"></span>
+                    </label>
+                    <div class="checkbox-text">ใช้ที่อยู่ตามทะเบียนบ้าน</div>
+                </div>
+
+
 
                 <!-- วันเกิด -->
                 <div class="form-group" style="max-width: 200px;">
@@ -702,6 +716,31 @@
                 });
             });
         });
+
+        // ฟังก์ชันคัดลอกที่อยู่
+        document.getElementById('sameAddress').addEventListener('change', function() {
+            const address = document.getElementById('address').value;
+            const currentAddress = document.getElementById('currentAddress');
+            
+            if (this.checked) {
+                currentAddress.value = address;
+                currentAddress.setAttribute('readonly', true); // ล็อกไม่ให้แก้ไข
+                currentAddress.style.backgroundColor = "#F3F4F6"; // ทำสีเทาอ่อน
+            } else {
+                currentAddress.value = "";
+                currentAddress.removeAttribute('readonly');
+                currentAddress.style.backgroundColor = "white";
+            }
+        });
+
+        // ถ้ามีการแก้ไขที่อยู่หลักแล้วเลือก "ใช้ที่อยู่ตามบัตร" อยู่ ให้ sync อัตโนมัติ
+        document.getElementById('address').addEventListener('input', function() {
+            const sameAddress = document.getElementById('sameAddress');
+            if (sameAddress.checked) {
+                document.getElementById('currentAddress').value = this.value;
+            }
+        });
+
 
         // Prevent form submission on enter key in input fields
         document.addEventListener('keydown', function(e) {
