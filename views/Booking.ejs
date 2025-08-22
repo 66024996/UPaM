@@ -773,41 +773,8 @@
 
     <!-- Page 1: Service Selection -->
     <div class="page-content active" id="page1">
-      <div class="services">
-        <label class="service-card" data-service="กายภาพขา" data-price="1250">
-          <span class="service-label">
-            <input type="radio" name="service" value="กายภาพขา"> กายภาพขา
-          </span>
-          <span class="service-price">1250 บาท</span>
-        </label>
-
-        <label class="service-card" data-service="กายภาพกล้ามเนื้อส่วนมือ" data-price="1250">
-          <span class="service-label">
-            <input type="radio" name="service" value="กายภาพกล้ามเนื้อส่วนมือ"> กายภาพกล้ามเนื้อส่วนมือ
-          </span>
-          <span class="service-price">1250 บาท</span>
-        </label>
-
-        <label class="service-card" data-service="กายภาพข้อเท้า กล้ามเนื้ออักเสบ" data-price="1250">
-          <span class="service-label">
-            <input type="radio" name="service" value="กายภาพข้อเท้า กล้ามเนื้ออักเสบ"> กายภาพข้อเท้า กล้ามเนื้ออักเสบ
-          </span>
-          <span class="service-price">1250 บาท</span>
-        </label>
-
-        <label class="service-card" data-service="กายภาพหมอนรองกระดูกทับเส้น" data-price="1250">
-          <span class="service-label">
-            <input type="radio" name="service" value="กายภาพหมอนรองกระดูกทับเส้น"> กายภาพหมอนรองกระดูกทับเส้น
-          </span>
-          <span class="service-price">1250 บาท</span>
-        </label>
-
-        <label class="service-card" data-service="กายภาพกล้ามเนื้ออ่อนแรง" data-price="1250">
-          <span class="service-label">
-            <input type="radio" name="service" value="กายภาพกล้ามเนื้ออ่อนแรง"> กายภาพกล้ามเนื้ออ่อนแรง
-          </span>
-          <span class="service-price">1250 บาท</span>
-        </label>
+      <div class="services" id="servicesContainer">
+        <!-- Service Card จะถูกสร้างด้วย JS -->
       </div>
 
       <div class="problem-box">
@@ -1005,12 +972,18 @@
     }
 
     // Generate random booking ID
+    let bookingCounter = 0; // ตัวนับ เริ่มจาก 0
+
     function generateBookingId() {
-      const id = Math.floor(Math.random() * 90000) + 10000;
-      bookingData.bookingId = id.toString();
-      document.getElementById('bookingId').textContent = id.toString().padStart(5, '0');
-      document.getElementById('modalBookingId').textContent = id.toString().padStart(5, '0');
+      bookingCounter++; // เพิ่มทีละ 1
+      const id = bookingCounter;
+
+      bookingData.bookingId = id.toString().padStart(5, '0');
+
+      document.getElementById('bookingId').textContent = bookingData.bookingId;
+      document.getElementById('modalBookingId').textContent = bookingData.bookingId;
     }
+
 
     // Update steps display
     function updateStepsDisplay() {
@@ -1035,6 +1008,55 @@
         step3.className = 'step-circle current';
       }
     }
+    // ตัวอย่าง data จาก DB หรือ API
+    const servicesFromDB = [
+      { id: 1, service_name: "กายภาพขา", price: 1250 },
+      { id: 2, service_name: "กายภาพกล้ามเนื้อส่วนมือ", price: 1250 },
+      { id: 3, service_name: "กายภาพข้อเท้า กล้ามเนื้ออักเสบ", price: 1250 },
+      { id: 4, service_name: "กายภาพหมอนรองกระดูกทับเส้น", price: 1250 },
+      { id: 5, service_name: "กายภาพกล้ามเนื้ออ่อนแรง", price: 1250 }
+    ];
+
+    function loadServices() {
+      const container = document.getElementById('servicesContainer');
+      container.innerHTML = '';
+
+      servicesFromDB.forEach(service => {
+        const card = document.createElement('label');
+        card.className = 'service-card';
+        card.dataset.id = service.id;
+        card.dataset.service = service.service_name;
+        card.dataset.price = service.price;
+
+        card.innerHTML = `
+          <span class="service-label">
+            <input type="radio" name="service" value="${service.service_name}"> ${service.service_name}
+          </span>
+          <span class="service-price">${service.price} บาท</span>
+        `;
+
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+
+          const radio = card.querySelector('input[type="radio"]');
+          radio.checked = true;
+
+          bookingData.service = service.service_name;
+          bookingData.servicePrice = service.price;
+          bookingData.serviceId = service.id;
+
+          document.getElementById('nextBtn1').disabled = !(bookingData.service && bookingData.problem.trim());
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    // เรียกตอนโหลดหน้า
+    document.addEventListener('DOMContentLoaded', () => {
+      loadServices();
+    });
 
     // Show specific page
     function showPage(pageNumber) {
@@ -1070,6 +1092,7 @@
           // Store data
           bookingData.service = this.dataset.service;
           bookingData.servicePrice = this.dataset.price;
+          bookingData.serviceId = this.dataset.id;
           
           // Update button state
           updateNextButton1();
@@ -1092,7 +1115,8 @@
 
     // Page navigation functions
     function nextToPage2() {
-      if (bookingData.service && bookingData.problem.trim()) {
+      if (!bookingData.selectedDate || !bookingData.selectedTime) {
+        alert('กรุณาเลือกวันและเวลานัดหมาย');
         showPage(2);
         generateCalendar();
       }
@@ -1294,18 +1318,63 @@
     // Booking confirmation
     function confirmBooking() {
       const btn = document.querySelector('.btn-primary');
+      if (!bookingData.serviceId || !bookingData.selectedDate || !bookingData.selectedTime) {
+        alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+        return;
+      }
       
       btn.classList.add('loading');
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังดำเนินการ...';
       
-      setTimeout(() => {
+      const userId = 1;
+      const serviceId = bookingData.serviceId;
+      const appointmentData = formatDisplayDateForAPI(bookingData.selectedDate);
+      const timeSlot = bookingData.selectedTime;
+
+      fetch('/booking', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          user_id: userId,
+          service_id: serviceId,
+          appointment_date: appointmentData,
+          time_slot: timeSlot
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
         btn.classList.remove('loading');
         btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
-        
-        document.getElementById('confirmationModal').classList.add('show');
-      }, 2000);
+
+        if (data.success) {
+      
+          document.getElementById('modalBookingId').textContent = String(data.bookingId).padStart(5, '0');
+          
+          document.getElementById('confirmationModal').classList.add('show');
+        } else {
+          alert('เกิดข้อผิดพลาดในการจอง: ' + data.message);
+        }
+      })
+
+      .catch(err => {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
+        alert('เกิดข้อผิดพลาดในการจอง: ' + err.message);
+        console.error(err);
+      })
+      
+      
+
     }
 
+    function formatDisplayDateForAPI(date) {
+      const d = new Date(date);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${year}-${month}-${day}`;
+    }
     function closeModal() {
       document.getElementById('confirmationModal').classList.remove('show');
     }
@@ -1339,6 +1408,8 @@
         });
       });
     });
+    console.log(bookingData);
+
   </script>
 </body>
 </html>
