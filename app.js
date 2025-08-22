@@ -124,8 +124,7 @@ app.post('/booking', async (req, res) => {
     res.json({ 
       success: true, 
       message: 'จองคิวสำเร็จ!', 
-      appointment_id: result.insertId, // ค่า AUTO_INCREMENT จริง
-      bookingId: bookingId             // แปลงเป็น 00001, 00002 …
+      appointment_id: result.insertId, 
     });
 
   } catch (err) {
