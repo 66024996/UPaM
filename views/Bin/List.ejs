@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>การจองคิว - UPaM</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      min-height: 100vh;
+      font-size: 14px;
+    }
+    /* Header */
+    .header {
+      background: white;
+      padding: 12px 24px;
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.477);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: linear-gradient(135deg, #ffff 0%, #183ccbba 100%);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-img {
+            width: 60px;
+            height: 60px;
+            margin-right: 10px;
+        }
+
+        .logo-text {
+            line-height: 1;
+        }
+
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .phone-number {
+      color: #6B7280;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .header-icons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #F3F4F6;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #6B7280;
+    }
+
+    .icon-btn:hover {
+      background: #E5E7EB;
+      transform: translateY(-1px);
+    }
+
+    .notification-btn {
+      position: relative;
+    }
+
+    .notification-btn::after {
+      content: '';
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 8px;
+      height: 8px;
+      background: #EF4444;
+      border-radius: 50%;
+      border: 2px solid white;
+    }
+
+    /* Container */
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    
+    .page-title {
+      text-align: center;
+      font-size: 64px;
+      color: #3B82F6;
+      font-weight: 600;
+      margin-bottom: 40px;
+    }
+
+    /* Steps */
+    .steps {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 40px;
+      gap: 80px;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .step-circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 600;
+      color: white;
+      transition: all 0.3s ease;
+    }
+
+    .step-circle.current {
+      background: #3B82F6;
+    }
+
+    .step-circle.completed {
+      background: #10B981;
+    }
+
+    .step-circle.inactive {
+      background: #D1D5DB;
+    }
+
+    .step-label {
+      font-size: 32px;
+      color: #374151;
+      font-weight: 500;
+    }
+
+    /* Page Content */
+    .page-content {
+      display: none;
+    }
+    
+    .page-content.active {
+      display: block;
+    }
+
+    /* Service List */
+    .service-card {
+      background: white; 
+      border-radius: 12px;
+      padding: 20px 25px; 
+      margin-bottom: 15px;
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      border: 1px solid #E5E7EB; 
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    
+    .service-card:hover { 
+      border-color: #3B82F6; 
+    }
+    
+    .service-card.selected {
+      border-color: #3B82F6;
+      background: #EBF4FF;
+    }
+    
+    .service-card input { 
+      margin-right: 10px; 
+    }
+    
+    .service-label { 
+      display: flex; 
+      align-items: center; 
+      font-size: 16px; 
+      font-weight: 500; 
+    }
+    
+    .service-price {
+      color: white; 
+      background: #EF4444; 
+      border-radius: 20px;
+      padding: 4px 12px; 
+      font-size: 14px; 
+      font-weight: 600;
+    }
+
+    /* Textarea */
+    .problem-box {
+      margin-top: 25px;
+    }
+    
+    .problem-box textarea {
+      width: 100%; 
+      min-height: 100px;
+      padding: 12px;
+      border: 1px solid #D1D5DB; 
+      border-radius: 8px;
+      font-size: 14px; 
+      resize: vertical;
+      font-family: inherit;
+    }
+    
+    .problem-box label { 
+      display: block; 
+      margin-bottom: 8px; 
+      font-weight: 500; 
+    }
+
+    /* Calendar Styles */
+    .calendar-section {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      margin-bottom: 30px;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .month-nav {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #3B82F6;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+    }
+
+    .month-nav:hover {
+      background: #F3F4F6;
+    }
+
+    .month-year {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1F2937;
+    }
+
+    .calendar {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+
+    .calendar th,
+    .calendar td {
+      width: 14.28%;
+      height: 50px;
+      text-align: center;
+      vertical-align: middle;
+      position: relative;
+    }
+
+    .calendar th {
+      font-weight: 600;
+      color: #6B7280;
+      border-bottom: 1px solid #E5E7EB;
+      padding-bottom: 10px;
+    }
+
+    .calendar td {
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-radius: 8px;
+      margin: 2px;
+    }
+
+    .date-cell {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .date-cell.today {
+      background: #FCD34D;
+      color: #92400E;
+    }
+
+    .date-cell.selected {
+      background: #3B82F6;
+      color: white;
+    }
+
+    .date-cell.available:hover {
+      background: #EBF4FF;
+      color: #3B82F6;
+    }
+
+    .date-cell.disabled {
+      color: #D1D5DB;
+      text-decoration: line-through;
+      cursor: not-allowed;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.today {
+      background: #FCD34D;
+    }
+
+    .legend-dot.selected {
+      background: #3B82F6;
+    }
+
+    .legend-dot.disabled {
+      background: #D1D5DB;
+      position: relative;
+    }
+
+    .legend-dot.disabled::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: -2px;
+      right: -2px;
+      height: 1px;
+      background: #9CA3AF;
+    }
+
+    .time-selection {
+      display: none;
+    }
+
+    .time-selection.show {
+      display: block;
+    }
+
+    .time-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1F2937;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .time-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .time-slot {
+      padding: 12px 16px;
+      border: 2px solid #E5E7EB;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      background: white;
+    }
+
+    .time-slot.available {
+      border-color: #D1D5DB;
+      color: #374151;
+    }
+
+    .time-slot.available:hover {
+      border-color: #3B82F6;
+      background: #EBF4FF;
+    }
+
+    .time-slot.selected {
+      background: #3B82F6;
+      color: white;
+      border-color: #3B82F6;
+    }
+
+    .time-slot.unavailable {
+      background: #F3F4F6;
+      color: #9CA3AF;
+      cursor: not-allowed;
+      border-color: #E5E7EB;
+    }
+
+    .selected-info {
+      background: #EBF4FF;
+      border: 1px solid #BFDBFE;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #1E40AF;
+      display: none;
+    }
+
+    .selected-info.show {
+      display: block;
+    }
+
+    /* Summary Styles */
+    .summary-card {
+      background: white;
+      border: 2px solid #3B82F6;
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .summary-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .summary-value {
+      font-size: 16px;
+      color: #1F2937;
+    }
+
+    .price-section {
+      grid-column: 1 / -1;
+      border-top: 2px solid #E5E7EB;
+      padding-top: 20px;
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .price-label {
+      font-size: 18px;
+      font-weight: 600;
+      color: #374151;
+      display: inline-block;
+      border-bottom: 1px solid #374151;
+      padding-bottom: 2px;
+    }
+
+    .price-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #EF4444;
+      margin-left: 15px;
+    }
+
+    /* Modal */
+    .confirmation-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .confirmation-modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    .modal-icon {
+      width: 80px;
+      height: 80px;
+      background: #10B981;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      color: white;
+      font-size: 36px;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1F2937;
+      margin-bottom: 10px;
+    }
+
+    .modal-message {
+      font-size: 16px;
+      color: #6B7280;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    /* Buttons */
+    .action-buttons {
+      margin-top: 30px; 
+      display: flex; 
+      justify-content: center; 
+      gap: 20px;
+    }
+    
+    .btn {
+      padding: 12px 28px; 
+      border: none; 
+      border-radius: 8px;
+      font-size: 16px; 
+      font-weight: 600; 
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn-primary { 
+      background: #3B82F6; 
+      color: white; 
+    }
+    
+    .btn-primary:hover { 
+      background: #2563EB; 
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary { 
+      background: #F3F4F6; 
+      color: #374151; 
+      border: 1px solid #E5E7EB; 
+    }
+    
+    .btn-secondary:hover { 
+      background: #E5E7EB; 
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .btn-modal {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-modal-primary {
+      background: #3B82F6;
+      color: white;
+    }
+
+    .btn-modal-primary:hover {
+      background: #2563EB;
+    }
+
+    .btn-modal-secondary {
+      background: #F3F4F6;
+      color: #374151;
+    }
+
+    .btn-modal-secondary:hover {
+      background: #E5E7EB;
+    }
+
+    .btn-back {
+      background: none;
+      border: none;
+      color: #6B7280;
+      font-size: 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-back:hover {
+      color: #374151;
+      transform: translateX(-2px);
+    }
+
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .btn-primary.loading::after {
+      content: "";
+      width: 16px;
+      height: 16px;
+      margin-left: 8px;
+      border: 2px solid transparent;
+      border-top: 2px solid white;
+      border-radius: 50%;
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width:768px) {
+      .steps { 
+        gap: 30px; 
+      }
+      
+      .step-circle { 
+        width: 50px; 
+        height: 50px; 
+        font-size: 18px; 
+      }
+      
+      .page-title { 
+        font-size: 28px; 
+      }
+
+      .step-label {
+        font-size: 16px;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .time-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .header-right .phone-number {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+        <div class="logo">
+            <img src=".\img\UPaMLOGO.png" class="logo-img"> 
+      <div class="phone-number">
+        <i class="fas fa-phone"></i>
+        1234
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <div class="header-icons">
+        <button class="icon-btn" title="ค้นหา">
+          <i class="fas fa-search"></i>
+        </button>
+        <button class="icon-btn notification-btn" title="การแจ้งเตือน">
+          <i class="fas fa-bell"></i>
+        </button>
+        <button class="icon-btn" title="บัญชีผู้ใช้">
+          <i class="fas fa-user"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="container">
+    <h1 class="page-title">การจองคิว</h1>
+
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step">
+        <div class="step-circle" id="step1">1</div>
+        <div class="step-label">เลือกบริการ</div>
+      </div>
+      <div class="step">
+        <div class="step-circle" id="step2">2</div>
+        <div class="step-label">วันและเวลานัดหมาย</div>
+      </div>
+      <div class="step">
+        <div class="step-circle" id="step3">3</div>
+        <div class="step-label">รายละเอียด</div>
+      </div>
+    </div>
+
+    <!-- Page 1: Service Selection -->
+    <div class="page-content active" id="page1">
+      <div class="services">
+        <label class="service-card" data-service="กายภาพขา" data-price="1250">
+          <span class="service-label">
+            <input type="radio" name="service" value="กายภาพขา"> กายภาพขา
+          </span>
+          <span class="service-price">1250 บาท</span>
+        </label>
+
+        <label class="service-card" data-service="กายภาพกล้ามเนื้อส่วนมือ" data-price="1250">
+          <span class="service-label">
+            <input type="radio" name="service" value="กายภาพกล้ามเนื้อส่วนมือ"> กายภาพกล้ามเนื้อส่วนมือ
+          </span>
+          <span class="service-price">1250 บาท</span>
+        </label>
+
+        <label class="service-card" data-service="กายภาพข้อเท้า กล้ามเนื้ออักเสบ" data-price="1250">
+          <span class="service-label">
+            <input type="radio" name="service" value="กายภาพข้อเท้า กล้ามเนื้ออักเสบ"> กายภาพข้อเท้า กล้ามเนื้ออักเสบ
+          </span>
+          <span class="service-price">1250 บาท</span>
+        </label>
+
+        <label class="service-card" data-service="กายภาพหมอนรองกระดูกทับเส้น" data-price="1250">
+          <span class="service-label">
+            <input type="radio" name="service" value="กายภาพหมอนรองกระดูกทับเส้น"> กายภาพหมอนรองกระดูกทับเส้น
+          </span>
+          <span class="service-price">1250 บาท</span>
+        </label>
+
+        <label class="service-card" data-service="กายภาพกล้ามเนื้ออ่อนแรง" data-price="1250">
+          <span class="service-label">
+            <input type="radio" name="service" value="กายภาพกล้ามเนื้ออ่อนแรง"> กายภาพกล้ามเนื้ออ่อนแรง
+          </span>
+          <span class="service-price">1250 บาท</span>
+        </label>
+      </div>
+
+      <div class="problem-box">
+        <label for="problem">ระบุปัญหาสุขภาพ *</label>
+        <textarea id="problem" placeholder="กรุณากรอกข้อมูล"></textarea>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-secondary" onclick="goBack()">ย้อนกลับ</button>
+        <button class="btn btn-primary" onclick="nextToPage2()" disabled id="nextBtn1">ถัดไป</button>
+      </div>
+    </div>
+
+    <!-- Page 2: Date & Time Selection -->
+    <div class="page-content" id="page2">
+      <div class="calendar-section">
+        <div class="calendar-header">
+          <button class="month-nav" onclick="changeMonth(-1)">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <div class="month-year" id="monthYear">เมษายน 2025</div>
+          <button class="month-nav" onclick="changeMonth(1)">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+
+        <table class="calendar">
+          <thead>
+            <tr>
+              <th>อา</th>
+              <th>จ</th>
+              <th>อ</th>
+              <th>พ</th>
+              <th>พฤ</th>
+              <th>ศ</th>
+              <th>ส</th>
+            </tr>
+          </thead>
+          <tbody id="calendarBody">
+          </tbody>
+        </table>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot today"></div>
+            <span>วันที่ปัจจุบัน</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot selected"></div>
+            <span>วันที่เลือก</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot disabled"></div>
+            <span>ไม่สามารถจองได้</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="time-selection" id="timeSelection">
+        <div class="selected-info" id="selectedInfo">
+          <strong>วันที่เลือก: <span id="selectedDate"></span></strong>
+        </div>
+        
+        <h3 class="time-title">เลือกเวลานัดหมาย</h3>
+        
+        <div class="time-grid" id="timeGrid">
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-secondary" onclick="backToPage1()">ย้อนกลับ</button>
+        <button class="btn btn-primary" onclick="nextToPage3()" disabled id="nextBtn2">ถัดไป</button>
+      </div>
+    </div>
+
+    <!-- Page 3: Summary -->
+    <div class="page-content" id="page3">
+      <div class="summary-card">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-label">รหัสการจอง:</div>
+            <div class="summary-value" id="bookingId">00010</div>
+          </div>
+          
+          <div class="summary-item">
+            <div class="summary-label">ชื่อ-นามสกุล</div>
+            <div class="summary-value">ประสิทธิโชค กรรเชียง</div>
+          </div>
+          
+          <div class="summary-item">
+            <div class="summary-label">ปัญหาสุขภาพ:</div>
+            <div class="summary-value" id="summaryProblem">-</div>
+          </div>
+          
+          <div class="summary-item">
+            <div class="summary-label">เวลา:</div>
+            <div class="summary-value" id="summaryTime">-</div>
+          </div>
+          
+          <div class="summary-item">
+            <div class="summary-label">บริการ:</div>
+            <div class="summary-value" id="summaryService">-</div>
+          </div>
+          
+          <div class="summary-item">
+            <div class="summary-label">วันที่:</div>
+            <div class="summary-value" id="summaryDate">-</div>
+          </div>
+          
+          <div class="price-section">
+            <span class="price-label">ค่าบริการที่ต้องชำระ:</span>
+            <span class="price-value" id="summaryPrice">1,250</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-primary" onclick="confirmBooking()">
+          <i class="fas fa-calendar-check"></i>
+          ส่งข้อมูลนัดหมาย
+        </button>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <button class="btn-back" onclick="backToPage2()">
+          <i class="fas fa-chevron-left"></i>
+          ย้อนกลับ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="confirmation-modal" id="confirmationModal">
+    <div class="modal-content">
+      <div class="modal-icon">
+        <i class="fas fa-check"></i>
+      </div>
+      <h3 class="modal-title">จองคิวสำเร็จ!</h3>
+      <p class="modal-message">
+        การนัดหมายของคุณได้รับการยืนยันแล้ว<br>
+        รหัสการจอง: <strong id="modalBookingId">00010</strong><br>
+        กรุณามาตามเวลาที่นัดหมาย
+      </p>
+      <div class="modal-buttons">
+        <button class="btn-modal btn-modal-primary" onclick="goToAppointments()">
+          ดูการนัดหมาย
+        </button>
+        <button class="btn-modal btn-modal-secondary" onclick="closeModal()">
+          ปิด
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let currentStep = 1;
+    let bookingData = {
+      service: '',
+      servicePrice: '',
+      problem: '',
+      selectedDate: null,
+      selectedTime: '',
+      bookingId: ''
+    };
+
+    let currentDate = new Date();
+    let selectedDate = null;
+    let selectedTime = null;
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
+
+    const months = [
+      'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+    ];
+
+    const timeSlots = [
+      { start: '09:00', end: '10:00', available: true },
+      { start: '10:00', end: '11:00', available: true },
+      { start: '11:00', end: '12:00', available: false },
+      { start: '13:00', end: '14:00', available: true },
+      { start: '14:00', end: '15:00', available: true },
+      { start: '15:00', end: '16:00', available: false },
+      { start: '16:00', end: '17:00', available: true }
+    ];
+
+    // Initialize page
+    function initializePage() {
+      updateStepsDisplay();
+      setupServiceSelection();
+      generateBookingId();
+      generateCalendar();
+    }
+
+    // Generate random booking ID
+    function generateBookingId() {
+      const id = Math.floor(Math.random() * 90000) + 10000;
+      bookingData.bookingId = id.toString();
+      document.getElementById('bookingId').textContent = id.toString().padStart(5, '0');
+      document.getElementById('modalBookingId').textContent = id.toString().padStart(5, '0');
+    }
+
+    // Update steps display
+    function updateStepsDisplay() {
+      const step1 = document.getElementById('step1');
+      const step2 = document.getElementById('step2');
+      const step3 = document.getElementById('step3');
+
+      // Reset all steps
+      [step1, step2, step3].forEach(step => {
+        step.className = 'step-circle inactive';
+      });
+
+      // Set current step
+      if (currentStep === 1) {
+        step1.className = 'step-circle current';
+      } else if (currentStep === 2) {
+        step1.className = 'step-circle completed';
+        step2.className = 'step-circle current';
+      } else if (currentStep === 3) {
+        step1.className = 'step-circle completed';
+        step2.className = 'step-circle completed';
+        step3.className = 'step-circle current';
+      }
+    }
+
+    // Show specific page
+    function showPage(pageNumber) {
+      // Hide all pages
+      document.querySelectorAll('.page-content').forEach(page => {
+        page.classList.remove('active');
+      });
+
+      // Show target page
+      document.getElementById(`page${pageNumber}`).classList.add('active');
+      currentStep = pageNumber;
+      updateStepsDisplay();
+    }
+
+    // Service selection setup
+    function setupServiceSelection() {
+      const serviceCards = document.querySelectorAll('.service-card');
+      const problemTextarea = document.getElementById('problem');
+      const nextBtn = document.getElementById('nextBtn1');
+
+      serviceCards.forEach(card => {
+        card.addEventListener('click', function() {
+          // Remove previous selection
+          serviceCards.forEach(c => c.classList.remove('selected'));
+          
+          // Add selection to clicked card
+          this.classList.add('selected');
+          
+          // Update radio button
+          const radio = this.querySelector('input[type="radio"]');
+          radio.checked = true;
+          
+          // Store data
+          bookingData.service = this.dataset.service;
+          bookingData.servicePrice = this.dataset.price;
+          
+          // Update button state
+          updateNextButton1();
+        });
+      });
+
+      problemTextarea.addEventListener('input', function() {
+        bookingData.problem = this.value;
+        updateNextButton1();
+      });
+
+      function updateNextButton1() {
+        if (bookingData.service && bookingData.problem.trim()) {
+          nextBtn.disabled = false;
+        } else {
+          nextBtn.disabled = true;
+        }
+      }
+    }
+
+    // Page navigation functions
+    function nextToPage2() {
+      if (bookingData.service && bookingData.problem.trim()) {
+        showPage(2);
+        generateCalendar();
+      }
+    }
+
+    function backToPage1() {
+      showPage(1);
+    }
+
+    function nextToPage3() {
+      if (selectedDate && selectedTime) {
+        bookingData.selectedDate = selectedDate;
+        bookingData.selectedTime = selectedTime;
+        updateSummary();
+        showPage(3);
+      }
+    }
+
+    function backToPage2() {
+      showPage(2);
+    }
+
+    function goBack() {
+        window.location.href = "/home";
+    }
+
+    // Calendar functions
+    function generateCalendar() {
+      const calendarBody = document.getElementById('calendarBody');
+      const monthYear = document.getElementById('monthYear');
+      
+      monthYear.textContent = `${months[currentMonth]} ${currentYear + 543}`;
+      
+      const firstDay = new Date(currentYear, currentMonth, 1);
+      const lastDay = new Date(currentYear, currentMonth + 1, 0);
+      const daysInMonth = lastDay.getDate();
+      const startingDay = firstDay.getDay();
+      
+      let html = '';
+      let date = 1;
+      
+      const maxBookableDate = new Date(currentDate);
+      maxBookableDate.setDate(maxBookableDate.getDate() + 7);
+      
+      for (let week = 0; week < 6; week++) {
+        html += '<tr>';
+        
+        for (let day = 0; day < 7; day++) {
+          if (week === 0 && day < startingDay) {
+            html += '<td></td>';
+          } else if (date > daysInMonth) {
+            html += '<td></td>';
+          } else {
+            const cellDate = new Date(currentYear, currentMonth, date);
+            const isToday = cellDate.toDateString() === currentDate.toDateString();
+            const isSelected = selectedDate && cellDate.toDateString() === selectedDate.toDateString();
+            const isPastOrToday = cellDate <= currentDate;
+            const isBeyondWeek = cellDate > maxBookableDate;
+            const isDisabled = isPastOrToday || isBeyondWeek;
+            
+            let cellClass = 'date-cell';
+            if (isToday) cellClass += ' today';
+            if (isSelected) cellClass += ' selected';
+            if (isDisabled) cellClass += ' disabled';
+            else cellClass += ' available';
+            
+            html += `<td onclick="selectDate(${date})" data-date="${date}">
+                        <div class="${cellClass}">${date}</div>
+                    </td>`;
+            date++;
+          }
+        }
+        
+        html += '</tr>';
+        
+        if (date > daysInMonth) break;
+      }
+      
+      calendarBody.innerHTML = html;
+    }
+
+    function selectDate(day) {
+      const clickedDate = new Date(currentYear, currentMonth, day);
+      const maxBookableDate = new Date(currentDate);
+      maxBookableDate.setDate(maxBookableDate.getDate() + 7);
+      
+      if (clickedDate <= currentDate || clickedDate > maxBookableDate) {
+        return;
+      }
+      
+      selectedDate = clickedDate;
+      selectedTime = null;
+      
+      generateCalendar();
+      showTimeSelection();
+      
+      const selectedInfo = document.getElementById('selectedInfo');
+      const selectedDateSpan = document.getElementById('selectedDate');
+      selectedDateSpan.textContent = formatThaiDate(selectedDate);
+      selectedInfo.classList.add('show');
+      
+      updateNextButton2();
+    }
+
+    function showTimeSelection() {
+      document.getElementById('timeSelection').classList.add('show');
+      generateTimeSlots();
+    }
+
+    function generateTimeSlots() {
+      const timeGrid = document.getElementById('timeGrid');
+      let html = '';
+      
+      timeSlots.forEach(slot => {
+        const slotClass = slot.available ? 'time-slot available' : 'time-slot unavailable';
+        const onclick = slot.available ? `onclick="selectTime('${slot.start}-${slot.end}')"` : '';
+        
+        html += `<div class="${slotClass}" ${onclick} data-time="${slot.start}-${slot.end}">
+                    ${slot.start} - ${slot.end}
+                </div>`;
+      });
+      
+      timeGrid.innerHTML = html;
+    }
+
+    function selectTime(timeRange) {
+      document.querySelectorAll('.time-slot').forEach(slot => {
+        slot.classList.remove('selected');
+      });
+      
+      const clickedSlot = document.querySelector(`[data-time="${timeRange}"]`);
+      if (clickedSlot && clickedSlot.classList.contains('available')) {
+        clickedSlot.classList.add('selected');
+        selectedTime = timeRange;
+        updateNextButton2();
+      }
+    }
+
+    function updateNextButton2() {
+      const nextBtn = document.getElementById('nextBtn2');
+      if (selectedDate && selectedTime) {
+        nextBtn.disabled = false;
+      } else {
+        nextBtn.disabled = true;
+      }
+    }
+
+    function changeMonth(direction) {
+      currentMonth += direction;
+      
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      } else if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      
+      const displayDate = new Date(currentYear, currentMonth, 1);
+      const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      
+      if (displayDate < currentMonthStart) {
+        currentMonth = currentDate.getMonth();
+        currentYear = currentDate.getFullYear();
+        return;
+      }
+      
+      selectedDate = null;
+      selectedTime = null;
+      document.getElementById('timeSelection').classList.remove('show');
+      document.getElementById('selectedInfo').classList.remove('show');
+      updateNextButton2();
+      generateCalendar();
+    }
+
+    function formatThaiDate(date) {
+      const day = date.getDate();
+      const month = months[date.getMonth()];
+      const year = date.getFullYear() + 543;
+      return `${day} ${month} ${year}`;
+    }
+
+    function formatDisplayDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+
+    // Summary functions
+    function updateSummary() {
+      document.getElementById('summaryService').textContent = bookingData.service || '-';
+      document.getElementById('summaryProblem').textContent = bookingData.problem || '-';
+      document.getElementById('summaryDate').textContent = bookingData.selectedDate ? formatDisplayDate(bookingData.selectedDate) : '-';
+      document.getElementById('summaryTime').textContent = bookingData.selectedTime ? bookingData.selectedTime + ' น.' : '-';
+      document.getElementById('summaryPrice').textContent = bookingData.servicePrice || '1,250';
+    }
+
+    // Booking confirmation
+    function confirmBooking() {
+      const btn = document.querySelector('.btn-primary');
+      
+      btn.classList.add('loading');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังดำเนินการ...';
+      
+      setTimeout(() => {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
+        
+        document.getElementById('confirmationModal').classList.add('show');
+      }, 2000);
+    }
+
+    function closeModal() {
+      document.getElementById('confirmationModal').classList.remove('show');
+    }
+
+    function goToAppointments() {
+      alert('กำลังไปยังหน้าการนัดหมายของคุณ...');
+      closeModal();
+    }
+
+    // Modal event listeners
+    document.getElementById('confirmationModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      initializePage();
+      
+      // Header button interactions
+      document.querySelectorAll('.icon-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          console.log('Clicked:', this.title || 'Header button');
+        });
+      });
+    });
+  </script>
+</body>
+</html>

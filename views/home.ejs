@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPaM - จองคิวตรวจสุขภาพ</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ffff 0%, #183ccbba 100%);
+            padding: 12px 24px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-img {
+            width: 60px;
+            height: 60px;
+            margin-right: 10px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .phone-number {
+            color: #6B7280;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #6b7280;
+        }
+
+        .icon-btn:hover {
+            background: #e5e7eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .notification-btn {
+            position: relative;
+        }
+
+        .notification-btn::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 60px 20px;
+            background-image: url('./img/กายภาพ1.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            position: relative;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23e0e7ff" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)" /></svg>');
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-title {
+            font-size: 48px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ffffff, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            color: #ffffff;
+            margin-bottom: 40px;
+        }
+
+        .promotion-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+            
+        }
+    
+        .promotion-card.img {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .promotion-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .promotion-card.physiotherapy {
+            background: linear-gradient(135deg, #ddd6fe 0%, #c7d2fe 100%);
+            max-height: 300px;
+        }
+
+        .promotion-card.blood-test {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            max-height: 300px;
+        }
+
+        .services-section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(79, 70, 229, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .service-card:hover::before {
+            opacity: 1;
+        }
+
+        .service-card:hover {
+            transform: scale(1.08) translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+
+        .service-card.physiotherapy {
+            border-top: 4px solid #94ABFF;
+        }
+
+        .service-card.physiotherapy:hover {
+            background: linear-gradient(135deg, #ffffff 0%, #94abff66 100%);
+        }
+
+        .service-card.blood-test {
+            border-top: 4px solid #DB3B3E;
+        }
+
+        .service-card.blood-test:hover {
+            background: linear-gradient(135deg, #ffffff86 0%, #db3b3e84 100%);
+        }
+
+        .service-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .service-card.physiotherapy .service-icon {
+            background: linear-gradient(135deg, #8b5cf6, #94ABFF);
+        }
+
+        .service-card.blood-test .service-icon {
+            background: linear-gradient(135deg, #ef4444, #DB3B3E);
+        }
+
+        .service-card:hover .service-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .service-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+
+        .service-card:hover .service-title {
+            color: #000000;
+        }
+
+        .service-description {
+            color: #6b7280;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        .news-section {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .news-card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .news-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .news-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: #6366f1;
+        }
+
+        .news-content {
+            padding: 20px;
+            background: white;
+        }
+
+        .news-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .news-description {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .footer {
+            background: #1f2937;
+            color: white;
+            padding: 40px 0;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footer-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #d1d5db;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 32px;
+            }
+
+            .hero-subtitle {
+                font-size: 18px;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+
+            .promotion-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .service-card {
+                padding: 30px 20px;
+            }
+
+            .header {
+                padding: 10px 15px;
+            }
+
+            .phone-number {
+                display: none;
+            }
+
+            .news-section {
+                padding: 30px 20px;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <img src=".\img\UPaMLOGO.png" class="logo-img"> 
+            <div class="phone-number">
+                <i class="fas fa-phone"></i>
+                1234
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <div class="header-icons">
+                <button class="icon-btn" title="ค้นหา">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="icon-btn notification-btn" title="การแจ้งเตือน">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <button class="icon-btn" title="บัญชีผู้ใช้">
+                    <i class="fas fa-user"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title floating">โปรโมชั่น</h1>
+                <p class="hero-subtitle">จองคิวตรวจสุขภาพ ง่าย สะดวก ประหยัด</p>
+            </div>
+        </div>
+
+        <!-- Promotion Cards -->
+        <div class="promotion-cards">
+            <div class="promotion-card physiotherapy">
+                <img src="\img\ChatGPT Image 28 มิ.ย. 2568 21_53_13 1.png" alt="PHYSIOTHERAPY" style="width:100%; border-radius:12px; margin-bottom:15px; max-height: 300px;">
+            </div>
+
+            <div class="promotion-card physiotherapy">
+                <img src="\img\ChatGPT Image 28 มิ.ย. 2568 21_20_36.png" alt="PHYSIOTHERAPY" style="width:100%; border-radius:12px; margin-bottom:15px; max-height: 300px;">
+            </div>
+
+
+            <div class="promotion-card blood-test">
+                <img src="\img\ChatGPT Image 8 ก.ค. 2568 11_26_29 1.png" alt="PHYSIOTHERAPY" style="width:100%; border-radius:12px; margin-bottom:10px; max-height: 300px;">
+            </div>
+        </div>
+
+        <!-- Services Section -->
+        <div class="services-section">
+            <h2 class="section-title">บริการการจองคิวของเรา</h2>
+            <div class="services-grid">
+                <div class="service-card physiotherapy"  onclick="bookService('physiotherapy')">
+                    <div class="service-icon">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <h3 class="service-title">กายภาพบำบัด</h3>
+                    <p class="service-description">บริการกายภาพบำบัด โดยผู้เชี่ยวชาญ เพื่อฟื้นฟูสุขภาพและการเคลื่อนไหวของร่างกาย</p>
+                </div>
+
+                <div class="service-card blood-test" onclick="bookService('blood-test')">
+                    <div class="service-icon">
+                        <i class="fas fa-syringe"></i>
+                    </div>
+                    <h3 class="service-title">ตรวจเลือด</h3>
+                    <p class="service-description">บริการตรวจเลือดครบวงจร ด้วยเทคโนโลยีทันสมัย ผลแม่นยำ</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- News Section -->
+        <div class="news-section">
+            <h2 class="section-title">ข่าวสาร</h2>
+            <div class="news-grid">
+                <div class="news-card">
+                    <div class="news-image">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <div class="news-content">
+                        <h3 class="news-title">กายภาพบำบัด</h3>
+                        <p class="news-description">โรคกล้ามเนื้อกระดูกลำคอกล่อง-ว่าง โดยเฉพาะในกลุ่มผู้ใหญ่และผู้สูงอายุต้องร่วง</p>
+                    </div>
+                </div>
+
+                <div class="news-card">
+                    <div class="news-image">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <div class="news-content">
+                        <h3 class="news-title">โรคไม่ติดต่อเรื้อรัง ติดต่อเด็กก่อนล่วงวัง</h3>
+                        <p class="news-description">โรคกล้ามเนื้อกระดูกลำคอกล่อง-ว่าง โดยเฉพาะในกลุ่มผู้ใหญ่และผู้สูงอายุต้องร่วง</p>
+                    </div>
+                </div>
+
+                <div class="news-card">
+                    <div class="news-image">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <div class="news-content">
+                        <h3 class="news-title">โรคไม่ติดต่อเรื้อรัง ติดต่อเด็กก่อนล่วงวัง</h3>
+                        <p class="news-description">โรคกล้ามเนื้อกระดูกลำคอกล่อง-ว่าง โดยเฉพาะในกลุ่มผู้ใหญ่และผู้สูงอายุต้องร่วง</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-content">
+            <h3 class="footer-title">บริการ</h3>
+            <ul class="footer-links">
+                <li><a href="#physiotherapy">กายภาพบำบัด</a></li>
+                <li><a href="#blood-test">ตรวจอุจจาระภาพ</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function bookService(serviceType) {
+            // สร้าง animation effect
+            const card = event.currentTarget;
+            card.style.transform = 'scale(0.95)';
+            window.location.href = "/Booking";
+            
+            setTimeout(() => {
+                card.style.transform = '';
+                
+                // แสดงข้อความยืนยัน
+                if (serviceType === 'physiotherapy') {
+                    alert('กำลังจองคิวกายภาพบำบัด กรุณารอสักครู่...');
+                    // เปลี่ยนเป็นหน้าจองคิวกายภาพบำบัด
+                    setTimeout(() => {
+                        alert('เปลี่ยนไปหน้าจองคิวกายภาพบำบัด');
+                    }, 1000);
+                } else if (serviceType === 'blood-test') {
+                    alert('กำลังจองคิวตรวจเลือด กรุณารอสักครู่...');
+                    // เปลี่ยนเป็นหน้าจองคิวตรวจเลือด
+                    setTimeout(() => {
+                        alert('เปลี่ยนไปหน้าจองคิวตรวจเลือด');
+                    }, 1000);
+                }
+            }, 150);
+        }
+
+        // Header button interactions
+        document.querySelectorAll('.icon-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                console.log('Clicked:', this.title || 'Header button');
+                // สร้าง ripple effect
+                this.style.transform = 'scale(0.9)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            });
+        });
+
+        // เพิ่มการเคลื่อนไหวเมื่อ scroll
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            const floating = document.querySelector('.floating');
+            if (floating) {
+                floating.style.transform = `translateY(${scrollY * 0.1}px)`;
+            }
+        });
+
+        // เพิ่ม loading effect เมื่อโหลดหน้าเว็บ
+        window.addEventListener('load', () => {
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.5s ease';
+            
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

@@ -36,6 +36,10 @@ app.get('/Booking', (req, res) => {
   res.render('Booking'); // render date.ejs
 });
 
+app.get('/ListAdmin', (req, res) => {
+  res.render('ListAdmin'); // render date.ejs
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
