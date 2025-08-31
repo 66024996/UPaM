@@ -32,12 +32,28 @@ app.get('/BookingCard', (req, res) => {
   res.render('BookingCard'); // render date.ejs
 });
 
-app.get('/Booking', (req, res) => {
-  res.render('Booking'); // render date.ejs
+app.get('/Bookingphy', (req, res) => {
+  res.render('Bookingphy'); // render date.ejs
 });
 
 app.get('/ListAdmin', (req, res) => {
   res.render('ListAdmin'); // render date.ejs
+});
+
+app.get('/Bookingblood', (req, res) => {
+  res.render('Bookingblood'); // render date.ejs
+});
+
+app.get('/Login', (req, res) => {
+  res.render('Login'); // render date.ejs
+});
+
+app.get('/Staffphy', (req, res) => {
+  res.render('Staffphy'); // render date.ejs
+});
+
+app.get('/Staffblood', (req, res) => {
+  res.render('Staffblood'); // render date.ejs
 });
 
 // Start server

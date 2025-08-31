@@ -557,12 +557,17 @@
     </div>
 
     <script>
-        function bookService(serviceType) {
-            // สร้าง animation effect
-            const card = event.currentTarget;
-            card.style.transform = 'scale(0.95)';
-            window.location.href = "/Booking";
-            
+            function bookService(service) {
+                const card = event.currentTarget;
+                card.style.transform = 'scale(0.95)';
+
+                if (service === 'physiotherapy') {
+                    window.location.href = "/Bookingphy";
+                } else if (service === 'blood-test') {
+                    window.location.href = "/Bookingblood";
+                }
+            }
+
             setTimeout(() => {
                 card.style.transform = '';
                 
@@ -581,7 +586,6 @@
                     }, 1000);
                 }
             }, 150);
-        }
 
         // Header button interactions
         document.querySelectorAll('.icon-btn').forEach(btn => {
