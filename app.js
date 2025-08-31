@@ -4,15 +4,15 @@ const mysql = require('mysql2/promise');
 const app = express();
 const PORT = 3000;
 
-//  Middleware
-app.use(express.json()); // เพิ่มสำหรับรองรับ JSON
-app.use(express.urlencoded({ extended: true })); // รองรับฟอร์ม POST
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-//  View Engine
+
 app.set('view engine', 'ejs');
 
-//  Database Connection
+
 const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
@@ -23,7 +23,7 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-//  Test Database
+
 async function testConnection() {
   try {
     const [rows] = await pool.query('SELECT 1 + 1 AS result');
@@ -99,7 +99,7 @@ app.post('/booking', async (req, res) => {
   }
 
   try {
-    //  ตรวจสอบว่าช่วงเวลานี้ถูกจองแล้วหรือยัง
+    
     const [existing] = await pool.execute(
       `SELECT id FROM appointments 
        WHERE appointment_date = ? AND time_slot = ? AND status = 'จองแล้ว'`,
@@ -110,7 +110,7 @@ app.post('/booking', async (req, res) => {
       return res.status(400).json({ success: false, message: 'เวลานี้ถูกจองแล้ว' });
     }
 
-    //  บันทึกการจอง (id จะ AUTO_INCREMENT อัตโนมัติ)
+    
     const [result] = await pool.execute(
       `INSERT INTO appointments 
        (user_id, service_id, appointment_date, time_slot, status, created_at, updated_at) 
@@ -118,7 +118,7 @@ app.post('/booking', async (req, res) => {
       [user_id, service_id, appointment_date, time_slot]
     );
 
-    //  ใช้ AUTO_INCREMENT id มาแปลงเป็น Booking ID 5 หลัก
+    
     const bookingId = result.insertId.toString().padStart(5, '0');
 
     res.json({ 
@@ -137,4 +137,3 @@ app.post('/booking', async (req, res) => {
 
 //  Start Server
 app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
-
