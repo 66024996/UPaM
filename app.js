@@ -79,8 +79,8 @@ app.post('/register', async (req, res) => {
   }
 });
 
-app.get('/list', (req, res) => {
-  res.render('list'); 
+app.get('/ListAdmin', (req, res) => {
+  res.render('ListAdmin'); 
 });
 
 app.get('/BookingCard', (req, res) => {
