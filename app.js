@@ -87,7 +87,6 @@ app.get('/BookingCard', (req, res) => {
   res.render('BookingCard'); 
 });
 
-<<<<<<< HEAD
 app.get('/Bookingphy', (req, res) => {
   res.render('Bookingphy'); // render date.ejs
 });
@@ -110,10 +109,6 @@ app.get('/Staffphy', (req, res) => {
 
 app.get('/Staffblood', (req, res) => {
   res.render('Staffblood'); // render date.ejs
-=======
-app.get('/Booking', (req, res) => {
-  res.render('Booking'); 
->>>>>>> origin/main
 });
 
 app.post('/booking', async (req, res) => {

@@ -513,6 +513,11 @@
                     <label for="birthDate" class="form-label">วัน/เดือน/ปีเกิด<span class="required">*</span></label>
                     <input type="date" name="birth_date" id="birthDate" class="form-input" required>
                 </div>
+                <!-- อีเมล -->
+                <div class="form-group">
+                    <label for="email" class="form-label">อีเมล<span class="required">*</span></label>
+                    <input type="email" name="email" id="email" class="form-input" placeholder="example@email.com" required>
+                </div>
 
 
                 <!-- เบอร์โทร -->
@@ -687,11 +692,12 @@
                     use_permanent_as_current: document.getElementById('sameAddress').checked ? 1 : 0,
                     birth_date: document.getElementById('birthDate').value,
                     phone: document.getElementById('phone').value,
+                    email: document.getElementById('email').value,
                     congenital_disease: document.getElementById('congenital_disease').value,
                     drug_allergy: document.getElementById('drug_allergy').value,
                     newsletter: document.getElementById('newsletter').checked ? 1 : 0,
                     medical_data_consent: document.querySelector('input[name="privacyConsent"]:checked')?.value === 'accept' ? 'ยินยอม' : 'ไม่ยินยอม'
-})
+                })
 
             })
             .then(res => res.json())
