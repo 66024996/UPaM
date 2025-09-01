@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>การจองคิว - UPaM</title>
+  <title>การจองคิวตรวจเลือด - UPaM</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -35,21 +35,15 @@
       align-items: center;
     }
 
-    .logo {
-            display: flex;
-            align-items: center;
-        }
+    .logo-img {
+      width: 60px;
+      height: 60px;
+      margin-right: 10px;
+    }
 
-        .logo-img {
-            width: 60px;
-            height: 60px;
-            margin-right: 10px;
-        }
-
-        .logo-text {
-            line-height: 1;
-        }
-
+    .logo-text {
+      line-height: 1;
+    }
 
     .header-right {
       display: flex;
@@ -115,7 +109,7 @@
     .page-title {
       text-align: center;
       font-size: 64px;
-      color: #3B82F6;
+      color: #DC2626;
       font-weight: 600;
       margin-bottom: 40px;
     }
@@ -150,7 +144,7 @@
     }
 
     .step-circle.current {
-      background: #3B82F6;
+      background: #DC2626;
     }
 
     .step-circle.completed {
@@ -191,16 +185,20 @@
     }
     
     .service-card:hover { 
-      border-color: #3B82F6; 
+      border-color: #DC2626; 
     }
     
     .service-card.selected {
-      border-color: #3B82F6;
-      background: #EBF4FF;
+      border-color: #DC2626;
+      background: #FEF2F2;
     }
     
-    .service-card input { 
-      margin-right: 10px; 
+    .service-card input[type="checkbox"] { 
+      margin-right: 12px;
+      width: 18px;
+      height: 18px;
+      accent-color: #DC2626;
+      cursor: pointer;
     }
     
     .service-label { 
@@ -208,15 +206,88 @@
       align-items: center; 
       font-size: 16px; 
       font-weight: 500; 
+      flex: 1;
     }
     
     .service-price {
       color: white; 
-      background: #EF4444; 
+      background: #DC2626; 
       border-radius: 20px;
       padding: 4px 12px; 
       font-size: 14px; 
       font-weight: 600;
+    }
+
+    /* Selected Services Summary */
+    .selected-services {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      border: 2px solid #DC2626;
+      display: none;
+    }
+
+    .selected-services.show {
+      display: block;
+    }
+
+    .selected-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #DC2626;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .selected-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .selected-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #F3F4F6;
+    }
+
+    .selected-item:last-child {
+      border-bottom: none;
+    }
+
+    .item-name {
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .item-price {
+      font-weight: 600;
+      color: #DC2626;
+    }
+
+    .total-section {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 2px solid #E5E7EB;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .total-label {
+      font-size: 18px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .total-price {
+      font-size: 20px;
+      font-weight: 700;
+      color: #DC2626;
     }
 
     /* Textarea */
@@ -261,7 +332,7 @@
       background: none;
       border: none;
       font-size: 24px;
-      color: #3B82F6;
+      color: #DC2626;
       cursor: pointer;
       padding: 8px;
       border-radius: 50%;
@@ -317,6 +388,7 @@
       margin: 0 auto;
       font-weight: 500;
       transition: all 0.2s ease;
+      position: relative;
     }
 
     .date-cell.today {
@@ -325,19 +397,31 @@
     }
 
     .date-cell.selected {
-      background: #3B82F6;
+      background: #DC2626;
       color: white;
     }
 
     .date-cell.available:hover {
-      background: #EBF4FF;
-      color: #3B82F6;
+      background: #FEF2F2;
+      color: #DC2626;
     }
 
     .date-cell.disabled {
       color: #D1D5DB;
       text-decoration: line-through;
       cursor: not-allowed;
+    }
+
+    .date-cell.has-bookings::after {
+      content: '';
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 12px;
+      height: 12px;
+      background: #F59E0B;
+      border-radius: 50%;
+      border: 2px solid white;
     }
 
     .legend {
@@ -365,7 +449,7 @@
     }
 
     .legend-dot.selected {
-      background: #3B82F6;
+      background: #DC2626;
     }
 
     .legend-dot.disabled {
@@ -381,6 +465,11 @@
       right: -2px;
       height: 1px;
       background: #9CA3AF;
+    }
+
+    .legend-dot.has-bookings {
+      background: #F59E0B;
+      position: relative;
     }
 
     .time-selection {
@@ -415,6 +504,7 @@
       transition: all 0.2s ease;
       font-weight: 500;
       background: white;
+      position: relative;
     }
 
     .time-slot.available {
@@ -423,14 +513,14 @@
     }
 
     .time-slot.available:hover {
-      border-color: #3B82F6;
-      background: #EBF4FF;
+      border-color: #DC2626;
+      background: #FEF2F2;
     }
 
     .time-slot.selected {
-      background: #3B82F6;
+      background: #DC2626;
       color: white;
-      border-color: #3B82F6;
+      border-color: #DC2626;
     }
 
     .time-slot.unavailable {
@@ -438,16 +528,28 @@
       color: #9CA3AF;
       cursor: not-allowed;
       border-color: #E5E7EB;
+      position: relative;
+    }
+
+    .time-slot.unavailable::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: #9CA3AF;
+      transform: translateY(-50%);
     }
 
     .selected-info {
-      background: #EBF4FF;
-      border: 1px solid #BFDBFE;
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
       border-radius: 8px;
       padding: 16px;
       margin-bottom: 20px;
       text-align: center;
-      color: #1E40AF;
+      color: #B91C1C;
       display: none;
     }
 
@@ -455,10 +557,21 @@
       display: block;
     }
 
+    .availability-info {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: #F0FDF4;
+      border: 1px solid #BBF7D0;
+      border-radius: 8px;
+      color: #15803D;
+      font-size: 14px;
+    }
+
     /* Summary Styles */
     .summary-card {
       background: white;
-      border: 2px solid #3B82F6;
+      border: 2px solid #DC2626;
       border-radius: 16px;
       padding: 40px;
       margin-bottom: 30px;
@@ -488,6 +601,29 @@
       color: #1F2937;
     }
 
+    .services-summary {
+      grid-column: 1 / -1;
+      margin-bottom: 20px;
+    }
+
+    .services-list {
+      background: #F9FAFB;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 10px;
+    }
+
+    .service-summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #E5E7EB;
+    }
+
+    .service-summary-item:last-child {
+      border-bottom: none;
+    }
+
     .price-section {
       grid-column: 1 / -1;
       border-top: 2px solid #E5E7EB;
@@ -508,7 +644,7 @@
     .price-value {
       font-size: 20px;
       font-weight: 700;
-      color: #EF4444;
+      color: #DC2626;
       margin-left: 15px;
     }
 
@@ -595,12 +731,12 @@
     }
     
     .btn-primary { 
-      background: #3B82F6; 
+      background: #DC2626; 
       color: white; 
     }
     
     .btn-primary:hover { 
-      background: #2563EB; 
+      background: #B91C1C; 
       transform: translateY(-1px);
     }
     
@@ -631,12 +767,12 @@
     }
 
     .btn-modal-primary {
-      background: #3B82F6;
+      background: #DC2626;
       color: white;
     }
 
     .btn-modal-primary:hover {
-      background: #2563EB;
+      background: #B91C1C;
     }
 
     .btn-modal-secondary {
@@ -722,14 +858,19 @@
       .header-right .phone-number {
         display: none;
       }
+
+      .legend {
+        flex-wrap: wrap;
+        gap: 15px;
+      }
     }
   </style>
 </head>
 <body>
   <!-- Header -->
   <div class="header">
-        <div class="logo">
-            <img src=".\img\UPaMLOGO.png" class="logo-img"> 
+    <div class="logo">
+      <img src=".\img\UPaMLOGO.png" class="logo-img"> 
       <div class="phone-number">
         <i class="fas fa-phone"></i>
         1234
@@ -753,7 +894,7 @@
 
   <!-- Main -->
   <div class="container">
-    <h1 class="page-title">การจองคิว</h1>
+    <h1 class="page-title">การจองคิวตรวจเลือด</h1>
 
     <!-- Steps -->
     <div class="steps">
@@ -773,13 +914,81 @@
 
     <!-- Page 1: Service Selection -->
     <div class="page-content active" id="page1">
-      <div class="services" id="servicesContainer">
-        <!-- Service Card จะถูกสร้างด้วย JS -->
+      <div class="services">
+        <label class="service-card" data-service="ตรวจเลือดทั่วไป (CBC)" data-price="300">
+          <span class="service-label">
+            <input type="checkbox" name="service" value="ตรวจเลือดทั่วไป (CBC)"> ตรวจเลือดทั่วไป (CBC)
+          </span>
+          <span class="service-price">300 บาท</span>
+        </label>
+
+        <label class="service-card" data-service="ตรวจระดับน้ำตาล (FBS)" data-price="150">
+          <span class="service-label">
+            <input type="checkbox" name="service" value="ตรวจระดับน้ำตาล (FBS)"> ตรวจระดับน้ำตาล (FBS)
+          </span>
+          <span class="service-price">150 บาท</span>
+        </label>
+
+        <label class="service-card" data-service="ตรวจไขมันในเลือด (Lipid Profile)" data-price="450">
+          <span class="service-label">
+            <input type="checkbox" name="service" value="ตรวจไขมันในเลือด (Lipid Profile)"> ตรวจไขมันในเลือด (Lipid Profile)
+          </span>
+          <span class="service-price">450 บาท</span>
+        </label>
+
+        <label class="service-card" data-service="ตรวจการทำงานของตับ (LFT)" data-price="400">
+          <span class="service-label">
+            <input type="checkbox" name="service" value="ตรวจการทำงานของตับ (LFT)"> ตรวจการทำงานของตับ (LFT)
+          </span>
+          <span class="service-price">400 บาท</span>
+        </label>
+
+        <label class="service-card" data-service="ตรวจการทำงานของไต (RFT)" data-price="350">
+          <span class="service-label">
+            <input type="checkbox" name="service" value="ตรวจการทำงานของไต (RFT)"> ตรวจการทำงานของไต (RFT)
+          </span>
+          <span class="service-price">350 บาท</span>
+        </label>
+
+        <label class="service-card" data-service="ตรวจฮอร์โมนไทรอยด์ (Thyroid Function)" data-price="600">
+          <span class="service-label">
+            <input type="checkbox" name="service" value="ตรวจฮอร์โมนไทรอยด์ (Thyroid Function)"> ตรวจฮอร์โมนไทรอยด์ (Thyroid Function)
+          </span>
+          <span class="service-price">600 บาท</span>
+        </label>
+
+        <label class="service-card" data-service="ตรวจวิตามิน D" data-price="800">
+          <span class="service-label">
+            <input type="checkbox" name="service" value="ตรวจวิตามิน D"> ตรวจวิตามิน D
+          </span>
+          <span class="service-price">800 บาท</span>
+        </label>
+
+        <label class="service-card" data-service="ตรวจ HbA1C (เฮโมโกลบิน A1C)" data-price="250">
+          <span class="service-label">
+            <input type="checkbox" name="service" value="ตรวจ HbA1C (เฮโมโกลบิน A1C)"> ตรวจ HbA1C (เฮโมโกลบิน A1C)
+          </span>
+          <span class="service-price">250 บาท</span>
+        </label>
+      </div>
+
+      <!-- Selected Services Summary -->
+      <div class="selected-services" id="selectedServices">
+        <div class="selected-title">
+          <i class="fas fa-check-circle"></i>
+          รายการตรวจที่เลือก
+        </div>
+        <ul class="selected-list" id="selectedList">
+        </ul>
+        <div class="total-section">
+          <span class="total-label">รวมทั้งหมด:</span>
+          <span class="total-price" id="totalPrice">0 บาท</span>
+        </div>
       </div>
 
       <div class="problem-box">
-        <label for="problem">ระบุปัญหาสุขภาพ *</label>
-        <textarea id="problem" placeholder="กรุณากรอกข้อมูล"></textarea>
+        <label for="problem">หมายเหตุเพิ่มเติม</label>
+        <textarea id="problem" placeholder="ระบุข้อมูลเพิ่มเติม เช่น อาการที่พบ, ประวัติการแพ้ยา หรือข้อสังเกตอื่นๆ (ไม่บังคับ)"></textarea>
       </div>
 
       <div class="action-buttons">
@@ -792,10 +1001,6 @@
     <div class="page-content" id="page2">
       <div class="calendar-section">
         <div class="calendar-header">
-          <button class="month-nav" onclick="changeMonth(-1)">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <div class="month-year" id="monthYear">เมษายน 2025</div>
           <button class="month-nav" onclick="changeMonth(1)">
             <i class="fas fa-chevron-right"></i>
           </button>
@@ -827,6 +1032,10 @@
             <span>วันที่เลือก</span>
           </div>
           <div class="legend-item">
+            <div class="legend-dot has-bookings"></div>
+            <span>มีการจองบางช่วง</span>
+          </div>
+          <div class="legend-item">
             <div class="legend-dot disabled"></div>
             <span>ไม่สามารถจองได้</span>
           </div>
@@ -837,6 +1046,8 @@
         <div class="selected-info" id="selectedInfo">
           <strong>วันที่เลือก: <span id="selectedDate"></span></strong>
         </div>
+        
+        <div class="availability-info" id="availabilityInfo"></div>
         
         <h3 class="time-title">เลือกเวลานัดหมาย</h3>
         
@@ -864,8 +1075,14 @@
             <div class="summary-value">ประสิทธิโชค กรรเชียง</div>
           </div>
           
+          <div class="services-summary">
+            <div class="summary-label">รายการตรวจเลือด:</div>
+            <div class="services-list" id="summaryServicesList">
+            </div>
+          </div>
+          
           <div class="summary-item">
-            <div class="summary-label">ปัญหาสุขภาพ:</div>
+            <div class="summary-label">หมายเหตุ:</div>
             <div class="summary-value" id="summaryProblem">-</div>
           </div>
           
@@ -875,18 +1092,13 @@
           </div>
           
           <div class="summary-item">
-            <div class="summary-label">บริการ:</div>
-            <div class="summary-value" id="summaryService">-</div>
-          </div>
-          
-          <div class="summary-item">
             <div class="summary-label">วันที่:</div>
             <div class="summary-value" id="summaryDate">-</div>
           </div>
           
           <div class="price-section">
             <span class="price-label">ค่าบริการที่ต้องชำระ:</span>
-            <span class="price-value" id="summaryPrice">1,250</span>
+            <span class="price-value" id="summaryPrice">0 บาท</span>
           </div>
         </div>
       </div>
@@ -915,9 +1127,9 @@
       </div>
       <h3 class="modal-title">จองคิวสำเร็จ!</h3>
       <p class="modal-message">
-        การนัดหมายของคุณได้รับการยืนยันแล้ว<br>
+        การนัดหมายตรวจเลือดของคุณได้รับการยืนยันแล้ว<br>
         รหัสการจอง: <strong id="modalBookingId">00010</strong><br>
-        กรุณามาตามเวลาที่นัดหมาย
+        กรุณาอดอาหาร 8-12 ชั่วโมงก่อนมาตรวจ
       </p>
       <div class="modal-buttons">
         <button class="btn-modal btn-modal-primary" onclick="goToAppointments()">
@@ -934,8 +1146,9 @@
     // Global variables
     let currentStep = 1;
     let bookingData = {
-      service: '',
-      servicePrice: '',
+      services: [], // Array of selected services
+      servicesPrices: [], // Array of prices
+      totalPrice: 0,
       problem: '',
       selectedDate: null,
       selectedTime: '',
@@ -953,14 +1166,26 @@
       'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
     ];
 
-    const timeSlots = [
-      { start: '09:00', end: '10:00', available: true },
-      { start: '10:00', end: '11:00', available: true },
-      { start: '11:00', end: '12:00', available: false },
-      { start: '13:00', end: '14:00', available: true },
-      { start: '14:00', end: '15:00', available: true },
-      { start: '15:00', end: '16:00', available: false },
-      { start: '16:00', end: '17:00', available: true }
+    // Mock booking data for blood test - different from physiotherapy
+    const existingBookings = {
+      '2025-09-03': ['08:00-09:00', '09:00-10:00', '10:00-11:00'],
+      '2025-09-04': ['08:00-09:00', '11:00-12:00'],
+      '2025-09-05': ['08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00', '13:00-14:00'],
+      '2025-09-06': [],
+      '2025-09-07': ['08:00-09:00', '09:00-10:00', '10:00-11:00'],
+      '2025-09-08': ['08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00']
+    };
+
+    // Blood test time slots (earlier times for fasting tests)
+    const baseTimeSlots = [
+      { start: '08:00', end: '09:00' },
+      { start: '09:00', end: '10:00' },
+      { start: '10:00', end: '11:00' },
+      { start: '11:00', end: '12:00' },
+      { start: '13:00', end: '14:00' },
+      { start: '14:00', end: '15:00' },
+      { start: '15:00', end: '16:00' },
+      { start: '16:00', end: '17:00' }
     ];
 
     // Initialize page
@@ -972,18 +1197,12 @@
     }
 
     // Generate random booking ID
-    let bookingCounter = 0; // ตัวนับ เริ่มจาก 0
-
     function generateBookingId() {
-      bookingCounter++; // เพิ่มทีละ 1
-      const id = bookingCounter;
-
-      bookingData.bookingId = id.toString().padStart(5, '0');
-
-      document.getElementById('bookingId').textContent = bookingData.bookingId;
-      document.getElementById('modalBookingId').textContent = bookingData.bookingId;
+      const id = Math.floor(Math.random() * 90000) + 10000;
+      bookingData.bookingId = id.toString();
+      document.getElementById('bookingId').textContent = id.toString().padStart(5, '0');
+      document.getElementById('modalBookingId').textContent = id.toString().padStart(5, '0');
     }
-
 
     // Update steps display
     function updateStepsDisplay() {
@@ -1008,72 +1227,6 @@
         step3.className = 'step-circle current';
       }
     }
-    // ตัวอย่าง data จาก DB หรือ API
-    const servicesFromDB = [
-      { id: 21, service_name: "การตรวจประเมินและวางแผนการรักษา", price: 1250 },
-      { id: 22, service_name: "การยึดตรึงด้วยผ้าเทป", price: 1250 },
-      { id: 23, service_name: "การพันผ้ายืด", price: 1250 },
-      { id: 24, service_name: "การประคบร้อน", price: 1250 },
-      { id: 25, service_name: "การบำบัดด้วยพาราฟิน", price: 1250 },
-      { id: 26, service_name: "การบำบัดด้วยเครื่องบำบัดแบบอณูไหล ", price: 1250 },
-      { id: 27, service_name: "การประคบเย็น", price: 1250 },
-      { id: 28, service_name: "การบำบัดด้วยเครื่องควบคุมแรงกดดันความเย็น", price: 1250 },
-      { id: 29, service_name: "การกระตุ้นไฟฟ้า", price: 1250 },
-      { id: 30, service_name: "การบำบัดด้วยอัลตราซาวน์", price: 1250 },
-      { id: 31, service_name: "การบำบัดด้วยอัลตราซาวน์ร่วมกับกระตุ้นไฟฟ้า", price: 1250 },
-      { id: 32, service_name: "การบำบัดด้วยชอร์ตเวฟ", price: 1250 },
-      { id: 33, service_name: "การบำบัดด้วยไมโครเวฟ", price: 1250 },
-      { id: 34, service_name: "การบำบัดด้วยเลเซอร์", price: 1250 },
-      { id: 35, service_name: "การบำบัดด้วยรังสีอัลตราไวโอเลต", price: 1250 },
-      { id: 36, service_name: "การดึงคอ/หลังด้วยเครื่อง", price: 1250 },
-      { id: 37, service_name: "การบำบัดด้วยเครื่องกดบีบสำหรับภาวะทางหลอดเลือด/น้ำเหลือง", price: 1250 },
-      { id: 38, service_name: "การบำบัดด้วยสนามแม่เหล็ก", price: 1250 },
-      { id: 39, service_name: "การบำบัดด้วยเครื่องป้อนกลับทางชีวภาพ", price: 1250 },
-      { id: 40, service_name: "การบำบัดด้วยช็อกเวฟ", price: 1250 }
-      
-
-    ];
-
-    function loadServices() {
-      const container = document.getElementById('servicesContainer');
-      container.innerHTML = '';
-
-      servicesFromDB.forEach(service => {
-        const card = document.createElement('label');
-        card.className = 'service-card';
-        card.dataset.id = service.id;
-        card.dataset.service = service.service_name;
-        card.dataset.price = service.price;
-
-        card.innerHTML = `
-          <span class="service-label">
-            <input type="radio" name="service" value="${service.service_name}"> ${service.service_name}
-          </span>
-          <span class="service-price">${service.price} บาท</span>
-        `;
-
-        card.addEventListener('click', () => {
-          document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
-          card.classList.add('selected');
-
-          const radio = card.querySelector('input[type="radio"]');
-          radio.checked = true;
-
-          bookingData.service = service.service_name;
-          bookingData.servicePrice = service.price;
-          bookingData.serviceId = service.id;
-
-          document.getElementById('nextBtn1').disabled = !(bookingData.service && bookingData.problem.trim());
-        });
-
-        container.appendChild(card);
-      });
-    }
-
-    // เรียกตอนโหลดหน้า
-    document.addEventListener('DOMContentLoaded', () => {
-      loadServices();
-    });
 
     // Show specific page
     function showPage(pageNumber) {
@@ -1088,41 +1241,97 @@
       updateStepsDisplay();
     }
 
-    // Service selection setup
+    // Service selection setup with checkboxes
     function setupServiceSelection() {
       const serviceCards = document.querySelectorAll('.service-card');
       const problemTextarea = document.getElementById('problem');
       const nextBtn = document.getElementById('nextBtn1');
 
       serviceCards.forEach(card => {
-        card.addEventListener('click', function() {
-          // Remove previous selection
-          serviceCards.forEach(c => c.classList.remove('selected'));
+        card.addEventListener('click', function(e) {
+          // Prevent double-trigger when clicking directly on checkbox
+          if (e.target.type === 'checkbox') {
+            return;
+          }
           
-          // Add selection to clicked card
-          this.classList.add('selected');
+          // Toggle checkbox
+          const checkbox = this.querySelector('input[type="checkbox"]');
+          checkbox.checked = !checkbox.checked;
           
-          // Update radio button
-          const radio = this.querySelector('input[type="radio"]');
-          radio.checked = true;
-          
-          // Store data
-          bookingData.service = this.dataset.service;
-          bookingData.servicePrice = this.dataset.price;
-          bookingData.serviceId = this.dataset.id;
-          
-          // Update button state
+          // Trigger change event
+          checkbox.dispatchEvent(new Event('change'));
+        });
+
+        // Handle checkbox change
+        const checkbox = card.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener('change', function() {
+          updateSelectedServices();
           updateNextButton1();
         });
       });
 
       problemTextarea.addEventListener('input', function() {
         bookingData.problem = this.value;
-        updateNextButton1();
       });
 
+      function updateSelectedServices() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+        bookingData.services = [];
+        bookingData.servicesPrices = [];
+        bookingData.totalPrice = 0;
+
+        // Reset visual state
+        document.querySelectorAll('.service-card').forEach(card => {
+          card.classList.remove('selected');
+        });
+
+        // Update selected services
+        checkboxes.forEach(checkbox => {
+          const card = checkbox.closest('.service-card');
+          card.classList.add('selected');
+          
+          const serviceName = card.dataset.service;
+          const servicePrice = parseInt(card.dataset.price);
+          
+          bookingData.services.push(serviceName);
+          bookingData.servicesPrices.push(servicePrice);
+          bookingData.totalPrice += servicePrice;
+        });
+
+        // Update summary display
+        updateSelectedServicesDisplay();
+      }
+
+      function updateSelectedServicesDisplay() {
+        const selectedServices = document.getElementById('selectedServices');
+        const selectedList = document.getElementById('selectedList');
+        const totalPrice = document.getElementById('totalPrice');
+
+        if (bookingData.services.length === 0) {
+          selectedServices.classList.remove('show');
+          return;
+        }
+
+        selectedServices.classList.add('show');
+        
+        // Update list
+        selectedList.innerHTML = '';
+        bookingData.services.forEach((service, index) => {
+          const li = document.createElement('li');
+          li.className = 'selected-item';
+          li.innerHTML = `
+            <span class="item-name">${service}</span>
+            <span class="item-price">${bookingData.servicesPrices[index]} บาท</span>
+          `;
+          selectedList.appendChild(li);
+        });
+
+        // Update total
+        totalPrice.textContent = `${bookingData.totalPrice.toLocaleString()} บาท`;
+      }
+
       function updateNextButton1() {
-        if (bookingData.service && bookingData.problem.trim()) {
+        if (bookingData.services.length > 0) {
           nextBtn.disabled = false;
         } else {
           nextBtn.disabled = true;
@@ -1132,8 +1341,7 @@
 
     // Page navigation functions
     function nextToPage2() {
-      if (!bookingData.selectedDate || !bookingData.selectedTime) {
-        alert('กรุณาเลือกวันและเวลานัดหมาย');
+      if (bookingData.services.length > 0) {
         showPage(2);
         generateCalendar();
       }
@@ -1157,7 +1365,19 @@
     }
 
     function goBack() {
-    window.location.href = "/";
+      window.location.href = "/";
+    }
+
+    // Check if date has existing bookings
+    function getBookingsForDate(date) {
+      const dateKey = date.toISOString().split('T')[0];
+      return existingBookings[dateKey] || [];
+    }
+
+    // Check if date has any available slots
+    function hasAvailableSlots(date) {
+      const bookedSlots = getBookingsForDate(date);
+      return bookedSlots.length < baseTimeSlots.length;
     }
 
     // Calendar functions
@@ -1193,12 +1413,14 @@
             const isPastOrToday = cellDate <= currentDate;
             const isBeyondWeek = cellDate > maxBookableDate;
             const isDisabled = isPastOrToday || isBeyondWeek;
+            const hasBookings = !isDisabled && getBookingsForDate(cellDate).length > 0;
             
             let cellClass = 'date-cell';
             if (isToday) cellClass += ' today';
             if (isSelected) cellClass += ' selected';
             if (isDisabled) cellClass += ' disabled';
             else cellClass += ' available';
+            if (hasBookings) cellClass += ' has-bookings';
             
             html += `<td onclick="selectDate(${date})" data-date="${date}">
                         <div class="${cellClass}">${date}</div>
@@ -1235,7 +1457,37 @@
       selectedDateSpan.textContent = formatThaiDate(selectedDate);
       selectedInfo.classList.add('show');
       
+      // Show availability info
+      updateAvailabilityInfo();
+      
       updateNextButton2();
+    }
+
+    function updateAvailabilityInfo() {
+      const availabilityInfo = document.getElementById('availabilityInfo');
+      const bookedSlots = getBookingsForDate(selectedDate);
+      const availableSlots = baseTimeSlots.length - bookedSlots.length;
+      
+      let message = '';
+      if (availableSlots === baseTimeSlots.length) {
+        message = `✅ วันนี้ว่างทุกช่วงเวลา (${availableSlots} ช่วงเวลา)`;
+        availabilityInfo.style.background = '#F0FDF4';
+        availabilityInfo.style.borderColor = '#BBF7D0';
+        availabilityInfo.style.color = '#15803D';
+      } else if (availableSlots > baseTimeSlots.length / 2) {
+        message = `⚠️ วันนี้ยังมีช่วงเวลาว่าง ${availableSlots} จาก ${baseTimeSlots.length} ช่วงเวลา`;
+        availabilityInfo.style.background = '#FFFBEB';
+        availabilityInfo.style.borderColor = '#FED7AA';
+        availabilityInfo.style.color = '#EA580C';
+      } else {
+        message = `🔥 วันนี้เหลือช่วงเวลาว่างเพียง ${availableSlots} จาก ${baseTimeSlots.length} ช่วงเวลา`;
+        availabilityInfo.style.background = '#FEF2F2';
+        availabilityInfo.style.borderColor = '#FECACA';
+        availabilityInfo.style.color = '#DC2626';
+      }
+      
+      availabilityInfo.textContent = message;
+      availabilityInfo.style.display = 'block';
     }
 
     function showTimeSelection() {
@@ -1245,13 +1497,16 @@
 
     function generateTimeSlots() {
       const timeGrid = document.getElementById('timeGrid');
+      const bookedSlots = getBookingsForDate(selectedDate);
       let html = '';
       
-      timeSlots.forEach(slot => {
-        const slotClass = slot.available ? 'time-slot available' : 'time-slot unavailable';
-        const onclick = slot.available ? `onclick="selectTime('${slot.start}-${slot.end}')"` : '';
+      baseTimeSlots.forEach(slot => {
+        const slotTime = `${slot.start}-${slot.end}`;
+        const isBooked = bookedSlots.includes(slotTime);
+        const slotClass = isBooked ? 'time-slot unavailable' : 'time-slot available';
+        const onclick = isBooked ? '' : `onclick="selectTime('${slotTime}')"`;
         
-        html += `<div class="${slotClass}" ${onclick} data-time="${slot.start}-${slot.end}">
+        html += `<div class="${slotClass}" ${onclick} data-time="${slotTime}">
                     ${slot.start} - ${slot.end}
                 </div>`;
       });
@@ -1325,73 +1580,50 @@
 
     // Summary functions
     function updateSummary() {
-      document.getElementById('summaryService').textContent = bookingData.service || '-';
+      // Update services list
+      const summaryServicesList = document.getElementById('summaryServicesList');
+      summaryServicesList.innerHTML = '';
+      
+      bookingData.services.forEach((service, index) => {
+        const serviceItem = document.createElement('div');
+        serviceItem.className = 'service-summary-item';
+        serviceItem.innerHTML = `
+          <span>${service}</span>
+          <span>${bookingData.servicesPrices[index]} บาท</span>
+        `;
+        summaryServicesList.appendChild(serviceItem);
+      });
+
+      // Update other fields
       document.getElementById('summaryProblem').textContent = bookingData.problem || '-';
       document.getElementById('summaryDate').textContent = bookingData.selectedDate ? formatDisplayDate(bookingData.selectedDate) : '-';
       document.getElementById('summaryTime').textContent = bookingData.selectedTime ? bookingData.selectedTime + ' น.' : '-';
-      document.getElementById('summaryPrice').textContent = bookingData.servicePrice || '1,250';
+      document.getElementById('summaryPrice').textContent = `${bookingData.totalPrice.toLocaleString()} บาท`;
     }
 
     // Booking confirmation
     function confirmBooking() {
       const btn = document.querySelector('.btn-primary');
-      if (!bookingData.serviceId || !bookingData.selectedDate || !bookingData.selectedTime) {
-        alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-        return;
-      }
       
       btn.classList.add('loading');
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังดำเนินการ...';
       
-      const userId = 1;
-      const serviceId = bookingData.serviceId;
-      const appointmentData = formatDisplayDateForAPI(bookingData.selectedDate);
-      const timeSlot = bookingData.selectedTime;
-
-      fetch('/booking', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          user_id: userId,
-          service_id: serviceId,
-          appointment_date: appointmentData,
-          time_slot: timeSlot
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        btn.classList.remove('loading');
-        btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
-
-        if (data.success) {
-      
-          document.getElementById('modalBookingId').textContent = String(data.bookingId).padStart(5, '0');
-          
-          document.getElementById('confirmationModal').classList.add('show');
-        } else {
-          alert('เกิดข้อผิดพลาดในการจอง: ' + data.message);
+      // Simulate booking process and add to existing bookings
+      setTimeout(() => {
+        // Add the new booking to our mock data
+        const dateKey = selectedDate.toISOString().split('T')[0];
+        if (!existingBookings[dateKey]) {
+          existingBookings[dateKey] = [];
         }
-      })
-
-      .catch(err => {
+        existingBookings[dateKey].push(selectedTime);
+        
         btn.classList.remove('loading');
         btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
-        alert('เกิดข้อผิดพลาดในการจอง: ' + err.message);
-        console.error(err);
-      })
-      
-      
-
+        
+        document.getElementById('confirmationModal').classList.add('show');
+      }, 2000);
     }
 
-    function formatDisplayDateForAPI(date) {
-      const d = new Date(date);
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      return `${year}-${month}-${day}`;
-    }
     function closeModal() {
       document.getElementById('confirmationModal').classList.remove('show');
     }
@@ -1425,8 +1657,10 @@
         });
       });
     });
-    console.log(bookingData);
-
   </script>
 </body>
-</html>
+</html>month-nav" onclick="changeMonth(-1)">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <div class="month-year" id="monthYear">เมษายน 2025</div>
+          <button class="
