@@ -493,12 +493,12 @@
                 <!-- ที่อยู่ -->
                 <div class="form-group">
                     <label for="address" class="form-label">ที่อยู่ตามทะเบียนบ้าน<span class="required">*</span></label>
-                    <textarea name="address" id="address" class="form-textarea" placeholder="" required></textarea>
+                    <textarea name="permanent_address" id="permanent_address" class="form-textarea" placeholder="" required></textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="currentAddress" class="form-label">ที่อยู่อาศัยปัจจุบัน<span class="required">*</span></label>
-                    <textarea name="currentAddress" id="currentAddress" class="form-textarea" required></textarea>
+                    <textarea name="current_address" id="current_address" class="form-textarea" required></textarea>
                 </div>
 
                 <div class="checkbox-wrapper" style="margin-bottom:20px;">
@@ -517,6 +517,17 @@
                 <div class="form-group">
                     <label for="email" class="form-label">อีเมล<span class="required">*</span></label>
                     <input type="email" name="email" id="email" class="form-input" placeholder="example@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">รหัสผ่าน<span class="required"></span></label>
+                    <input type="password" name="password" id="password" class="form-input" placeholder="กรอกรหัสผ่าน" required>
+                </div>
+
+                <!-- ยืนยันรหัสผ่าน -->
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">ยืนยันรหัสผ่าน<span class="required"></span></label>
+                    <input type="password" name="confirmPassword" id="confirmPassword" class="form-input" placeholder="ยืนยันรหัสผ่าน" required>
                 </div>
 
 
@@ -623,18 +634,19 @@
         }
 
         // Form validation
+        // Form validation
         function validateForm() {
             const form = document.getElementById('registrationForm');
             const requiredFields = form.querySelectorAll('input[required], select[required]');
             let isValid = true;
             let firstError = null;
 
-            // Remove previous error states
+            // ลบ error state เก่า
             document.querySelectorAll('.form-input, .form-select').forEach(field => {
                 field.style.borderColor = '#D1D5DB';
             });
 
-            // Check required fields
+            // ตรวจสอบ required field
             requiredFields.forEach(field => {
                 if (!field.value.trim()) {
                     field.style.borderColor = '#EF4444';
@@ -643,7 +655,7 @@
                 }
             });
 
-            // Check phone number format
+            // ตรวจสอบเบอร์โทร
             const phone = document.getElementById('phone');
             if (phone.value && !/^[0-9]{10}$/.test(phone.value)) {
                 phone.style.borderColor = '#EF4444';
@@ -651,7 +663,17 @@
                 isValid = false;
             }
 
-            // Check privacy consent
+            // ตรวจสอบรหัสผ่านกับยืนยันรหัสผ่าน
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            if (password.value !== confirmPassword.value) {
+                confirmPassword.style.borderColor = '#EF4444';
+                alert('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+                confirmPassword.focus();
+                return false;
+            }
+
+            // ตรวจสอบความยินยอม
             const privacyConsent = document.querySelector('input[name="privacyConsent"]:checked');
             if (!privacyConsent || privacyConsent.value === 'decline') {
                 alert('กรุณายินยอมนโยบายคุ้มครองข้อมูลส่วนบุคคล');
@@ -666,6 +688,8 @@
             return isValid;
         }
 
+
+        
         // Form submission
         function handleSubmit(e) {
             e.preventDefault();
@@ -678,26 +702,36 @@
             btn.classList.add('loading');
             btn.textContent = 'กำลังดำเนินการ...';
 
+
+            const permanent = document.getElementById('permanent_address').value;
+            const current = document.getElementById('current_address').value;
+            const sameAddressChecked = document.getElementById('sameAddress').checked;
+
             fetch('/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                
+
                 body: JSON.stringify({
                     title: document.getElementById('title').value,
                     first_name: document.getElementById('firstName').value,
                     last_name: document.getElementById('lastName').value,
-                    permanent_address: document.getElementById('address').value,
-                    current_address: document.getElementById('currentAddress').value,
-                    use_permanent_as_current: document.getElementById('sameAddress').checked ? 1 : 0,
+                    permanent_address: permanent,
+                    current_address: sameAddressChecked ? permanent : current, // ✅ แก้ตรงนี้
+                    use_permanent_as_current: sameAddressChecked ? 1 : 0,
                     birth_date: document.getElementById('birthDate').value,
                     phone: document.getElementById('phone').value,
                     email: document.getElementById('email').value,
+                    password: document.getElementById('password').value,
                     congenital_disease: document.getElementById('congenital_disease').value,
                     drug_allergy: document.getElementById('drug_allergy').value,
                     newsletter: document.getElementById('newsletter').checked ? 1 : 0,
                     medical_data_consent: document.querySelector('input[name="privacyConsent"]:checked')?.value === 'accept' ? 'ยินยอม' : 'ไม่ยินยอม'
-                })
+})
+
+
 
             })
             .then(res => res.json())
@@ -753,27 +787,28 @@
         });
 
         document.getElementById('sameAddress').addEventListener('change', function() {
-            const address = document.getElementById('address').value;
-            const currentAddress = document.getElementById('currentAddress');
+            const permanent = document.getElementById('permanent_address');
+            const current = document.getElementById('current_address');
             
             if (this.checked) {
-                currentAddress.value = address;
-                currentAddress.setAttribute('readonly', true); // ล็อกไม่ให้แก้ไข
-                currentAddress.style.backgroundColor = "#F3F4F6"; // ทำสีเทาอ่อน
+                current.value = permanent.value;
+                current.setAttribute('readonly', true); 
+                current.style.backgroundColor = "#F3F4F6"; 
             } else {
-                currentAddress.value = "";
-                currentAddress.removeAttribute('readonly');
-                currentAddress.style.backgroundColor = "white";
+                current.value = "";
+                current.removeAttribute('readonly');
+                current.style.backgroundColor = "white";
             }
         });
 
-        // ถ้ามีการแก้ไขที่อยู่หลักแล้วเลือก "ใช้ที่อยู่ตามบัตร" อยู่ ให้ sync อัตโนมัติ
-        document.getElementById('address').addEventListener('input', function() {
+        // sync อัตโนมัติถ้าที่อยู่หลักเปลี่ยน
+        document.getElementById('permanent_address').addEventListener('input', function() {
             const sameAddress = document.getElementById('sameAddress');
             if (sameAddress.checked) {
-                document.getElementById('currentAddress').value = this.value;
+                document.getElementById('current_address').value = this.value;
             }
         });
+
 
         // Prevent form submission on enter key in input fields
         document.addEventListener('keydown', function(e) {

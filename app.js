@@ -3,6 +3,7 @@ const path = require('path');
 const mysql = require('mysql2/promise');
 const app = express();
 const PORT = 3000;
+const bcrypt = require('bcrypt');
 
 
 app.use(express.json());
@@ -34,6 +35,8 @@ async function testConnection() {
 }
 testConnection();
 
+
+
 app.post('/register', async (req, res) => {
   console.log('📌 Received Data:', req.body);
 
@@ -41,22 +44,35 @@ app.post('/register', async (req, res) => {
     title, first_name, last_name, 
     permanent_address, current_address, use_permanent_as_current,
     birth_date, phone, congenital_disease, drug_allergy,
-    newsletter, medical_data_consent
+    newsletter, medical_data_consent, email, password
   } = req.body;
 
   const safe = (val) => (val === undefined ? null : val);
 
-  if (!title || !first_name || !last_name || !permanent_address || !birth_date || !phone) {
+  if (!title || !first_name || !last_name || !permanent_address || !birth_date || !phone || !email || !password) {
     return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
   }
 
   try {
+    // ✅ Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // ✅ บันทึก users ก่อน
+    const [userResult] = await pool.execute(
+      `INSERT INTO users (email, password) VALUES (?, ?)`,
+      [safe(email), hashedPassword]
+    );
+
+    const userId = userResult.insertId;
+
+    // ✅ บันทึก personal_info โดยอ้างอิง user_id
     await pool.execute(
       `INSERT INTO personal_info 
-       (title, first_name, last_name, permanent_address, current_address, use_permanent_as_current,
-        birth_date, phone, congenital_disease, drug_allergy, newsletter, medical_data_consent) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (user_id, title, first_name, last_name, permanent_address, current_address, use_permanent_as_current,
+        birth_date, phone, congenital_disease, drug_allergy, newsletter, medical_data_consent, email , password) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
+        userId,
         safe(title),
         safe(first_name),
         safe(last_name),
@@ -68,27 +84,35 @@ app.post('/register', async (req, res) => {
         safe(congenital_disease),
         safe(drug_allergy),
         safe(newsletter),
-        safe(medical_data_consent)
+        safe(medical_data_consent),
+        email,
+        hashedPassword
       ]
     );
 
     res.json({ success: true, message: 'ลงทะเบียนสำเร็จ!' });
+
   } catch (err) {
     console.error('❌ Database Insert Error:', err.message);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
   }
 });
 
+
 app.get('/ListAdmin', (req, res) => {
   res.render('ListAdmin'); 
+});
+
+app.get('/home', (req, res) => {
+  res.render('home'); 
 });
 
 app.get('/BookingCard', (req, res) => {
   res.render('BookingCard'); 
 });
 
-app.get('/Bookingphy', (req, res) => {
-  res.render('Bookingphy'); // render date.ejs
+app.get('/bookingphy', (req, res) => {
+  res.render('bookingphy'); // render date.ejs
 });
 
 app.get('/ListAdmin', (req, res) => {
@@ -111,7 +135,11 @@ app.get('/Staffblood', (req, res) => {
   res.render('Staffblood'); // render date.ejs
 });
 
-app.post('/booking', async (req, res) => {
+app.get('/register', (req, res) => {
+  res.render('register'); // render date.ejs
+});
+
+app.post('/bookingphy', async (req, res) => {
   const { user_id, service_id, appointment_date, time_slot } = req.body;
 
   if (!user_id || !service_id || !appointment_date || !time_slot) {
@@ -153,6 +181,9 @@ app.post('/booking', async (req, res) => {
   }
 });
 
+app.get('/', (req, res) => {
+  res.redirect('/home'); // หรือ res.render('home'); ถ้ามีไฟล์ home.ejs
+});
 
 
 //  Start Server

@@ -1459,60 +1459,52 @@
       
       btn.classList.add('loading');
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังดำเนินการ...';
-      
-<<<<<<< HEAD:views/Bookingphy.ejs
+
       // Simulate booking process and add to existing bookings
       setTimeout(() => {
-        // Add the new booking to our mock data
         const dateKey = selectedDate.toISOString().split('T')[0];
         if (!existingBookings[dateKey]) {
           existingBookings[dateKey] = [];
         }
         existingBookings[dateKey].push(selectedTime);
-        
-=======
-      const userId = 1;
-      const serviceId = bookingData.serviceId;
-      const appointmentData = formatDisplayDateForAPI(bookingData.selectedDate);
-      const timeSlot = bookingData.selectedTime;
 
-      fetch('/booking', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          user_id: userId,
-          service_id: serviceId,
-          appointment_date: appointmentData,
-          time_slot: timeSlot
+        const userId = 1;
+        const serviceId = bookingData.serviceId;
+        const appointmentData = formatDisplayDateForAPI(bookingData.selectedDate);
+        const timeSlot = bookingData.selectedTime;
+
+        fetch('/bookingphy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            user_id: userId,
+            service_id: serviceId,
+            appointment_date: appointmentData,
+            time_slot: timeSlot
+          })
         })
-      })
-      .then(res => res.json())
-      .then(data => {
->>>>>>> origin/main:views/Booking.ejs
-        btn.classList.remove('loading');
-        btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
+        .then(res => res.json())
+        .then(data => {
+          btn.classList.remove('loading');
+          btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
 
-        if (data.success) {
-      
-          document.getElementById('modalBookingId').textContent = String(data.bookingId).padStart(5, '0');
-          
-          document.getElementById('confirmationModal').classList.add('show');
-        } else {
-          alert('เกิดข้อผิดพลาดในการจอง: ' + data.message);
-        }
-      })
+          if (data.success) {
+            document.getElementById('modalBookingId').textContent = String(data.bookingId).padStart(5, '0');
+            document.getElementById('confirmationModal').classList.add('show');
+          } else {
+            alert('เกิดข้อผิดพลาดในการจอง: ' + data.message);
+          }
+        })
+        .catch(err => {
+          btn.classList.remove('loading');
+          btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
+          alert('เกิดข้อผิดพลาดในการจอง: ' + err.message);
+          console.error(err);
+        });
 
-      .catch(err => {
-        btn.classList.remove('loading');
-        btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
-        alert('เกิดข้อผิดพลาดในการจอง: ' + err.message);
-        console.error(err);
-      })
-      
-      
+      }, 1000); // <--- ต้องปิด setTimeout ตรงนี้
+    } // <--- ต้องปิดฟังก์ชัน confirmBooking ตรงนี้
 
-    }
 
     function formatDisplayDateForAPI(date) {
       const d = new Date(date);
