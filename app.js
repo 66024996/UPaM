@@ -1,15 +1,19 @@
+// app.js
 const express = require('express');
 const path = require('path');
-const mysql = require('mysql2/promise');
 const app = express();
 const PORT = 3000;
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const mysql = require('mysql2/promise');
 
+// ตั้งค่า view engine เป็น ejs
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// middleware สำหรับอ่านไฟล์ static (css, js, img)
 app.use(express.static(path.join(__dirname, 'public')));
+
 
 
 app.set('view engine', 'ejs');
@@ -127,29 +131,34 @@ app.get('/BookingCard', (req, res) => {
   res.render('BookingCard'); 
 });
 
+
 app.get('/bookingphy', (req, res) => {
   res.render('bookingphy'); // render date.ejs
+
 });
 
 app.get('/ListAdmin', (req, res) => {
-  res.render('ListAdmin'); // render date.ejs
+  res.render('ListAdmin');
 });
 
 app.get('/Bookingblood', (req, res) => {
-  res.render('Bookingblood'); // render date.ejs
+  res.render('Bookingblood');
 });
+
 
 app.get('/login', (req, res) => {
   res.render('login'); // render date.ejs
 });
 
+
 app.get('/Staffphy', (req, res) => {
-  res.render('Staffphy'); // render date.ejs
+  res.render('Staffphy');
 });
 
 app.get('/Staffblood', (req, res) => {
-  res.render('Staffblood'); // render date.ejs
+  res.render('Staffblood');
 });
+
 
 app.get('/register', (req, res) => {
   res.render('register'); // render date.ejs

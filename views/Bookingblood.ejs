@@ -99,6 +99,80 @@
       border: 2px solid white;
     }
 
+        /* Profile Dropdown Styles */
+        .profile-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: white;
+            min-width: 180px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            z-index: 1000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            margin-top: 8px;
+        }
+
+        .dropdown-content.show {
+            display: block;
+            animation: dropdownFadeIn 0.3s ease-out;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item {
+            color: #374151;
+            padding: 12px 20px;
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f9fafb;
+            color: #1f2937;
+        }
+
+        .dropdown-item i {
+            margin-right: 10px;
+            width: 16px;
+            color: #6b7280;
+        }
+
+        .dropdown-item.logout {
+            border-top: 1px solid #e5e7eb;
+            color: #dc2626;
+        }
+
+        .dropdown-item.logout:hover {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+
+        .dropdown-item.logout i {
+            color: #dc2626;
+        }
     /* Container */
     .container {
       max-width: 800px;
@@ -885,9 +959,17 @@
         <button class="icon-btn notification-btn" title="การแจ้งเตือน">
           <i class="fas fa-bell"></i>
         </button>
-        <button class="icon-btn" title="บัญชีผู้ใช้">
-          <i class="fas fa-user"></i>
-        </button>
+        <div class="profile-dropdown">
+                    <button class="icon-btn" id="profileBtn" title="บัญชีผู้ใช้">
+                        <i class="fas fa-user"></i>
+                    </button>
+                    <div class="dropdown-content" id="profileDropdown">
+                        <button class="dropdown-item logout" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            ออกจากระบบ
+                        </button>
+                    </div>
+                </div>
       </div>
     </div>
   </div>
@@ -1150,6 +1232,82 @@
   </div>
 
   <script>
+    // Profile dropdown functionality
+        const profileBtn = document.getElementById('profileBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('show');
+        });
+
+        // ปิด dropdown เมื่อคลิกข้างนอก
+        window.addEventListener('click', function() {
+            if (profileDropdown.classList.contains('show')) {
+                profileDropdown.classList.remove('show');
+            }
+        });
+
+        // ป้องกันการปิด dropdown เมื่อคลิกข้างใน dropdown
+        profileDropdown.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        // ฟังก์ชัน logout
+        function logout() {
+            if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+                // เพิ่ม loading effect
+                const logoutBtn = event.target;
+                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
+                
+                setTimeout(() => {
+                    alert('ออกจากระบบเรียบร้อยแล้ว');
+                     window.location.href = "/Login";
+                }, 1500);
+            }
+        }
+
+        function bookService(service) {
+            const card = event.currentTarget;
+            card.style.transform = 'scale(0.95)';
+
+            if (service === 'physiotherapy') {
+                window.location.href = "/Bookingphy";
+            } else if (service === 'blood-test') {
+                window.location.href = "/Bookingblood";
+            }
+        }
+
+        setTimeout(() => {
+            card.style.transform = '';
+            
+            // แสดงข้อความยืนยัน
+            if (serviceType === 'physiotherapy') {
+                alert('กำลังจองคิวกายภาพบำบัด กรุณารอสักครู่...');
+                // เปลี่ยนเป็นหน้าจองคิวกายภาพบำบัด
+                setTimeout(() => {
+                    alert('เปลี่ยนไปหน้าจองคิวกายภาพบำบัด');
+                }, 1000);
+            } else if (serviceType === 'blood-test') {
+                alert('กำลังจองคิวตรวจเลือด กรุณารอสักครู่...');
+                // เปลี่ยนเป็นหน้าจองคิวตรวจเลือด
+                setTimeout(() => {
+                    alert('เปลี่ยนไปหน้าจองคิวตรวจเลือด');
+                }, 1000);
+            }
+        }, 150);
+
+        // Header button interactions (ยกเว้น profile button ที่มี dropdown)
+        document.querySelectorAll('.icon-btn:not(#profileBtn)').forEach(btn => {
+            btn.addEventListener('click', function() {
+                console.log('Clicked:', this.title || 'Header button');
+                // สร้าง ripple effect
+                this.style.transform = 'scale(0.9)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            });
+        });
     // Global variables
     let currentStep = 1;
     let bookingData = {
