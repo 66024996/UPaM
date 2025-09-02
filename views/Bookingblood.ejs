@@ -1001,10 +1001,17 @@
     <div class="page-content" id="page2">
       <div class="calendar-section">
         <div class="calendar-header">
+          <button class="month-nav" onclick="changeMonth(-1)">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+
+          <div class="month-year" id="monthYear">เมษายน 2025</div>
+
           <button class="month-nav" onclick="changeMonth(1)">
             <i class="fas fa-chevron-right"></i>
           </button>
         </div>
+
 
         <table class="calendar">
           <thead>
@@ -1602,27 +1609,40 @@
     }
 
     // Booking confirmation
-    function confirmBooking() {
+    async function confirmBooking() {
       const btn = document.querySelector('.btn-primary');
-      
       btn.classList.add('loading');
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังดำเนินการ...';
-      
-      // Simulate booking process and add to existing bookings
-      setTimeout(() => {
-        // Add the new booking to our mock data
-        const dateKey = selectedDate.toISOString().split('T')[0];
-        if (!existingBookings[dateKey]) {
-          existingBookings[dateKey] = [];
+
+      try {
+        const response = await fetch('/bookingblood', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            services: bookingData.services,
+            totalPrice: bookingData.totalPrice,
+            appointment_date: bookingData.selectedDate.toISOString().split('T')[0],
+            time_slot: bookingData.selectedTime,
+            problem: bookingData.problem
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById('modalBookingId').textContent = data.booking_code;
+          document.getElementById('confirmationModal').classList.add('show');
+        } else {
+          alert(data.message || 'การจองล้มเหลว');
         }
-        existingBookings[dateKey].push(selectedTime);
-        
+      } catch (err) {
+        console.error('❌ Booking Error:', err);
+        alert('เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์');
+      } finally {
         btn.classList.remove('loading');
         btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
-        
-        document.getElementById('confirmationModal').classList.add('show');
-      }, 2000);
+      }
     }
+
 
     function closeModal() {
       document.getElementById('confirmationModal').classList.remove('show');
@@ -1659,8 +1679,4 @@
     });
   </script>
 </body>
-</html>month-nav" onclick="changeMonth(-1)">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <div class="month-year" id="monthYear">เมษายน 2025</div>
-          <button class="
+</html>

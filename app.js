@@ -4,6 +4,7 @@ const mysql = require('mysql2/promise');
 const app = express();
 const PORT = 3000;
 const bcrypt = require('bcrypt');
+const session = require('express-session');
 
 
 app.use(express.json());
@@ -35,7 +36,22 @@ async function testConnection() {
 }
 testConnection();
 
+require('dotenv').config();
 
+
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 1000 * 60 * 60 * 24 } // 1 วัน
+}));
+
+function isLoggedIn(req, res, next) {
+  if (req.session.userId) {
+    return next(); // ผ่าน ตรวจสอบแล้ว
+  }
+  res.redirect('/login'); // ไม่ล็อกอิน -> ไปหน้า login
+}
 
 app.post('/register', async (req, res) => {
   console.log('📌 Received Data:', req.body);
@@ -123,8 +139,8 @@ app.get('/Bookingblood', (req, res) => {
   res.render('Bookingblood'); // render date.ejs
 });
 
-app.get('/Login', (req, res) => {
-  res.render('Login'); // render date.ejs
+app.get('/login', (req, res) => {
+  res.render('login'); // render date.ejs
 });
 
 app.get('/Staffphy', (req, res) => {
@@ -140,14 +156,21 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/bookingphy', async (req, res) => {
-  const { user_id, service_id, appointment_date, time_slot } = req.body;
+  const { service_id, appointment_date, time_slot } = req.body;
 
-  if (!user_id || !service_id || !appointment_date || !time_slot) {
+  if (!req.session || !req.session.userId || !req.session.email) {
+    return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบก่อนทำการจอง' });
+  }
+
+  const user_id = req.session.userId;
+  const user_email = req.session.email;
+
+  if (!service_id || !appointment_date || !time_slot) {
     return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
   }
 
   try {
-    
+    // ตรวจสอบเวลาที่ถูกจองแล้ว
     const [existing] = await pool.execute(
       `SELECT id FROM appointments 
        WHERE appointment_date = ? AND time_slot = ? AND status = 'จองแล้ว'`,
@@ -158,31 +181,126 @@ app.post('/bookingphy', async (req, res) => {
       return res.status(400).json({ success: false, message: 'เวลานี้ถูกจองแล้ว' });
     }
 
-    
+    // ทำการจอง
     const [result] = await pool.execute(
       `INSERT INTO appointments 
-       (user_id, service_id, appointment_date, time_slot, status, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, 'จองแล้ว', NOW(), NOW())`,
-      [user_id, service_id, appointment_date, time_slot]
+       (user_id, email, service_id, appointment_date, time_slot, status, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, 'จองแล้ว', NOW(), NOW())`,
+      [user_id, user_email, service_id, appointment_date, time_slot]
     );
 
-    
     const bookingId = result.insertId.toString().padStart(5, '0');
 
     res.json({ 
       success: true, 
       message: 'จองคิวสำเร็จ!', 
       appointment_id: result.insertId, 
+      booking_code: bookingId 
     });
 
   } catch (err) {
-    console.error('Booking Error:', err);
+    console.error('❌ Booking Error:', err);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
   }
 });
 
+app.post('/bookingblood', async (req, res) => {
+  if (!req.session || !req.session.userId || !req.session.email) {
+    return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบก่อนทำการจอง' });
+  }
+
+  const { services, totalPrice, appointment_date, time_slot, problem } = req.body;
+  const user_id = req.session.userId;
+  const user_email = req.session.email;
+
+  if (!services || !appointment_date || !time_slot) {
+    return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+  }
+
+  try {
+    // ตรวจสอบเวลาที่ถูกจองแล้ว
+    const [existing] = await pool.execute(
+      `SELECT id FROM blood_appointments 
+       WHERE appointment_date = ? AND time_slot = ? AND status = 'จองแล้ว'`,
+      [appointment_date, time_slot]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ success: false, message: 'เวลานี้ถูกจองแล้ว' });
+    }
+
+    // บันทึกการจอง
+    const [result] = await pool.execute(
+      `INSERT INTO blood_appointments 
+       (user_id, email, services, total_price, appointment_date, time_slot, problem, status, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'จองแล้ว', NOW(), NOW())`,
+      [user_id, user_email, JSON.stringify(services), totalPrice, appointment_date, time_slot, problem]
+    );
+
+    const bookingId = result.insertId.toString().padStart(5, '0');
+
+    res.json({
+      success: true,
+      message: 'จองคิวสำเร็จ!',
+      appointment_id: result.insertId,
+      booking_code: bookingId
+    });
+  } catch (err) {
+    console.error('❌ Booking Error:', err);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+  }
+});
+
+
 app.get('/', (req, res) => {
-  res.redirect('/home'); // หรือ res.render('home'); ถ้ามีไฟล์ home.ejs
+  res.redirect('/home'); 
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+  }
+
+  try {
+    // ดึงข้อมูลผู้ใช้จาก DB
+    const [rows] = await pool.execute(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({ success: false, message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
+    }
+
+    const user = rows[0];
+
+    // ตรวจสอบรหัสผ่าน
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(400).json({ success: false, message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
+    }
+
+    // สร้าง session
+    req.session.userId = user.id;
+    req.session.email = user.email;
+
+    res.redirect('/home');
+  } catch (err) {
+    console.error('Login Error:', err);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+  }
+});
+
+app.get('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      return res.status(500).json({ success: false, message: 'ออกจากระบบไม่สำเร็จ' });
+    }
+    res.clearCookie('connect.sid'); // ลบ cookie session
+    res.redirect('/login'); // กลับไปหน้า login
+  });
 });
 
 
