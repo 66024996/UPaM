@@ -867,16 +867,18 @@
           <i class="fas fa-bell"></i>
         </button>
         <div class="profile-dropdown">
-                    <button class="icon-btn" id="profileBtn" title="บัญชีผู้ใช้">
+                  <a href="/Login">
+                    <button class="icon-btn" title="บัญชีผู้ใช้">
                         <i class="fas fa-user"></i>
                     </button>
+                  </a>
                     <div class="dropdown-content" id="profileDropdown">
                         <button class="dropdown-item logout" onclick="logout()">
                             <i class="fas fa-sign-out-alt"></i>
                             ออกจากระบบ
                         </button>
                     </div>
-                </div>
+          </div>
       </div>
     </div>
   </div>
@@ -1067,82 +1069,6 @@
   </div>
 
   <script>
-    // Profile dropdown functionality
-        const profileBtn = document.getElementById('profileBtn');
-        const profileDropdown = document.getElementById('profileDropdown');
-
-        profileBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            profileDropdown.classList.toggle('show');
-        });
-
-        // ปิด dropdown เมื่อคลิกข้างนอก
-        window.addEventListener('click', function() {
-            if (profileDropdown.classList.contains('show')) {
-                profileDropdown.classList.remove('show');
-            }
-        });
-
-        // ป้องกันการปิด dropdown เมื่อคลิกข้างใน dropdown
-        profileDropdown.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-
-        // ฟังก์ชัน logout
-        function logout() {
-            if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
-                // เพิ่ม loading effect
-                const logoutBtn = event.target;
-                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
-                
-                setTimeout(() => {
-                    alert('ออกจากระบบเรียบร้อยแล้ว');
-                     window.location.href = "/Login";
-                }, 1500);
-            }
-        }
-
-        function bookService(service) {
-            const card = event.currentTarget;
-            card.style.transform = 'scale(0.95)';
-
-            if (service === 'physiotherapy') {
-                window.location.href = "/Bookingphy";
-            } else if (service === 'blood-test') {
-                window.location.href = "/Bookingblood";
-            }
-        }
-
-        setTimeout(() => {
-            card.style.transform = '';
-            
-            // แสดงข้อความยืนยัน
-            if (serviceType === 'physiotherapy') {
-                alert('กำลังจองคิวกายภาพบำบัด กรุณารอสักครู่...');
-                // เปลี่ยนเป็นหน้าจองคิวกายภาพบำบัด
-                setTimeout(() => {
-                    alert('เปลี่ยนไปหน้าจองคิวกายภาพบำบัด');
-                }, 1000);
-            } else if (serviceType === 'blood-test') {
-                alert('กำลังจองคิวตรวจเลือด กรุณารอสักครู่...');
-                // เปลี่ยนเป็นหน้าจองคิวตรวจเลือด
-                setTimeout(() => {
-                    alert('เปลี่ยนไปหน้าจองคิวตรวจเลือด');
-                }, 1000);
-            }
-        }, 150);
-
-        // Header button interactions (ยกเว้น profile button ที่มี dropdown)
-        document.querySelectorAll('.icon-btn:not(#profileBtn)').forEach(btn => {
-            btn.addEventListener('click', function() {
-                console.log('Clicked:', this.title || 'Header button');
-                // สร้าง ripple effect
-                this.style.transform = 'scale(0.9)';
-                setTimeout(() => {
-                    this.style.transform = '';
-                }, 150);
-            });
-        });
     // Global variables
     let currentStep = 1;
     let bookingData = {
@@ -1165,7 +1091,6 @@
       'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
     ];
 
-    // Mock booking data for different dates - สร้างข้อมูลการจองที่แตกต่างกันในแต่ละวัน
     const existingBookings = {
       // วันที่ 3 - มีการจองหลายช่วงเวลา
       '2025-09-03': ['09:00-10:00', '11:00-12:00', '15:00-16:00'],
@@ -1191,53 +1116,7 @@
       { start: '15:00', end: '16:00' },
       { start: '16:00', end: '17:00' }
     ];
-
-    // Initialize page
-    function initializePage() {
-      updateStepsDisplay();
-      setupServiceSelection();
-      generateBookingId();
-      generateCalendar();
-    }
-
-    // Generate random booking ID
-    let bookingCounter = 0; // ตัวนับ เริ่มจาก 0
-
-    function generateBookingId() {
-      bookingCounter++; // เพิ่มทีละ 1
-      const id = bookingCounter;
-
-      bookingData.bookingId = id.toString().padStart(5, '0');
-
-      document.getElementById('bookingId').textContent = bookingData.bookingId;
-      document.getElementById('modalBookingId').textContent = bookingData.bookingId;
-    }
-
-
-    // Update steps display
-    function updateStepsDisplay() {
-      const step1 = document.getElementById('step1');
-      const step2 = document.getElementById('step2');
-      const step3 = document.getElementById('step3');
-
-      // Reset all steps
-      [step1, step2, step3].forEach(step => {
-        step.className = 'step-circle inactive';
-      });
-
-      // Set current step
-      if (currentStep === 1) {
-        step1.className = 'step-circle current';
-      } else if (currentStep === 2) {
-        step1.className = 'step-circle completed';
-        step2.className = 'step-circle current';
-      } else if (currentStep === 3) {
-        step1.className = 'step-circle completed';
-        step2.className = 'step-circle completed';
-        step3.className = 'step-circle current';
-      }
-    }
-    // ตัวอย่าง data จาก DB หรือ API
+    
     const servicesFromDB = [
       { id: 21, service_name: "การตรวจประเมินและวางแผนการรักษา", price: 1250 },
       { id: 22, service_name: "การยึดตรึงด้วยผ้าเทป", price: 1250 },
@@ -1299,10 +1178,80 @@
       });
     }
 
-    // เรียกตอนโหลดหน้า
-    document.addEventListener('DOMContentLoaded', () => {
-      loadServices();
-    });
+    function loadServiceFromStorage() {
+      const serviceType = localStorage.getItem('serviceType');
+
+      if (serviceType === 'physiotherapy') {
+        currentAppointment.service = 'กายภาพบำบัด';
+        currentAppointment.problem = 'กล้ามเนื้อขาอ่อนแรง';
+        currentAppointment.price = '1,250';
+      } else if (serviceType === 'blood-test') {
+        currentAppointment.service = 'ตรวจเลือดทั่วไป';
+        currentAppointment.problem = 'ตรวจค่าความสมบูรณ์ของเลือด';
+        currentAppointment.price = '850';
+      } else {
+        // default
+        currentAppointment.service = 'กายภาพบำบัด';
+        currentAppointment.problem = 'กล้ามเนื้อขาอ่อนแรง';
+        currentAppointment.price = '1,250';
+      }
+    }
+    // Initialize page
+    // Initialize page
+    function initializePage() {
+      updateStepsDisplay();
+      loadServices();        // ✅ โหลดบริการขึ้นมาบนหน้า
+      setupServiceSelection();
+      generateBookingId();
+      generateCalendar();
+      loadServiceFromStorage();   // ✅ โหลดข้อมูลจาก LocalStorage
+      updateAppointmentDisplay();
+      setupModalEvents();
+    }
+
+
+    // Generate random booking ID
+    function generateBookingId() {
+      const id = Math.floor(Math.random() * 90000) + 10000;
+      bookingData.bookingId = id.toString();
+      document.getElementById('bookingId').textContent = id.toString().padStart(5, '0');
+      document.getElementById('modalBookingId').textContent = id.toString().padStart(5, '0');
+    }
+
+    function updateAppointmentDisplay() {
+      document.getElementById('bookingId').textContent = currentAppointment.id;
+      document.getElementById('serviceName').textContent = currentAppointment.service;
+      document.getElementById('healthProblem').textContent = currentAppointment.problem;
+      document.getElementById('appointmentDate').textContent = currentAppointment.date;
+      document.getElementById('appointmentTime').textContent = currentAppointment.time;
+      document.getElementById('servicePrice').textContent = currentAppointment.price + ' บาท';
+      
+      updateStatusBadge(currentAppointment.status);
+    }
+
+    // Update steps display
+    function updateStepsDisplay() {
+      const step1 = document.getElementById('step1');
+      const step2 = document.getElementById('step2');
+      const step3 = document.getElementById('step3');
+
+      // Reset all steps
+      [step1, step2, step3].forEach(step => {
+        step.className = 'step-circle inactive';
+      });
+
+      // Set current step
+      if (currentStep === 1) {
+        step1.className = 'step-circle current';
+      } else if (currentStep === 2) {
+        step1.className = 'step-circle completed';
+        step2.className = 'step-circle current';
+      } else if (currentStep === 3) {
+        step1.className = 'step-circle completed';
+        step2.className = 'step-circle completed';
+        step3.className = 'step-circle current';
+      }
+    }
 
     // Show specific page
     function showPage(pageNumber) {
@@ -1338,7 +1287,6 @@
           // Store data
           bookingData.service = this.dataset.service;
           bookingData.servicePrice = this.dataset.price;
-          bookingData.serviceId = this.dataset.id;
           
           // Update button state
           updateNextButton1();
@@ -1361,8 +1309,7 @@
 
     // Page navigation functions
     function nextToPage2() {
-      if (!bookingData.selectedDate || !bookingData.selectedTime) {
-        alert('กรุณาเลือกวันและเวลานัดหมาย');
+      if (bookingData.service && bookingData.problem.trim()) {
         showPage(2);
         generateCalendar();
       }
@@ -1386,19 +1333,7 @@
     }
 
     function goBack() {
-      window.location.href = "/";
-    }
-
-    // Check if date has existing bookings
-    function getBookingsForDate(date) {
-      const dateKey = date.toISOString().split('T')[0];
-      return existingBookings[dateKey] || [];
-    }
-
-    // Check if date has any available slots
-    function hasAvailableSlots(date) {
-      const bookedSlots = getBookingsForDate(date);
-      return bookedSlots.length < baseTimeSlots.length;
+    window.location.href = "/";
     }
 
     // Calendar functions
@@ -1434,14 +1369,12 @@
             const isPastOrToday = cellDate <= currentDate;
             const isBeyondWeek = cellDate > maxBookableDate;
             const isDisabled = isPastOrToday || isBeyondWeek;
-            const hasBookings = !isDisabled && getBookingsForDate(cellDate).length > 0;
             
             let cellClass = 'date-cell';
             if (isToday) cellClass += ' today';
             if (isSelected) cellClass += ' selected';
             if (isDisabled) cellClass += ' disabled';
             else cellClass += ' available';
-            if (hasBookings) cellClass += ' has-bookings';
             
             html += `<td onclick="selectDate(${date})" data-date="${date}">
                         <div class="${cellClass}">${date}</div>
@@ -1478,37 +1411,7 @@
       selectedDateSpan.textContent = formatThaiDate(selectedDate);
       selectedInfo.classList.add('show');
       
-      // Show availability info
-      updateAvailabilityInfo();
-      
       updateNextButton2();
-    }
-
-    function updateAvailabilityInfo() {
-      const availabilityInfo = document.getElementById('availabilityInfo');
-      const bookedSlots = getBookingsForDate(selectedDate);
-      const availableSlots = baseTimeSlots.length - bookedSlots.length;
-      
-      let message = '';
-      if (availableSlots === baseTimeSlots.length) {
-        message = `✅ วันนี้ว่างทุกช่วงเวลา (${availableSlots} ช่วงเวลา)`;
-        availabilityInfo.style.background = '#F0FDF4';
-        availabilityInfo.style.borderColor = '#BBF7D0';
-        availabilityInfo.style.color = '#15803D';
-      } else if (availableSlots > baseTimeSlots.length / 2) {
-        message = `⚠️ วันนี้ยังมีช่วงเวลาว่าง ${availableSlots} จาก ${baseTimeSlots.length} ช่วงเวลา`;
-        availabilityInfo.style.background = '#FFFBEB';
-        availabilityInfo.style.borderColor = '#FED7AA';
-        availabilityInfo.style.color = '#EA580C';
-      } else {
-        message = `🔥 วันนี้เหลือช่วงเวลาว่างเพียง ${availableSlots} จาก ${baseTimeSlots.length} ช่วงเวลา`;
-        availabilityInfo.style.background = '#FEF2F2';
-        availabilityInfo.style.borderColor = '#FECACA';
-        availabilityInfo.style.color = '#DC2626';
-      }
-      
-      availabilityInfo.textContent = message;
-      availabilityInfo.style.display = 'block';
     }
 
     function showTimeSelection() {
@@ -1518,22 +1421,33 @@
 
     function generateTimeSlots() {
       const timeGrid = document.getElementById('timeGrid');
-      const bookedSlots = getBookingsForDate(selectedDate);
       let html = '';
-      
-      baseTimeSlots.forEach(slot => {
-        const slotTime = `${slot.start}-${slot.end}`;
-        const isBooked = bookedSlots.includes(slotTime);
-        const slotClass = isBooked ? 'time-slot unavailable' : 'time-slot available';
-        const onclick = isBooked ? '' : `onclick="selectTime('${slotTime}')"`;
-        
-        html += `<div class="${slotClass}" ${onclick} data-time="${slotTime}">
+
+      // แปลง baseTimeSlots ให้เช็กว่า slot ไหนถูกจองแล้ว
+      const dateKey = selectedDate.toISOString().split('T')[0];
+      const bookedSlots = existingBookings[dateKey] || [];
+
+      const timeSlots = baseTimeSlots.map(slot => {
+        const timeRange = `${slot.start}-${slot.end}`;
+        return {
+          ...slot,
+          available: !bookedSlots.includes(timeRange)
+        };
+      });
+
+      timeSlots.forEach(slot => {
+        const timeRange = `${slot.start}-${slot.end}`;
+        const slotClass = slot.available ? 'time-slot available' : 'time-slot unavailable';
+        const onclick = slot.available ? `onclick="selectTime('${timeRange}')"` : '';
+
+        html += `<div class="${slotClass}" ${onclick} data-time="${timeRange}">
                     ${slot.start} - ${slot.end}
                 </div>`;
       });
-      
+
       timeGrid.innerHTML = html;
     }
+
 
     function selectTime(timeRange) {
       document.querySelectorAll('.time-slot').forEach(slot => {
@@ -1611,69 +1525,41 @@
     // Booking confirmation
     function confirmBooking() {
       const btn = document.querySelector('.btn-primary');
-      if (!bookingData.serviceId || !bookingData.selectedDate || !bookingData.selectedTime) {
-        alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-        return;
-      }
-      
       btn.classList.add('loading');
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังดำเนินการ...';
 
-      // Simulate booking process and add to existing bookings
-      setTimeout(() => {
-        const dateKey = selectedDate.toISOString().split('T')[0];
-        if (!existingBookings[dateKey]) {
-          existingBookings[dateKey] = [];
+      fetch('/bookingphy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          service_id: bookingData.serviceId,
+          appointment_date: bookingData.selectedDate.toISOString().split('T')[0], // YYYY-MM-DD
+          time_slot: bookingData.selectedTime,
+          problem: bookingData.problem
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
+
+        if (data.success) {
+          // อัปเดต modal ด้วย booking id ที่ backend ส่งกลับมา
+          document.getElementById('modalBookingId').textContent = String(data.appointment_id).padStart(5, '0');
+          document.getElementById('confirmationModal').classList.add('show');
+        } else {
+          alert('เกิดข้อผิดพลาด: ' + data.message);
         }
-        existingBookings[dateKey].push(selectedTime);
-
-
-        const userId = 1;
-        const serviceId = bookingData.serviceId;
-        const appointmentData = formatDisplayDateForAPI(bookingData.selectedDate);
-        const timeSlot = bookingData.selectedTime;
-
-        fetch('/bookingphy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            user_id: userId,
-            service_id: serviceId,
-            appointment_date: appointmentData,
-            time_slot: timeSlot
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          btn.classList.remove('loading');
-          btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
-
-
-          if (data.success) {
-            document.getElementById('modalBookingId').textContent = String(data.bookingId).padStart(5, '0');
-            document.getElementById('confirmationModal').classList.add('show');
-          } else {
-            alert('เกิดข้อผิดพลาดในการจอง: ' + data.message);
-          }
-        })
-        .catch(err => {
-          btn.classList.remove('loading');
-          btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
-          alert('เกิดข้อผิดพลาดในการจอง: ' + err.message);
-          console.error(err);
-        });
-
-      }, 1000); // <--- ต้องปิด setTimeout ตรงนี้
-    } // <--- ต้องปิดฟังก์ชัน confirmBooking ตรงนี้
-
-
-    function formatDisplayDateForAPI(date) {
-      const d = new Date(date);
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      return `${year}-${month}-${day}`;
+      })
+      .catch(err => {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fas fa-calendar-check"></i> ส่งข้อมูลนัดหมาย';
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+        console.error(err);
+      });
     }
+
+
     function closeModal() {
       document.getElementById('confirmationModal').classList.remove('show');
     }
@@ -1707,8 +1593,6 @@
         });
       });
     });
-    console.log(bookingData);
-
   </script>
 </body>
 </html>

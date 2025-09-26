@@ -630,9 +630,11 @@
           <i class="fas fa-bell"></i>
         </button>
         <div class="profile-dropdown">
-                    <button class="icon-btn" id="profileBtn" title="บัญชีผู้ใช้">
+                  <a href="/Login">
+                    <button class="icon-btn" title="บัญชีผู้ใช้">
                         <i class="fas fa-user"></i>
                     </button>
+                  </a>
                     <div class="dropdown-content" id="profileDropdown">
                         <button class="dropdown-item logout" onclick="logout()">
                             <i class="fas fa-sign-out-alt"></i>
@@ -657,7 +659,7 @@
     </div>
 
     <!-- Appointment Details Card -->
-    <div class="appointment-card">
+    <div id="appointmentCard" class="appointment-card">
       <div class="appointment-grid">
         <div class="appointment-item">
           <div class="appointment-label">
@@ -672,7 +674,7 @@
             <i class="fas fa-user"></i>
             ชื่อ-นามสกุล
           </div>
-          <div class="appointment-value">ประสิทธิโชค กรรชียง</div>
+          <div class="appointment-value" id="patientName">-</div>
         </div>
         
         <div class="appointment-item">
@@ -680,7 +682,7 @@
             <i class="fas fa-stethoscope"></i>
             ปัญหาสุขภาพ:
           </div>
-          <div class="appointment-value" id="healthProblem">กล้ามเนื้อขาอ่อนแรง</div>
+          <div class="appointment-value" id="healthProblem">-</div>
         </div>
         
         <div class="appointment-item">
@@ -688,7 +690,7 @@
             <i class="fas fa-clock"></i>
             เวลา:
           </div>
-          <div class="appointment-value" id="appointmentTime">11:00-12:00 น.</div>
+          <div class="appointment-value" id="appointmentTime">-</div>
         </div>
         
         <div class="appointment-item">
@@ -696,7 +698,7 @@
             <i class="fas fa-hospital"></i>
             บริการ:
           </div>
-          <div class="appointment-value" id="serviceName">กายภาพขา</div>
+          <div class="appointment-value" id="serviceName">-</div>
         </div>
         
         <div class="appointment-item">
@@ -704,12 +706,12 @@
             <i class="fas fa-calendar-alt"></i>
             วันที่:
           </div>
-          <div class="appointment-value" id="appointmentDate">18/04/2025</div>
+          <div class="appointment-value" id="appointmentDate">-</div>
         </div>
         
         <div class="price-section">
           <div class="price-label">ค่าบริการที่ต้องชำระ:</div>
-          <div class="price-value" id="servicePrice">1,250 บาท</div>
+          <div class="price-value" id="servicePrice">-</div>
         </div>
       </div>
     </div>
@@ -826,131 +828,94 @@
   </div>
 
   <script>
-    // Profile dropdown functionality
-        const profileBtn = document.getElementById('profileBtn');
-        const profileDropdown = document.getElementById('profileDropdown');
+    let currentAppointment = null;
 
-        profileBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            profileDropdown.classList.toggle('show');
-        });
-
-        // ปิด dropdown เมื่อคลิกข้างนอก
-        window.addEventListener('click', function() {
-            if (profileDropdown.classList.contains('show')) {
-                profileDropdown.classList.remove('show');
-            }
-        });
-
-        // ป้องกันการปิด dropdown เมื่อคลิกข้างใน dropdown
-        profileDropdown.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-
-        // ฟังก์ชัน logout
-        function logout() {
-            if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
-                // เพิ่ม loading effect
-                const logoutBtn = event.target;
-                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
-                
-                setTimeout(() => {
-                    alert('ออกจากระบบเรียบร้อยแล้ว');
-                     window.location.href = "/Login";
-                }, 1500);
-            }
+// ดึง appointment ล่าสุด ทั้ง phy และ blood
+    async function fetchAppointment() {
+      try {
+        console.log('🔍 Fetching appointment...');
+        const res = await fetch('/api/my-appointment');
+        const data = await res.json();
+        
+        console.log('📊 API Response:', data);
+        
+        if (data.success && data.appointment) {
+          currentAppointment = mapAppointment(data.appointment);
+          updateAppointmentDisplay();
+          console.log('✅ Appointment loaded:', currentAppointment);
+        } else {
+          currentAppointment = null;
+          document.getElementById('appointmentCard').style.display = 'none';
+          console.log('❌ No appointment found:', data.message);
+          
+          // แสดง message ให้ user ทราบ
+          const appointmentCard = document.getElementById('appointmentCard');
+          appointmentCard.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #666;">
+              <i class="fas fa-calendar-times" style="font-size: 48px; margin-bottom: 10px;"></i>
+              <p>${data.message}</p>
+            </div>
+          `;
+          appointmentCard.style.display = 'block';
         }
-
-        function bookService(service) {
-            const card = event.currentTarget;
-            card.style.transform = 'scale(0.95)';
-
-            if (service === 'physiotherapy') {
-                window.location.href = "/Bookingphy";
-            } else if (service === 'blood-test') {
-                window.location.href = "/Bookingblood";
-            }
-        }
-
-        setTimeout(() => {
-            card.style.transform = '';
-            
-            // แสดงข้อความยืนยัน
-            if (serviceType === 'physiotherapy') {
-                alert('กำลังจองคิวกายภาพบำบัด กรุณารอสักครู่...');
-                // เปลี่ยนเป็นหน้าจองคิวกายภาพบำบัด
-                setTimeout(() => {
-                    alert('เปลี่ยนไปหน้าจองคิวกายภาพบำบัด');
-                }, 1000);
-            } else if (serviceType === 'blood-test') {
-                alert('กำลังจองคิวตรวจเลือด กรุณารอสักครู่...');
-                // เปลี่ยนเป็นหน้าจองคิวตรวจเลือด
-                setTimeout(() => {
-                    alert('เปลี่ยนไปหน้าจองคิวตรวจเลือด');
-                }, 1000);
-            }
-        }, 150);
-
-        // Header button interactions (ยกเว้น profile button ที่มี dropdown)
-        document.querySelectorAll('.icon-btn:not(#profileBtn)').forEach(btn => {
-            btn.addEventListener('click', function() {
-                console.log('Clicked:', this.title || 'Header button');
-                // สร้าง ripple effect
-                this.style.transform = 'scale(0.9)';
-                setTimeout(() => {
-                    this.style.transform = '';
-                }, 150);
-            });
-        });
-    // Global variables
-    let currentAppointment = {
-      id: '00010',
-      patientName: 'ประสิทธิโชค กรรชียง',
-      service: 'กายภาพขา',
-      problem: 'กล้ามเนื้อขาอ่อนแรง',
-      date: '18/04/2025',
-      time: '11:00-12:00 น.',
-      price: '1,250',
-      status: 'confirmed'
-    };
-
-    // Initialize page
-    function initializePage() {
-      updateAppointmentDisplay();
-      setupModalEvents();
+      } catch (error) {
+        console.error('❌ Fetch error:', error);
+        document.getElementById('appointmentCard').style.display = 'none';
+      }
     }
 
-    // Update appointment display
-    function updateAppointmentDisplay() {
-      document.getElementById('bookingId').textContent = currentAppointment.id;
-      document.getElementById('serviceName').textContent = currentAppointment.service;
-      document.getElementById('healthProblem').textContent = currentAppointment.problem;
-      document.getElementById('appointmentDate').textContent = currentAppointment.date;
-      document.getElementById('appointmentTime').textContent = currentAppointment.time;
-      document.getElementById('servicePrice').textContent = currentAppointment.price + ' บาท';
+    // Mapping ข้อมูลจาก API -> ใช้ render
+    function mapAppointment(appointment) {
+      console.log('🔄 Mapping appointment:', appointment);
       
+      return {
+        id: appointment.id,
+        patientName: appointment.patientName || appointment.fullname || '-',
+        problem: appointment.problem || '-',
+        time: appointment.time_slot || appointment.time || '-',
+        service: appointment.service || 'ไม่ระบุ',
+        date: appointment.appointment_date || appointment.date || '-',
+        total_price: appointment.total_price || '0',
+        status: appointment.status || 'จองแล้ว',
+        type: appointment.service === 'ตรวจเลือด' ? 'blood' : 'phy' // เพิ่ม type
+      };
+    }
+    
+    function updateAppointmentDisplay() {
+      if (!currentAppointment) return;
+
+      document.getElementById('appointmentCard').style.display = 'block';
+      document.getElementById('bookingId').textContent = currentAppointment.id;
+      document.getElementById('patientName').textContent = currentAppointment.patientName;
+      document.getElementById('healthProblem').textContent = currentAppointment.problem;
+      document.getElementById('appointmentTime').textContent = currentAppointment.time;
+      document.getElementById('serviceName').textContent = currentAppointment.service;
+      document.getElementById('appointmentDate').textContent = currentAppointment.date;
+      document.getElementById('servicePrice').textContent = currentAppointment.total_price !== '-' 
+        ? `${parseFloat(currentAppointment.total_price).toLocaleString()} บาท`
+        : '-';
+
       updateStatusBadge(currentAppointment.status);
     }
 
-    // Update status badge
     function updateStatusBadge(status) {
       const badge = document.getElementById('statusBadge');
       const actionButtons = document.querySelector('.action-buttons');
-      
       badge.className = 'status-badge';
-      
-      switch(status) {
+
+      switch (status) {
+        case 'จองแล้ว':
         case 'confirmed':
           badge.classList.add('confirmed');
           badge.innerHTML = '<i class="fas fa-check-circle"></i> ยืนยันการนัดหมายแล้ว';
           actionButtons.style.display = 'flex';
           break;
-        case 'cancelled':
+        case 'ยกเลิกแล้ว':
           badge.classList.add('cancelled');
           badge.innerHTML = '<i class="fas fa-times-circle"></i> ยกเลิกการนัดหมายแล้ว';
           actionButtons.style.display = 'none';
           break;
-        case 'rescheduled':
+        case 'เลื่อนแล้ว':
           badge.classList.add('rescheduled');
           badge.innerHTML = '<i class="fas fa-clock"></i> เลื่อนการนัดหมายแล้ว';
           actionButtons.style.display = 'none';
@@ -958,7 +923,6 @@
       }
     }
 
-    // Modal functions
     function openCancelModal() {
       document.getElementById('cancelModal').classList.add('show');
       document.getElementById('cancelReason').focus();
@@ -970,98 +934,11 @@
     }
 
     function closeModal() {
-      document.querySelectorAll('.modal').forEach(modal => {
-        modal.classList.remove('show');
-      });
-      
-      // Clear textarea values
+      document.querySelectorAll('.modal').forEach(modal => modal.classList.remove('show'));
       document.getElementById('cancelReason').value = '';
       document.getElementById('rescheduleReason').value = '';
     }
 
-    function confirmCancel() {
-      const reason = document.getElementById('cancelReason').value.trim();
-      
-      if (!reason) {
-        alert('กรุณาระบุเหตุผลในการยกเลิก');
-        return;
-      }
-      
-      // Show loading state
-      const btn = event.target;
-      btn.classList.add('loading');
-      btn.textContent = 'กำลังดำเนินการ...';
-      
-      // Simulate API call
-      setTimeout(() => {
-        btn.classList.remove('loading');
-        btn.textContent = 'ยืนยันยกเลิก';
-        
-        // Close cancel modal
-        document.getElementById('cancelModal').classList.remove('show');
-        
-        // Update appointment status
-        currentAppointment.status = 'cancelled';
-        updateStatusBadge('cancelled');
-        
-        // Show success modal
-        document.getElementById('successTitle').textContent = 'ยกเลิกสำเร็จ!';
-        document.getElementById('successMessage').innerHTML = 
-          'การยกเลิกการนัดหมายของคุณเสร็จสิ้นแล้ว<br>ขอบคุณสำหรับการแจ้งให้ทราบ';
-        document.getElementById('successModal').classList.add('show');
-        
-        // Clear form
-        document.getElementById('cancelReason').value = '';
-        
-        console.log('Cancelled with reason:', reason);
-      }, 2000);
-    }
-
-    function confirmReschedule() {
-      const reason = document.getElementById('rescheduleReason').value.trim();
-      
-      if (!reason) {
-        alert('กรุณาระบุเหตุผลในการเลื่อน');
-        return;
-      }
-      
-      // Show loading state
-      const btn = event.target;
-      btn.classList.add('loading');
-      btn.textContent = 'กำลังดำเนินการ...';
-      
-      // Simulate API call
-      setTimeout(() => {
-        btn.classList.remove('loading');
-        btn.textContent = 'ยืนยันเลื่อน';
-        
-        // Close reschedule modal
-        document.getElementById('rescheduleModal').classList.remove('show');
-        
-        // Update appointment status
-        currentAppointment.status = 'rescheduled';
-        updateStatusBadge('rescheduled');
-        
-        // Show success modal
-        document.getElementById('successTitle').textContent = 'เลื่อนสำเร็จ!';
-        document.getElementById('successMessage').innerHTML = 
-          'การเลื่อนการนัดหมายของคุณเสร็จสิ้นแล้ว<br>ระบบจะนำคุณไปจองคิวใหม่ในไม่ช้า';
-        document.getElementById('successModal').classList.add('show');
-        
-        // Clear form
-        document.getElementById('rescheduleReason').value = '';
-        
-        console.log('Rescheduled with reason:', reason);
-        
-        // Redirect to booking page after showing success
-        setTimeout(() => {
-          alert('กำลังนำคุณไปยังหน้าจองคิวใหม่...');
-          // window.location.href = 'booking.html';
-        }, 3000);
-      }, 2000);
-    }
-
-    // Navigation functions
     function goBack() {
       if (confirm('ต้องการกลับไปหน้าก่อนหน้านี้?')) {
         window.history.back();
@@ -1069,14 +946,138 @@
     }
 
     function goToAppointments() {
-      alert('กำลังนำคุณไปยังหน้าการนัดหมายทั้งหมด...');
       closeModal();
-      // window.location.href = 'appointments.html';
+      window.location.href = '/appointments';
+    }
+
+    // เรียกใช้ตอนโหลดหน้า
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🚀 Page loaded, fetching appointment...');
+      fetchAppointment();
+    });
+
+    // ยกเลิกการนัดหมายผ่าน API
+    async function confirmCancel() {
+      const reason = document.getElementById('cancelReason').value.trim();
+      if (!reason) return alert('กรุณาระบุเหตุผลในการยกเลิก');
+
+      try {
+        console.log('🚫 Cancelling appointment:', currentAppointment);
+        
+        const res = await fetch(`/api/my-appointment/cancel`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            appointmentId: currentAppointment.id, 
+            reason: reason,
+            type: currentAppointment.type // ส่ง type ไปด้วย
+          })
+        });
+        
+        const data = await res.json();
+        console.log('📊 Cancel response:', data);
+        
+        if (data.success) {
+          currentAppointment.status = 'ยกเลิกแล้ว';
+          updateStatusBadge('ยกเลิกแล้ว');
+          closeModal();
+          alert('ยกเลิกการนัดหมายสำเร็จ');
+        } else {
+          alert(data.message || 'เกิดข้อผิดพลาดในการยกเลิก');
+        }
+      } catch (err) {
+        console.error('❌ Cancel error:', err);
+        alert('เกิดข้อผิดพลาดในการยกเลิก');
+      }
+    }
+
+    // เลื่อนการนัดหมายผ่าน API
+    async function confirmReschedule() {
+      const reason = document.getElementById('rescheduleReason').value.trim();
+      if (!reason) return alert('กรุณาระบุเหตุผลในการเลื่อน');
+
+      const newDate = prompt('ระบุวันที่ใหม่ (dd/mm/yyyy):', currentAppointment.date);
+      const newTime = prompt('ระบุเวลาที่ใหม่ (HH:MM-HH:MM):', currentAppointment.time);
+      if (!newDate || !newTime) return alert('กรุณากรอกวันที่และเวลาใหม่');
+
+      try {
+        console.log('📅 Rescheduling appointment:', currentAppointment);
+        
+        const res = await fetch(`/api/my-appointment/reschedule`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appointmentId: currentAppointment.id,
+            new_date: newDate,
+            new_time: newTime,
+            reason: reason,
+            type: currentAppointment.type // ส่ง type ไปด้วย
+          })
+        });
+        
+        const data = await res.json();
+        console.log('📊 Reschedule response:', data);
+
+        if (data.success) {
+          currentAppointment.status = 'เลื่อนแล้ว';
+          currentAppointment.date = newDate;
+          currentAppointment.time = newTime;
+          updateAppointmentDisplay();
+          closeModal();
+
+          document.getElementById('successTitle').textContent = 'เลื่อนสำเร็จ!';
+          document.getElementById('successMessage').innerHTML = 'เลื่อนการนัดหมายเสร็จสิ้นแล้ว';
+          document.getElementById('successModal').classList.add('show');
+        } else {
+          alert(data.message || 'เกิดข้อผิดพลาดในการเลื่อน');
+        }
+      } catch (err) {
+        console.error('❌ Reschedule error:', err);
+        alert('เกิดข้อผิดพลาดในการเลื่อน');
+      }
+    }
+
+    // เรียก fetch ตอนโหลดหน้า
+    document.addEventListener('DOMContentLoaded', () => {
+      initializePage();
+      fetchAppointment();
+    });
+
+    // ฟังก์ชัน logout
+    function logout() {
+      if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+        const logoutBtn = event.target;
+        logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
+        setTimeout(() => {
+          alert('ออกจากระบบเรียบร้อยแล้ว');
+          window.location.href = "/Login";
+        }, 1500);
+      }
+    }
+
+    // ฟังก์ชันจองบริการ
+    function bookService(service) {
+      const card = event.currentTarget;
+      card.style.transform = 'scale(0.95)';
+
+      setTimeout(() => {
+        card.style.transform = '';
+        if (service === 'physiotherapy') {
+          window.location.href = "/Bookingphy";
+        } else if (service === 'blood-test') {
+          window.location.href = "/Bookingblood";
+        }
+      }, 150);
+    }
+
+    // Initialize page
+    function initializePage() {
+      updateAppointmentDisplay();
+      setupModalEvents();
     }
 
     // Setup modal events
     function setupModalEvents() {
-      // Close modal when clicking outside
       document.querySelectorAll('.modal').forEach(modal => {
         modal.addEventListener('click', function(e) {
           if (e.target === this) {
@@ -1085,42 +1086,22 @@
         });
       });
 
-      // Close modal with Escape key
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
           closeModal();
+
         }
-      });
 
-      // Textarea character count (optional enhancement)
-      const textareas = document.querySelectorAll('.reason-input');
-      textareas.forEach(textarea => {
-        textarea.addEventListener('input', function() {
-          const maxLength = this.getAttribute('maxlength');
-          const currentLength = this.value.length;
-          
-          // You could add character counter here if needed
-          console.log(`Characters: ${currentLength}/${maxLength}`);
-        });
+      
       });
     }
 
-    // Simulate real-time updates
-    function simulateStatusUpdates() {
-      // This could be used to check for real-time status updates from server
-      setInterval(() => {
-        // Check for status updates via API
-        console.log('Checking for status updates...');
-      }, 30000); // Check every 30 seconds
-    }
-
-    // Format date functions
+    // Format date (optional)
     function formatThaiDate(dateString) {
       const months = [
         'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
         'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
       ];
-      
       const [day, month, year] = dateString.split('/');
       const monthName = months[parseInt(month) - 1];
       return `${parseInt(day)} ${monthName} ${year}`;
@@ -1130,93 +1111,8 @@
     function printAppointment() {
       window.print();
     }
-
-    // Share appointment details
-    function shareAppointment() {
-      if (navigator.share) {
-        navigator.share({
-          title: 'ข้อมูลการนัดหมาย - UPaM',
-          text: `การนัดหมาย ${currentAppointment.service} วันที่ ${currentAppointment.date} เวลา ${currentAppointment.time}`,
-          url: window.location.href
-        });
-      } else {
-        // Fallback for browsers that don't support Web Share API
-        const shareData = `การนัดหมาย UPaM\nบริการ: ${currentAppointment.service}\nวันที่: ${currentAppointment.date}\nเวลา: ${currentAppointment.time}\nรหัส: ${currentAppointment.id}`;
-        
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(shareData).then(() => {
-            alert('คัดลอกข้อมูลการนัดหมายแล้ว');
-          });
-        } else {
-          prompt('คัดลอกข้อมูลการนัดหมาย:', shareData);
-        }
-      }
-    }
-
-    // Add to calendar function
-    function addToCalendar() {
-      const [day, month, year] = currentAppointment.date.split('/');
-      const [startTime] = currentAppointment.time.split('-');
-      const [hours, minutes] = startTime.split(':');
-      
-      const eventDate = new Date(year, month - 1, day, hours, minutes);
-      const endDate = new Date(eventDate.getTime() + (60 * 60 * 1000)); // Add 1 hour
-      
-      const formatDate = (date) => {
-        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-      };
-      
-      const startDateFormatted = formatDate(eventDate);
-      const endDateFormatted = formatDate(endDate);
-      
-      const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-        `&text=การนัดหมาย ${currentAppointment.service}` +
-        `&dates=${startDateFormatted}/${endDateFormatted}` +
-        `&details=รหัสการจอง: ${currentAppointment.id}%0A` +
-        `บริการ: ${currentAppointment.service}%0A` +
-        `ปัญหาสุขภาพ: ${currentAppointment.problem}` +
-        `&location=UPaM Clinic`;
-      
-      window.open(calendarUrl, '_blank');
-    }
-
-    // Initialize page when DOM is loaded
-    document.addEventListener('DOMContentLoaded', function() {
-      initializePage();
-      
-      // Header button interactions
-      document.querySelectorAll('.icon-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          console.log('Clicked:', this.title || 'Header button');
-        });
-      });
-      
-      // Start status update simulation
-      // simulateStatusUpdates();
-    });
-
-    // Prevent form submission on Enter key in textareas
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && e.target.classList.contains('reason-input')) {
-        if (!e.shiftKey) {
-          e.preventDefault();
-          // You could trigger submit here if needed
-        }
-      }
-    });
-
-    // Auto-resize textarea
-    function autoResizeTextarea(textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = textarea.scrollHeight + 'px';
-    }
-
-    // Add auto-resize to textareas
-    document.querySelectorAll('.reason-input').forEach(textarea => {
-      textarea.addEventListener('input', function() {
-        autoResizeTextarea(this);
-      });
-    });
+    
   </script>
+
 </body>
 </html>

@@ -821,6 +821,10 @@
       font-size: 16px;
     }
 
+    .btn.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
     /* Loading */
     .loading {
       opacity: 0.7;
@@ -905,16 +909,18 @@
           <i class="fas fa-bell"></i>
         </button>
         <div class="profile-dropdown">
+              <a href="/Login">
                     <button class="icon-btn" id="profileBtn" title="บัญชีผู้ใช้">
                         <i class="fas fa-user"></i>
                     </button>
-                    <div class="dropdown-content" id="profileDropdown">
-                        <button class="dropdown-item logout" onclick="logout()">
-                            <i class="fas fa-sign-out-alt"></i>
-                            ออกจากระบบ
-                        </button>
-                    </div>
-                </div>
+              </a>
+              <div class="dropdown-content" id="profileDropdown">
+                <button class="dropdown-item logout" onclick="logout()">
+                  <i class="fas fa-sign-out-alt"></i>
+                    ออกจากระบบ
+                </button>
+              </div>
+          </div>
       </div>
     </div>
   </div>
@@ -935,13 +941,13 @@
     <!-- Status Tabs -->
     <div class="status-tabs">
       <button class="status-tab active" data-status="today" onclick="switchTab('today')">
-        วันนี้ <span class="status-count" id="todayCount">3</span>
+        วันนี้ <span class="status-count" id="todayCount">0</span>
       </button>
       <button class="status-tab" data-status="completed" onclick="switchTab('completed')">
-        ที่อัปโหลดแล้ว <span class="status-count" id="completedCount">5</span>
+        ที่อัปโหลดแล้ว <span class="status-count" id="completedCount">0</span>
       </button>
       <button class="status-tab" data-status="history" onclick="switchTab('history')">
-        ประวัติ <span class="status-count" id="historyCount">12</span>
+        ประวัติ <span class="status-count" id="historyCount">0</span>
       </button>
     </div>
 
@@ -950,7 +956,22 @@
       <!-- Tests will be populated here -->
     </div>
   </div>
-
+  <h2>รายการจองตรวจเลือด</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        
+        <th>Services</th>
+        <th>ราคา</th>
+        <th>วันที่</th>
+        <th>เวลา</th>
+        <th>สถานะ</th>
+        <th>การจัดการ</th>
+      </tr>
+    </thead>
+    <tbody id="appointmentsBody"></tbody>
+  </table>
   <!-- Detail Modal -->
   <div class="detail-modal" id="detailModal">
     <div class="modal-content">
@@ -1005,35 +1026,24 @@
     </div>
   </div>
 
-  <!-- Upload Modal -->
-  <div class="upload-modal" id="uploadModal">
+  <div id="uploadModal" class="upload-modal">
     <div class="upload-modal-content">
-      <h3 class="upload-modal-title">อัปโหลดผลตรวจเลือด</h3>
-      
-      <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('fileInput').click()">
-        <div class="upload-icon">
-          <i class="fas fa-cloud-upload-alt"></i>
-        </div>
-        <div class="upload-text">คลิกหรือลากไฟล์มาวางที่นี่</div>
-        <div class="upload-subtext">รองรับไฟล์ Excel (.xlsx, .xls) สูงสุด 10MB</div>
+      <h2 class="upload-modal-title">อัปโหลดผลตรวจ</h2>
+      <div id="fileUploadArea" class="file-upload-area">
+        <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
+        <label for="fileInput" class="btn">เลือกไฟล์</label>
       </div>
-      
-      <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
-      
       <div id="selectedFile" class="selected-file" style="display: none;">
-        <i class="fas fa-file-excel"></i>
-        <span class="file-name" id="fileName"></span>
-        <button class="remove-file" onclick="removeFile()">
-          <i class="fas fa-times"></i>
-        </button>
+        <span id="fileName" class="file-name"></span>
+        <button class="remove-file" onclick="removeFile()">ลบ</button>
       </div>
-      
       <div class="upload-modal-actions">
+        <button id="uploadBtn" class="btn-modal btn-modal-primary" onclick="uploadFile()" disabled>อัปโหลด</button>
         <button class="btn-modal btn-modal-secondary" onclick="closeUploadModal()">ยกเลิก</button>
-        <button class="btn-modal btn-modal-primary" id="uploadBtn" onclick="uploadFile()" disabled>อัปโหลด</button>
       </div>
     </div>
   </div>
+
 
   <!-- Success Modal -->
   <div class="success-modal" id="successModal">
@@ -1050,172 +1060,112 @@
       </button>
     </div>
   </div>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script>
-    // Profile dropdown functionality
-        const profileBtn = document.getElementById('profileBtn');
-        const profileDropdown = document.getElementById('profileDropdown');
-
-        profileBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            profileDropdown.classList.toggle('show');
-        });
-
-        // ปิด dropdown เมื่อคลิกข้างนอก
-        window.addEventListener('click', function() {
-            if (profileDropdown.classList.contains('show')) {
-                profileDropdown.classList.remove('show');
-            }
-        });
-
-        // ป้องกันการปิด dropdown เมื่อคลิกข้างใน dropdown
-        profileDropdown.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-
-        // ฟังก์ชัน logout
-        function logout() {
-            if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
-                // เพิ่ม loading effect
-                const logoutBtn = event.target;
-                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
-                
-                setTimeout(() => {
-                    alert('ออกจากระบบเรียบร้อยแล้ว');
-                     window.location.href = "/Login";
-                }, 1500);
-            }
-        }
-
-        function bookService(service) {
-            const card = event.currentTarget;
-            card.style.transform = 'scale(0.95)';
-
-            if (service === 'physiotherapy') {
-                window.location.href = "/Bookingphy";
-            } else if (service === 'blood-test') {
-                window.location.href = "/Bookingblood";
-            }
-        }
-
-        setTimeout(() => {
-            card.style.transform = '';
-            
-            // แสดงข้อความยืนยัน
-            if (serviceType === 'physiotherapy') {
-                alert('กำลังจองคิวกายภาพบำบัด กรุณารอสักครู่...');
-                // เปลี่ยนเป็นหน้าจองคิวกายภาพบำบัด
-                setTimeout(() => {
-                    alert('เปลี่ยนไปหน้าจองคิวกายภาพบำบัด');
-                }, 1000);
-            } else if (serviceType === 'blood-test') {
-                alert('กำลังจองคิวตรวจเลือด กรุณารอสักครู่...');
-                // เปลี่ยนเป็นหน้าจองคิวตรวจเลือด
-                setTimeout(() => {
-                    alert('เปลี่ยนไปหน้าจองคิวตรวจเลือด');
-                }, 1000);
-            }
-        }, 150);
-
-        // Header button interactions (ยกเว้น profile button ที่มี dropdown)
-        document.querySelectorAll('.icon-btn:not(#profileBtn)').forEach(btn => {
-            btn.addEventListener('click', function() {
-                console.log('Clicked:', this.title || 'Header button');
-                // สร้าง ripple effect
-                this.style.transform = 'scale(0.9)';
-                setTimeout(() => {
-                    this.style.transform = '';
-                }, 150);
-            });
-        });
-    // Lab test reference data based on the document
-    const labTestReference = {
-      'Electrolyte (Na, K, Cl, CO2)': { category: 'เคมีคลินิก', normalRange: 'Na: 136-145 mmol/L, K: 3.5-5.1 mmol/L, Cl: 98-107 mmol/L' },
-      'Blood gas analysis': { category: 'แก๊สในเลือด', normalRange: 'pH: 7.35-7.45, HCO3: 22-28 mmol/L' },
-      'Liver function test': { category: 'ตับ', normalRange: 'ALT: <40 U/L, AST: <40 U/L' },
-      'Lipid profile (Cholesterol, HDL-chol, LDL-chol, TG)': { category: 'ไขมันในเลือด', normalRange: 'Total Chol: <200 mg/dL, HDL: >40 mg/dL' },
-      'Glucose': { category: 'น้ำตาล', normalRange: 'Fasting: 70-100 mg/dL, Random: <140 mg/dL' },
-      'BUN (Blood Urea Nitrogen)': { category: 'ไต', normalRange: '7-20 mg/dL' },
-      'Creatinine': { category: 'ไต', normalRange: '0.7-1.2 mg/dL (ชาย), 0.6-1.1 mg/dL (หญิง)' },
-      'Uric acid': { category: 'กรดยูริค', normalRange: '3.5-7.2 mg/dL (ชาย), 2.6-6.0 mg/dL (หญิง)' },
-      'HbA1c': { category: 'น้ำตาลเรื้อรัง', normalRange: '<5.7% (ปกติ), 5.7-6.4% (เสี่ยง)' },
-      'TSH (Thyroid Stimulating Hormone)': { category: 'ฮอร์โมนไทรอยด์', normalRange: '0.27-4.2 mIU/L' },
-      'Free T4': { category: 'ฮอร์โมนไทรอยด์', normalRange: '12-22 pmol/L' },
-      'Ferritin': { category: 'ธาตุเหล็ก', normalRange: '15-150 ng/mL (หญิง), 15-200 ng/mL (ชาย)' }
-    };
-
-    // Sample test data
-    let bloodTests = [
-      {
-        id: 'LAB001',
-        patientName: 'นายสมชาย ใจดี',
-        testType: 'Lipid profile (Cholesterol, HDL-chol, LDL-chol, TG)',
-        date: '01/09/2025',
-        time: '08:00-08:30',
-        price: '450',
-        status: 'today',
-        labStaff: 'นพ. สมชาย วิทยากร',
-        results: null,
-        excelData: null
-      },
-      {
-        id: 'LAB002',
-        patientName: 'นางสาวสมหญิง รักสุขภาพ',
-        testType: 'HbA1c',
-        date: '01/09/2025',
-        time: '09:00-09:30',
-        price: '350',
-        status: 'today',
-        labStaff: 'นพ. สมชาย วิทยากร',
-        results: null,
-        excelData: null
-      },
-      {
-        id: 'LAB003',
-        patientName: 'นายวิชัย สุขใจ',
-        testType: 'Liver function test',
-        date: '01/09/2025',
-        time: '10:00-10:30',
-        price: '380',
-        status: 'today',
-        labStaff: 'นพ. สมชาย วิทยากร',
-        results: null,
-        excelData: null
-      },
-      {
-        id: 'LAB004',
-        patientName: 'นางจินตรา จันทร์เจ้า',
-        testType: 'TSH (Thyroid Stimulating Hormone)',
-        date: '31/08/2025',
-        time: '08:30-09:00',
-        price: '320',
-        status: 'completed',
-        labStaff: 'นพ. สมชาย วิทยากร',
-        results: 'ผลตรวจปกติ - TSH: 2.1 mIU/L (ช่วงปกติ)',
-        excelData: [
-          { test: 'TSH', value: '2.1', unit: 'mIU/L', normalRange: '0.27-4.2', status: 'ปกติ' }
-        ]
-      },
-      {
-        id: 'LAB005',
-        patientName: 'นายประสิทธิ์ แข็งแรง',
-        testType: 'Glucose',
-        date: '31/08/2025',
-        time: '07:30-08:00',
-        price: '120',
-        status: 'completed',
-        labStaff: 'นพ. สมชาย วิทยากร',
-        results: 'ผลตรวจสูงกว่าปกติ - Glucose: 145 mg/dL (สูงกว่าปกติ)',
-        excelData: [
-          { test: 'Glucose (Fasting)', value: '145', unit: 'mg/dL', normalRange: '70-100', status: 'สูง' }
-        ]
-      }
-    ];
-
     let currentTab = 'today';
     let currentTestId = null;
     let selectedFile = null;
+    let bloodTests = [];
 
+    async function loadBloodTests() {
+      const res = await fetch('/api/lab/Staffblood');
+      bloodTests = await res.json();
+      renderTests();
+      updateCounts();
+      renderAppointments(bloodTests); // <-- เพิ่มบรรทัดนี้
+      initializePage();
+    }
+
+    window.addEventListener('DOMContentLoaded', loadBloodTests);
+    // Profile dropdown functionality
+        
+    const profileBtn = document.getElementById('profileBtn');
+      const profileDropdown = document.getElementById('profileDropdown');
+
+      profileBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        profileDropdown.classList.toggle('show');
+      });
+      window.addEventListener('click', () => profileDropdown.classList.remove('show'));
+      profileDropdown.addEventListener('click', e => e.stopPropagation());
+
+      function logout(event) {
+        if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+          event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
+          setTimeout(() => window.location.href = "/Login", 1500);
+        }
+      }
+
+    function bookService(service, event) {
+      const card = event.currentTarget;
+      card.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        card.style.transform = '';
+        const url = service === 'physiotherapy' ? "/Bookingphy" : "/Bookingblood";
+        alert(`กำลังจองคิว ${service === 'physiotherapy' ? 'กายภาพบำบัด' : 'ตรวจเลือด'} กรุณารอสักครู่...`);
+        setTimeout(() => window.location.href = url, 800);
+      }, 150);
+    }
+
+    function openLabTestSystem() {
+      alert('กำลังไปที่ระบบดูผลตรวจเลือด...');
+      setTimeout(() => window.location.href = "/lab-tests", 800);
+    }
+
+        function openLabTestSystem() {
+          alert('กำลังไปที่ระบบดูผลตรวจเลือด...');
+          setTimeout(() => {
+              window.location.href = "/lab-tests";
+          }, 800);
+        }
+
+        // Header button interactions (ยกเว้น profile button ที่มี dropdown)
+        document.querySelectorAll('.icon-btn:not(#profileBtn)').forEach(btn => {
+          btn.addEventListener('click', function() {
+              console.log('Clicked:', this.title || 'Header button');
+              this.style.transform = 'scale(0.9)';
+              setTimeout(() => {
+                  this.style.transform = '';
+              }, 150);
+          });
+        });
+    // Lab test reference data based on the document
+    function renderAppointments(list) {
+      const tbody = document.getElementById('appointmentsBody');
+      tbody.innerHTML = "";
+      list.forEach(appt => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${appt.id}</td>
+          <td>${appt.services}</td>
+          <td>${appt.total_price}</td>
+          <td>${appt.appointment_date}</td>
+          <td>${appt.time_slot}</td>
+          <td>${appt.status}</td>
+          <td>
+            <button class="detail-btn" data-id="${appt.id}">รายละเอียด</button>
+            <button class="upload-btn" data-id="${appt.id}">อัปโหลดผล</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // bind ปุ่มรายละเอียด
+      document.querySelectorAll('.detail-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const apptId = btn.dataset.id;
+          openDetailModal(apptId);
+        });
+      });
+
+      // bind ปุ่มอัปโหลดผล
+      document.querySelectorAll('.upload-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const testId = btn.dataset.id;
+          openUploadModal(testId);
+        });
+      });
+    }
     // Initialize page
     function initializePage() {
       setTodayDate();
@@ -1283,70 +1233,62 @@
     // Switch between tabs
     function switchTab(status) {
       currentTab = status;
-      
-      // Update tab appearance
-      document.querySelectorAll('.status-tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
+      document.querySelectorAll('.status-tab').forEach(tab => tab.classList.remove('active'));
       document.querySelector(`[data-status="${status}"]`).classList.add('active');
-      
       renderTests();
     }
 
     // Render tests based on current tab
-    function renderTests() {
+    function renderTests(filtered = null) {
       const testList = document.getElementById('testList');
-      const filteredTests = bloodTests.filter(test => test.status === currentTab);
-      
-      if (filteredTests.length === 0) {
+      const list = filtered || bloodTests.filter(t => t.status === currentTab);
+
+      if (!list.length) {
         testList.innerHTML = `
           <div class="empty-state">
-            <div class="empty-icon">
-              <i class="fas fa-vial"></i>
-            </div>
+            <div class="empty-icon"><i class="fas fa-vial"></i></div>
             <div class="empty-title">ไม่มีรายการในสถานะนี้</div>
-            <div class="empty-message">ยังไม่มีรายการตรวจเลือดที่ต้องจัดการในขณะนี้</div>
-          </div>
-        `;
+            <div class="empty-message">ยังไม่มีรายการตรวจเลือดที่ต้องจัดการ</div>
+          </div>`;
         return;
       }
 
       let html = '';
-      filteredTests.forEach(test => {
-        const statusClass = test.status === 'today' ? 'status-today' : 
-                           test.status === 'completed' ? 'status-completed' : 'status-past';
-        const statusText = test.status === 'today' ? 'วันนี้' : 
-                          test.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
-        
-        html += `
-          <div class="test-card ${test.status}" onclick="openDetailModal('${test.id}')">
-            <div class="test-header">
-              <div class="test-id">รหัส ${test.id}</div>
-              <div class="test-status ${statusClass}">${statusText}</div>
-            </div>
-            
-            <div class="test-info">
-              <div class="info-item">
-                <div class="info-label">ชื่อผู้ป่วย</div>
-                <div class="info-value">${test.patientName}</div>
+        list.forEach(test => {
+          const statusClass = test.status === 'today' ? 'status-today' : 
+                            test.status === 'completed' ? 'status-completed' : 'status-past';
+          const statusText = test.status === 'today' ? 'วันนี้' : 
+                            test.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
+          
+          html += `
+            <div class="test-card ${test.status}" onclick="openDetailModal('${test.id}')">
+              <div class="test-header">
+                <div class="test-id">รหัส ${test.id}</div>
+                <div class="test-status ${statusClass}">${statusText}</div>
               </div>
               
-              <div class="info-item">
-                <div class="info-label">ประเภทการตรวจ</div>
-                <div class="info-value">${test.testType}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">วันที่</div>
-                <div class="info-value">${test.date}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">เวลา</div>
-                <div class="info-value">${test.time} น.</div>
-              </div>
-              
-              <div class="info-item">
+              <div class="test-info">
+                <div class="info-item">
+                  <div class="info-label">ชื่อผู้ป่วย</div>
+                  <div class="info-value">${test.patientName}</div>
+                </div>
+                
+                <div class="info-item">
+                  <div class="info-label">ประเภทการตรวจ</div>
+                  <div class="info-value">${test.testType}</div>
+                </div>
+                
+                <div class="info-item">
+                  <div class="info-label">วันที่</div>
+                  <div class="info-value">${test.date}</div>
+                </div>
+                
+                <div class="info-item">
+                  <div class="info-label">เวลา</div>
+                  <div class="info-value">${test.time} น.</div>
+                </div>
+                
+                <div class="info-item">
                 <div class="info-label">ค่าบริการ</div>
                 <div class="info-value price-value">${test.price} บาท</div>
               </div>
@@ -1373,10 +1315,10 @@
               ` : ''}
             </div>
           </div>
-        `;
-      });
-      
-      testList.innerHTML = html;
+          `;
+        });
+        
+        testList.innerHTML = html;
     }
 
     // Update counts for each tab
@@ -1524,8 +1466,8 @@
       
       // Show results if available
       const resultsSection = document.getElementById('resultsSection');
-      if (test.excelData && test.excelData.length > 0) {
-        displayTestResults(test.excelData);
+      if (test.results && test.results.length > 0) {
+        displayTestResults(test.results);
         resultsSection.style.display = 'block';
       } else {
         resultsSection.style.display = 'none';
@@ -1560,6 +1502,12 @@
       }
       
       document.getElementById('detailModal').classList.add('show');
+      console.log('✅ Detail modal opened for test:', test.id);
+    }
+    
+    function testUploadModal() {
+      console.log('🧪 Testing upload modal with sample test ID');
+      openUploadModal('BT001');
     }
 
     function displayTestResults(excelData) {
@@ -1609,212 +1557,445 @@
       tableContainer.innerHTML = tableHtml;
     }
 
-    function closeDetailModal() {
-      document.getElementById('detailModal').classList.remove('show');
-      currentTestId = null;
-    }
-
     function openUploadModal(testId) {
+      if (!testId) {
+        alert("ไม่พบรหัสการตรวจ");
+        return;
+      }
       currentTestId = testId;
       selectedFile = null;
+
+      const uploadBtn = document.getElementById('uploadBtn');
+      if (uploadBtn) {
+        uploadBtn.disabled = true;
+        uploadBtn.classList.add('disabled');
+      }
+
+      document.getElementById('fileInput').value = "";
       document.getElementById('selectedFile').style.display = 'none';
-      document.getElementById('uploadBtn').disabled = true;
       document.getElementById('uploadModal').classList.add('show');
+
       closeDetailModal();
     }
 
+    function closeDetailModal() {
+      const detailModal = document.getElementById('detailModal');
+      if (detailModal) {
+        detailModal.classList.remove('show');
+      }
+      console.log('Detail modal closed');
+    }
+
     function closeUploadModal() {
-      document.getElementById('uploadModal').classList.remove('show');
+      const uploadModal = document.getElementById('uploadModal');
+      if (uploadModal) {
+        uploadModal.classList.remove('show');
+      }
       selectedFile = null;
       currentTestId = null;
+      console.log('Upload modal closed');
     }
 
     function handleFileSelect(event) {
+      console.log('🔍 handleFileSelect called');
       const file = event.target.files[0];
-      if (!file) return;
-      
-      // Validate file type
-      const allowedTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-      if (!allowedTypes.includes(file.type)) {
-        showNotification('ประเภทไฟล์ไม่ถูกต้อง กรุณาเลือกไฟล์ Excel (.xlsx, .xls)', 'error');
-        return;
+      const fileNameElement = document.getElementById('fileName');
+      const selectedFileDiv = document.getElementById('selectedFile');
+      const uploadBtn = document.getElementById('uploadBtn');
+
+      console.log('📁 Selected file:', file);
+
+      if (file) {
+        // ตรวจสอบว่าเป็น Excel
+        const allowedTypes = [
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+          "application/vnd.ms-excel", // .xls
+          "application/excel",
+          "application/x-excel",
+          "application/x-msexcel"
+        ];
+
+        const fileExtension = file.name.toLowerCase().split('.').pop();
+        const isValidExtension = ['xlsx', 'xls'].includes(fileExtension);
+        const isValidType = allowedTypes.includes(file.type);
+          
+        console.log('📄 File type:', file.type); // Debug log
+        console.log('📄 File extension:', fileExtension); // Debug log
+        console.log('✅ Valid type:', isValidType); // Debug log
+        console.log('✅ Valid extension:', isValidExtension); // Debug log
+        
+        if (!allowedTypes.includes(file.type)) {
+          alert("กรุณาเลือกไฟล์ Excel (.xlsx, .xls) เท่านั้น");
+          event.target.value = "";
+          uploadBtn.disabled = true;
+          return;
+        }
+
+        selectedFile = file;
+        console.log('✅ selectedFile assigned:', selectedFile);
+        // แสดงไฟล์ที่เลือก
+        if (fileNameElement) {
+          fileNameElement.textContent = file.name;
+        }
+        if (selectedFileDiv) {
+          selectedFileDiv.style.display = "flex";
+        }
+        if (uploadBtn) {
+          uploadBtn.disabled = false;
+          uploadBtn.classList.remove('disabled'); // ลบ class disabled ถ้ามี
+          console.log('✅ Upload button enabled'); // Debug log
+        } else {
+          console.error('❌ Upload button not found!');
+        }
+      } else {
+        // ถ้าไม่มีไฟล์
+        selectedFile = null;
+        if (uploadBtn) {
+          uploadBtn.disabled = true;
+          uploadBtn.classList.add('disabled');
+        }
+        console.log('❌ No file selected');
       }
+    }
+
+    function checkUploadButtonStatus() {
+      const uploadBtn = document.getElementById('uploadBtn');
+      const fileInput = document.getElementById('fileInput');
       
-      // Validate file size (10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        showNotification('ไฟล์มีขนาดใหญ่เกินไป (สูงสุด 10MB)', 'error');
-        return;
-      }
+      console.log('🔍 Upload Button Check:');
+      console.log('- Button exists:', !!uploadBtn);
+      console.log('- Button disabled:', uploadBtn ? uploadBtn.disabled : 'N/A');
+      console.log('- Button text:', uploadBtn ? uploadBtn.textContent : 'N/A');
+      console.log('- Current test ID:', currentTestId);
+      console.log('- Selected file variable:', selectedFile);
+      console.log('- File input files:', fileInput ? fileInput.files.length : 'N/A');
       
-      selectedFile = file;
-      document.getElementById('fileName').textContent = file.name;
-      document.getElementById('selectedFile').style.display = 'flex';
-      document.getElementById('uploadBtn').disabled = false;
+      return {
+        buttonExists: !!uploadBtn,
+        buttonDisabled: uploadBtn ? uploadBtn.disabled : true,
+        hasFile: selectedFile !== null,
+        hasTestId: currentTestId !== null
+      };
     }
 
     function removeFile() {
       selectedFile = null;
+      document.getElementById('fileInput').value = "";
       document.getElementById('selectedFile').style.display = 'none';
       document.getElementById('uploadBtn').disabled = true;
-      document.getElementById('fileInput').value = '';
+    }
+
+  
+    function quickFixCurrentTestId() {
+      // หาคาร์ดที่มี status 'today' และยังไม่มี results
+      const todayTests = bloodTests.filter(test => test.status === 'today' && !test.results);
+      
+      if (todayTests.length > 0) {
+        const testId = todayTests[0].id;
+        currentTestId = testId;
+        console.log('Quick fix: currentTestId set to:', testId);
+        return testId;
+      } else {
+        console.error('No available tests for today');
+        return null;
+      }
     }
 
     function uploadFile() {
-      if (!selectedFile || !currentTestId) return;
-      
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput?.files?.[0];
       const uploadBtn = document.getElementById('uploadBtn');
+
+      if (!file) {
+        alert('กรุณาเลือกไฟล์ก่อนอัปโหลด');
+        return;
+      }
+
+      if (!currentTestId) {
+        alert('ไม่พบรหัสการตรวจ กรุณาลองใหม่');
+        return;
+      }
+
       uploadBtn.classList.add('loading');
-      uploadBtn.textContent = 'กำลังประมวลผล...';
+      uploadBtn.textContent = 'กำลังอัปโหลด...';
       uploadBtn.disabled = true;
-      
-      // Read Excel file
+
       const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheet];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+        const processedData = processExcelData(jsonData);
+
+        // 📌 ส่งไป Backend
+        fetch('/api/Staffblood/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              testId: currentTestId,
+              results: processedData
+            })
+          })
           
-          // Get first worksheet
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          
-          // Convert to JSON
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-          
-          // Process Excel data (assuming columns: Test Name, Value, Unit, Normal Range, Status)
-          const processedData = processExcelData(jsonData);
-          
-          setTimeout(() => {
-            // Update test with results
-            const testIndex = bloodTests.findIndex(b => b.id === currentTestId);
-            if (testIndex !== -1) {
-              bloodTests[testIndex].results = `ผลตรวจจากไฟล์: ${selectedFile.name}`;
-              bloodTests[testIndex].excelData = processedData;
-              bloodTests[testIndex].status = 'completed';
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              alert('อัปโหลดผลตรวจสำเร็จ');
+              closeUploadModal();
+              switchTab('completed'); // refresh tab
+            } else {
+              alert('อัปโหลดไม่สำเร็จ: ' + data.message);
             }
-            
-            closeUploadModal();
-            
-            // Show success modal
-            document.getElementById('successMessage').innerHTML = `
-              ไฟล์ผลตรวจเลือดสำหรับผู้ป่วยรหัส <strong>${currentTestId}</strong><br>
-              ได้ถูกประมวลผลและอัปโหลดเรียบร้อยแล้ว<br>
-              พบข้อมูลการตรวจ ${processedData.length} รายการ
-            `;
-            document.getElementById('successModal').classList.add('show');
-            
-            // Update display
-            updateCounts();
-            renderTests();
-            
-            // Reset upload button
+          })
+          .catch(err => {
+            console.error('❌ Upload failed:', err);
+            alert('เกิดข้อผิดพลาดในการอัปโหลด');
+          })
+          .finally(() => {
             uploadBtn.classList.remove('loading');
             uploadBtn.textContent = 'อัปโหลด';
             uploadBtn.disabled = false;
-          }, 2000);
-          
-        } catch (error) {
-          console.error('Error processing Excel file:', error);
-          showNotification('เกิดข้อผิดพลาดในการอ่านไฟล์ Excel กรุณาตรวจสอบรูปแบบไฟล์', 'error');
-          
-          uploadBtn.classList.remove('loading');
-          uploadBtn.textContent = 'อัปโหลด';
-          uploadBtn.disabled = false;
-        }
+          });
       };
-      
-      reader.readAsArrayBuffer(selectedFile);
+
+      reader.readAsArrayBuffer(file);
     }
 
-    function processExcelData(jsonData) {
-      const processedData = [];
+
+    function testCompleteUploadFlow() {
+      console.log('Testing complete upload flow...');
       
-      // Skip header row (if exists) and process data rows
-      for (let i = 1; i < jsonData.length; i++) {
-        const row = jsonData[i];
-        if (row && row.length >= 4) {
-          const testName = row[0] || '';
-          const value = row[1] || '';
-          const unit = row[2] || '';
-          const normalRange = row[3] || '';
-          let status = row[4] || 'ปกติ';
+      // Step 1: เปิด modal
+      openUploadModal('BT001');
+      
+      // Step 2: จำลองการเลือกไฟล์
+      setTimeout(() => {
+        console.log('Simulating file selection...');
+        selectedFile = new File(['test'], 'test.xlsx', {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        
+        const uploadBtn = document.getElementById('uploadBtn');
+        if (uploadBtn) {
+          uploadBtn.disabled = false;
+          uploadBtn.style.opacity = '1';
+          uploadBtn.style.pointerEvents = 'auto';
+        }
+        
+        console.log('File simulation complete. Ready for upload test.');
+        console.log('Current state:', {
+          currentTestId,
+          hasSelectedFile: !!selectedFile,
+          uploadBtnEnabled: uploadBtn ? !uploadBtn.disabled : 'not found'
+        });
+      }, 1000);
+    }
+
+    function emergencyUploadFix() {
+      console.log('Applying emergency upload fix...');
+      
+      // กำหนด currentTestId ให้เป็น test แรกที่หาเจอ
+      const availableTest = bloodTests.find(test => test.status === 'today' && !test.results);
+      
+      if (availableTest) {
+        currentTestId = availableTest.id;
+        console.log('Emergency fix: currentTestId set to:', currentTestId);
+        
+        // เปิดใช้งานปุ่มอัปโหลด
+        const uploadBtn = document.getElementById('uploadBtn');
+        if (uploadBtn && selectedFile) {
+          uploadBtn.disabled = false;
+          uploadBtn.style.opacity = '1';
+          uploadBtn.style.pointerEvents = 'auto';
+          uploadBtn.classList.remove('disabled');
+          console.log('Emergency fix: Upload button enabled');
+        }
+        
+        return true;
+      } else {
+        console.error('Emergency fix failed: No available tests found');
+        return false;
+      }
+    }
+
+    function addDirectUploadHandler() {
+      const uploadBtn = document.getElementById('uploadBtn');
+      if (uploadBtn) {
+        // ลบ onclick attribute เก่า
+        uploadBtn.removeAttribute('onclick');
+        
+        // เพิ่ม event listener ใหม่
+        uploadBtn.addEventListener('click', function(e) {
+          e.preventDefault();
           
-          // Determine status if not provided
-          if (!row[4] && value && normalRange) {
-            status = determineStatus(value, normalRange);
+          console.log('Direct upload handler called');
+          console.log('Button disabled:', this.disabled);
+          
+          if (!this.disabled) {
+            // ตรวจสอบและแก้ไขก่อนอัปโหลด
+            if (!currentTestId) {
+              emergencyUploadFix();
+            }
+            
+            if (currentTestId && selectedFile) {
+              uploadFile();
+            } else {
+              alert('กรุณาตรวจสอบ:\n- ไฟล์ที่เลือก: ' + (selectedFile ? 'มี' : 'ไม่มี') + '\n- รหัสการตรวจ: ' + (currentTestId || 'ไม่มี'));
+            }
           }
-          
-          if (testName.trim()) {
-            processedData.push({
-              test: testName.trim(),
-              value: value.toString().trim(),
-              unit: unit.toString().trim(),
-              normalRange: normalRange.toString().trim(),
-              status: status.toString().trim()
-            });
+        });
+        
+        console.log('Direct upload handler added');
+      }
+    }
+
+    function debugCurrentState() {
+      console.log('=== DEBUG CURRENT STATE ===');
+      console.log('currentTab:', currentTab);
+      console.log('currentTestId:', currentTestId);
+      console.log('selectedFile:', selectedFile);
+      console.log('bloodTests:', bloodTests);
+      
+      const uploadBtn = document.getElementById('uploadBtn');
+      console.log('uploadBtn exists:', !!uploadBtn);
+      console.log('uploadBtn disabled:', uploadBtn ? uploadBtn.disabled : 'N/A');
+      
+      return {
+        currentTab,
+        currentTestId,
+        hasSelectedFile: !!selectedFile,
+        hasUploadBtn: !!uploadBtn,
+        btnDisabled: uploadBtn ? uploadBtn.disabled : true
+      };
+    }
+
+    // labTestReference (object)
+    const labTestReference = {
+      'Electrolyte (Na, K, Cl, CO2)': { category: 'เคมีคลินิก', normalRange: 'Na: 136-145 mmol/L, K: 3.5-5.1 mmol/L, Cl: 98-107 mmol/L' },
+      'Blood gas analysis': { category: 'แก๊สในเลือด', normalRange: 'pH: 7.35-7.45, HCO3: 22-28 mmol/L' },
+      'Liver function test': { category: 'ตับ', normalRange: 'ALT: <40 U/L, AST: <40 U/L' },
+      'Lipid profile (Cholesterol, HDL-chol, LDL-chol, TG)': { category: 'ไขมันในเลือด', normalRange: 'Total Chol: <200 mg/dL, HDL: >40 mg/dL' },
+      'Glucose': { category: 'น้ำตาล', normalRange: 'Fasting: 70-100 mg/dL, Random: <140 mg/dL' },
+      'BUN (Blood Urea Nitrogen)': { category: 'ไต', normalRange: '7-20 mg/dL' },
+      'Creatinine': { category: 'ไต', normalRange: '0.7-1.2 mg/dL (ชาย), 0.6-1.1 mg/dL (หญิง)' },
+      'Uric acid': { category: 'กรดยูริค', normalRange: '3.5-7.2 mg/dL (ชาย), 2.6-6.0 mg/dL (หญิง)' },
+      'HbA1c': { category: 'น้ำตาลเรื้อรัง', normalRange: '<5.7% (ปกติ), 5.7-6.4% (เสี่ยง)' },
+      'TSH (Thyroid Stimulating Hormone)': { category: 'ฮอร์โมนไทรอยด์', normalRange: '0.27-4.2 mIU/L' },
+      'Free T4': { category: 'ฮอร์โมนไทรอยด์', normalRange: '12-22 pmol/L' },
+      'Ferritin': { category: 'ธาตุเหล็ก', normalRange: '15-150 ng/mL (หญิง), 15-200 ng/mL (ชาย)' }
+    };
+
+    // ✅ ฟังก์ชันแปลงข้อมูลจาก Excel
+    function processExcelData(jsonData) {
+      return jsonData.map(row => {
+        const testName = row.Test?.trim() || '';
+        const value = row.Value ?? '';
+        const unit = row.Unit ?? '';
+
+        const ref = labTestReference[testName]; // ✅ ใช้ object lookup แทน find()
+
+        let status = 'ไม่ทราบ';
+        let normalRange = ref?.normalRange || '-';
+        let category = ref?.category || '-';
+
+        // 🔎 ตรวจค่าเฉพาะกรณีที่ normalRange เป็นตัวเลขช่วง เช่น "70-100"
+        const rangeMatch = normalRange.match(/(\d+)-(\d+)/);
+        if (rangeMatch) {
+          const min = parseFloat(rangeMatch[1]);
+          const max = parseFloat(rangeMatch[2]);
+          const val = parseFloat(value);
+          if (!isNaN(val)) {
+            if (val < min) status = 'ต่ำ';
+            else if (val > max) status = 'สูง';
+            else status = 'ปกติ';
           }
         }
-      }
-      
-      return processedData;
+
+        return {
+          test: testName,
+          value: value,
+          unit: unit,
+          category: category,
+          normalRange: normalRange,
+          status: status
+        };
+      });
     }
+
+
+
+
 
     function determineStatus(value, normalRange) {
-      // Simple logic to determine if value is within normal range
-      // This is a basic implementation - in real app, you'd want more sophisticated logic
       const numValue = parseFloat(value);
-      if (isNaN(numValue)) return 'ปกติ';
-      
-      // Try to parse range like "70-100" or "<40" or ">60"
-      if (normalRange.includes('-')) {
-        const [min, max] = normalRange.split('-').map(x => parseFloat(x.trim()));
+      if (isNaN(numValue)) return "ไม่ระบุ";
+
+      const range = normalRange.trim();
+
+      // Case 1: ช่วงแบบ 70-100
+      if (range.includes("-")) {
+        const [min, max] = range.split("-").map(v => parseFloat(v));
         if (!isNaN(min) && !isNaN(max)) {
-          if (numValue < min) return 'ต่ำ';
-          if (numValue > max) return 'สูง';
-          return 'ปกติ';
-        }
-      } else if (normalRange.startsWith('<')) {
-        const maxVal = parseFloat(normalRange.substring(1));
-        if (!isNaN(maxVal)) {
-          return numValue >= maxVal ? 'สูง' : 'ปกติ';
-        }
-      } else if (normalRange.startsWith('>')) {
-        const minVal = parseFloat(normalRange.substring(1));
-        if (!isNaN(minVal)) {
-          return numValue <= minVal ? 'ต่ำ' : 'ปกติ';
+          if (numValue < min) return "ต่ำ";
+          if (numValue > max) return "สูง";
+          return "ปกติ";
         }
       }
-      
-      return 'ปกติ';
+
+      // Case 2: เงื่อนไข < หรือ >
+      if (range.startsWith("<")) {
+        const limit = parseFloat(range.replace("<", "").trim());
+        if (!isNaN(limit)) {
+          return numValue < limit ? "ปกติ" : "สูง";
+        }
+      }
+
+      if (range.startsWith(">")) {
+        const limit = parseFloat(range.replace(">", "").trim());
+        if (!isNaN(limit)) {
+          return numValue > limit ? "ปกติ" : "ต่ำ";
+        }
+      }
+
+      // Case 3: ตัวเลขเดียว
+      const exact = parseFloat(range);
+      if (!isNaN(exact)) {
+        return numValue === exact ? "ปกติ" : numValue > exact ? "สูง" : "ต่ำ";
+      }
+
+      // Default
+      return "ไม่ระบุ";
     }
 
     function closeSuccessModal() {
-      document.getElementById('successModal').classList.remove('show');
+      const successModal = document.getElementById('successModal');
+      if (successModal) {
+        successModal.classList.remove('show');
+      }
       currentTestId = null;
+      console.log('Success modal closed');
     }
 
     function downloadResult(testId) {
       const test = bloodTests.find(b => b.id === testId);
-      if (!test || !test.excelData) return;
-      
-      // Create Excel workbook for download
-      const ws = XLSX.utils.json_to_sheet(test.excelData.map(item => ({
+      if (!test || !test.results) return;
+
+      const ws = XLSX.utils.json_to_sheet(test.results.map(item => ({
         'รายการตรวจ': item.test,
         'ค่าที่วัดได้': item.value,
         'หน่วย': item.unit,
         'ค่าปกติ': item.normalRange,
         'สถานะ': item.status
       })));
-      
+
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'ผลตรวจเลือด');
-      
-      // Generate filename
       const filename = `ผลตรวจเลือด_${test.patientName}_${test.id}_${new Date().toISOString().split('T')[0]}.xlsx`;
-      
-      // Download file
       XLSX.writeFile(wb, filename);
-      
+
       showNotification(`กำลังดาวน์โหลดผลตรวจเลือดของ ${test.patientName}`, 'success');
     }
 
@@ -1859,9 +2040,38 @@
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', function() {
-      initializePage();
+      // เพิ่ม click listener ให้ปุ่มอัปโหลดเพื่อ debug
+      const uploadBtn = document.getElementById('uploadBtn');
+      if (uploadBtn) {
+        uploadBtn.addEventListener('click', function(e) {
+          console.log('🔍 Upload button clicked');
+          console.log('- Event:', e);
+          console.log('- Button disabled:', this.disabled);
+          console.log('- Current test ID:', currentTestId);
+          console.log('- Selected file:', selectedFile);
+          
+          if (this.disabled) {
+            console.log('❌ Button is disabled, preventing upload');
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }
+        });
+      }
     });
-
+    function forceEnableUploadButton() {
+      const uploadBtn = document.getElementById('uploadBtn');
+      if (uploadBtn) {
+        uploadBtn.disabled = false;
+        uploadBtn.classList.remove('disabled');
+        uploadBtn.style.opacity = '1';
+        uploadBtn.style.pointerEvents = 'auto';
+        console.log('✅ Upload button force enabled');
+        return true;
+      }
+      console.log('❌ Upload button not found');
+      return false;
+    }
     // Add CSS for notification animations
     const style = document.createElement('style');
     style.textContent = `
@@ -1889,5 +2099,6 @@
     `;
     document.head.appendChild(style);
   </script>
+  
 </body>
 </html>

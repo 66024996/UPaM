@@ -759,7 +759,7 @@
   <!-- Header -->
   <div class="header">
     <div class="logo">
-      <img src="./img/UPaMLOGO.png" class="logo-img"> 
+      <img src="public/img/UPaMLOGO.png" class="logo-img"> 
       <div class="phone-number">
         <i class="fas fa-phone"></i>
         1234
@@ -775,9 +775,11 @@
           <i class="fas fa-bell"></i>
         </button>
         <div class="profile-dropdown">
-                    <button class="icon-btn" id="profileBtn" title="บัญชีผู้ใช้">
-                        <i class="fas fa-user"></i>
-                    </button>
+                    <a href="/Login">
+                      <button class="icon-btn" title="บัญชีผู้ใช้">
+                          <i class="fas fa-user"></i>
+                      </button>
+                    </a>
                     <div class="dropdown-content" id="profileDropdown">
                         <button class="dropdown-item logout" onclick="logout()">
                             <i class="fas fa-sign-out-alt"></i>
@@ -909,6 +911,29 @@
   </div>
 
   <script>
+    let bookings = [];
+    let currentTab = 'pending'; // ใช้ภาษาอังกฤษใน UI
+    let currentBookingId = null;
+    let currentBookingType = null;
+
+    function mapStatus(dbStatus) {
+      switch (dbStatus) {
+        case 'จองแล้ว': return 'pending';
+        case 'ยืนยันแล้ว': return 'confirmed';
+        case 'ยกเลิกแล้ว': return 'cancelled';
+        default: return 'pending';
+      }
+    }
+
+    function mapStatusToDb(uiStatus) {
+      switch (uiStatus) {
+        case 'pending': return 'จองแล้ว';
+        case 'confirmed': return 'ยืนยันแล้ว';
+        case 'cancelled': return 'ยกเลิกแล้ว';
+        default: return 'จองแล้ว';
+      }
+    }
+    
     // Profile dropdown functionality
         const profileBtn = document.getElementById('profileBtn');
         const profileDropdown = document.getElementById('profileDropdown');
@@ -944,72 +969,42 @@
             }
         }
     // Sample data
-    let bookings = [
-      {
-        id: '00010',
-        patientName: 'ประสิทธิโชค กรรเชียง',
-        service: 'กายภาพขา',
-        problem: 'กล้ามเนื้อขาอ่อนแรง',
-        date: '20/08/2025',
-        time: '11:00-12:00',
-        price: '1,250',
-        status: 'pending',
-        assignedStaff: null
-      },
-      {
-        id: '00011',
-        patientName: 'สมชาย ใจดี',
-        service: 'กายภาพกล้ามเนื้อส่วนมือ',
-        problem: 'ปวดมือจากการทำงาน',
-        date: '20/08/2025',
-        time: '09:00-10:00',
-        price: '1,250',
-        status: 'pending',
-        assignedStaff: null
-      },
-      {
-        id: '00012',
-        patientName: 'สมหญิง รักสุขภาพ',
-        service: 'กายภาพหมอนรองกระดูกทับเส้น',
-        problem: 'หมอนรองกระดูกเคลื่อน',
-        date: '20/08/2025',
-        time: '14:00-15:00',
-        price: '1,250',
-        status: 'pending',
-        assignedStaff: null
-      },
-      {
-        id: '00009',
-        patientName: 'จินตรา จันทร์เจ้า',
-        service: 'กายภาพขา',
-        problem: 'เข่าปวดจากการกีฬา',
-        date: '20/08/2025',
-        time: '10:00-11:00',
-        price: '1,250',
-        status: 'confirmed',
-        assignedStaff: 'ทนพ. กำปั่น แสงจันทร์'
-      },
-      {
-        id: '00008',
-        patientName: 'นาง B',
-        service: 'กายภาพข้อเท้า กล้ามเนื้ออักเสบ',
-        problem: 'ข้อเท้าบิดจากการล้ม',
-        date: '20/08/2025',
-        time: '13:00-14:00',
-        price: '1,250',
-        status: 'confirmed',
-        assignedStaff: 'ทนพ. เชษฐา เอี่ยมจินดา'
-      }
-    ];
-
-    let currentTab = 'pending';
-    let currentBookingId = null;
+    
 
     // Initialize page
     function initializePage() {
       renderBookings();
       updateCounts();
+      loadBookings();
       setupEventListeners();
+    }
+    
+    async function loadBookings() {
+      try {
+        const res = await fetch(`/api/admin/appointments?status=${currentTab}`);
+        const data = await res.json();
+        if (data.success) {
+          const normalized = data.appointments.map(a => ({
+            id: a.id,
+            status: mapStatus(a.status), // ✅ แปลงสถานะ DB → UI
+            patientName: a.patientName,
+            service: a.service,
+            date: a.appointment_date,
+            time: a.time_slot,
+            price: a.total_price,
+            assignedStaff: a.assignedStaff || null,
+            type: a.appointment_type,
+            problem: a.problem || '-'   // blood appointment จะมีค่า
+          }));
+          bookings = normalized;
+          renderBookings();
+          updateCounts();
+        } else {
+          console.error('โหลดข้อมูลล้มเหลว:', data.message);
+        }
+      } catch (err) {
+        console.error('API error:', err);
+      }
     }
 
     // Setup event listeners
@@ -1042,41 +1037,53 @@
     // Switch between tabs
     function switchTab(status) {
       currentTab = status;
-      
-      // Update tab appearance
-      document.querySelectorAll('.status-tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
+      document.querySelectorAll('.status-tab').forEach(tab => tab.classList.remove('active'));
       document.querySelector(`[data-status="${status}"]`).classList.add('active');
-      
-      renderBookings();
+      loadBookings();
     }
+
+    const normalized = data.appointments.map(a => ({
+      id: a.id,
+      status: mapStatus(a.status), // แปลงสถานะให้ตรง
+      patientName: a.patientName,
+      service: a.service,
+      date: a.appointment_date,
+      time: a.time_slot,
+      price: a.total_price,
+      assignedStaff: a.assignedStaff || null,
+      type: a.appointment_type,
+      problem: a.problem || '-'   // เผื่อกรณี blood appointment
+    }));
+
+    bookings = normalized;
+    renderBookings();
+
 
     // Render bookings based on current tab
     function renderBookings() {
-      const bookingList = document.getElementById('bookingList');
-      const filteredBookings = bookings.filter(booking => booking.status === currentTab);
-      
-      if (filteredBookings.length === 0) {
-        bookingList.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">
-              <i class="fas fa-calendar-times"></i>
-            </div>
-            <div class="empty-title">ไม่มีการจองในสถานะนี้</div>
-            <div class="empty-message">ยังไม่มีรายการจองที่ต้องจัดการในขณะนี้</div>
-          </div>
-        `;
-        return;
-      }
+    const bookingList = document.getElementById('bookingList');
+    const filteredBookings = bookings.filter(booking => booking.status === currentTab);
 
-      let html = '';
+    if (filteredBookings.length === 0) {
+      bookingList.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="fas fa-calendar-times"></i>
+          </div>
+          <div class="empty-title">ไม่มีการจองในสถานะนี้</div>
+          <div class="empty-message">ยังไม่มีรายการจองที่ต้องจัดการในขณะนี้</div>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
       filteredBookings.forEach(booking => {
         const statusClass = booking.status === 'pending' ? 'status-pending' : 
-                           booking.status === 'confirmed' ? 'status-confirmed' : 'status-cancelled';
+                          booking.status === 'confirmed' ? 'status-confirmed' : 'status-cancelled';
         const statusText = booking.status === 'pending' ? 'รอการยืนยัน' : 
                           booking.status === 'confirmed' ? 'ยืนยันแล้ว' : 'ยกเลิก';
-        
+
         html += `
           <div class="booking-card ${booking.status}" onclick="openDetailModal('${booking.id}')">
             <div class="booking-header">
@@ -1275,6 +1282,7 @@
       if (!booking) return;
       
       currentBookingId = bookingId;
+      currentBookingType = booking.type;
       
       document.getElementById('modalBookingId').textContent = booking.id;
       document.getElementById('modalPatientName').textContent = booking.patientName;
@@ -1312,7 +1320,9 @@
     }
 
     function openStaffModal(bookingId) {
+      const booking = bookings.find(b => b.id === bookingId);
       currentBookingId = bookingId;
+      currentBookingType = booking.type;
       document.getElementById('staffSelect').value = '';
       document.getElementById('staffModal').classList.add('show');
       closeDetailModal();
@@ -1323,53 +1333,62 @@
       currentBookingId = null;
     }
 
-    function confirmStaffAssignment() {
-      const selectedStaff = document.getElementById('staffSelect').value;
-      
-      if (!selectedStaff) {
-        alert('กรุณาเลือกเจ้าหน้าที่');
-        return;
-      }
-      
-      // Update booking data
-      const bookingIndex = bookings.findIndex(b => b.id === currentBookingId);
-      if (bookingIndex !== -1) {
-        bookings[bookingIndex].status = 'confirmed';
-        bookings[bookingIndex].assignedStaff = selectedStaff;
-      }
-      
-      closeStaffModal();
-      
-      // Show success modal
-      document.getElementById('successMessage').innerHTML = `
-        การนัดหมายรหัส <strong>${currentBookingId}</strong><br>
-        ได้รับการยืนยันและมอบหมายให้ <strong>${selectedStaff}</strong> แล้ว
-      `;
-      document.getElementById('successModal').classList.add('show');
-      
-      // Update display
-      updateCounts();
-      renderBookings();
+    function switchTab(status) {
+      currentTab = status;
+      document.querySelectorAll('.status-tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelector(`[data-status="${status}"]`).classList.add('active');
+      loadBookings();
     }
 
+    async function confirmStaffAssignment() {
+      const selectedStaff = document.getElementById('staffSelect').value;
+      if (!selectedStaff) return alert('กรุณาเลือกเจ้าหน้าที่');
+
+      try {
+        const res = await fetch(`/api/admin/appointments/${currentBookingId}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'ยืนยันแล้ว', staffName: selectedStaff, type: bookingType })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeStaffModal();
+          document.getElementById('successMessage').innerHTML = data.message;
+          document.getElementById('successModal').classList.add('show');
+          loadBookings();
+        } else {
+          alert('❌ ' + data.message);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('เกิดข้อผิดพลาด');
+      }
+    }
     function closeSuccessModal() {
       document.getElementById('successModal').classList.remove('show');
       currentBookingId = null;
     }
 
-    function cancelBooking(bookingId) {
-      if (confirm('คุณแน่ใจหรือไม่ที่จะยกเลิกการจองนี้?')) {
-        const bookingIndex = bookings.findIndex(b => b.id === bookingId);
-        if (bookingIndex !== -1) {
-          bookings[bookingIndex].status = 'cancelled';
+    async function cancelBooking(bookingId) {
+      if (!confirm('คุณแน่ใจหรือไม่ที่จะยกเลิกการจองนี้?')) return;
+
+      try {
+        const res = await fetch(`/api/admin/appointments/${bookingId}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'ยกเลิกแล้ว', reason: 'ยกเลิกโดยผู้ดูแล', type: bookingType })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeDetailModal();
+          showNotification(data.message, 'warning');
+          loadBookings();
+        } else {
+          alert('❌ ' + data.message);
         }
-        
-        closeDetailModal();
-        updateCounts();
-        renderBookings();
-        
-        // Show notification
-        showNotification('ยกเลิกการจองเรียบร้อยแล้ว', 'warning');
+      } catch (err) {
+        console.error(err);
+        alert('เกิดข้อผิดพลาด');
       }
     }
 
@@ -1440,6 +1459,9 @@
       }
     `;
     document.head.appendChild(style);
+    document.addEventListener('DOMContentLoaded', function() {
+      loadBookings();  // เรียกใช้ loadBookings ของ admin
+    });
   </script>
 </body>
 </html>
