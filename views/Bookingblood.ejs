@@ -1737,7 +1737,7 @@
           body: JSON.stringify({
             services: bookingData.services,
             totalPrice: bookingData.totalPrice,
-            appointment_date: bookingData.selectedDate.toISOString().split('T')[0],
+            appointment_date: bookingData.selectedDate.toLocaleString().split(' ')[0].split('/').reverse().join("-"),
             time_slot: bookingData.selectedTime,
             problem: bookingData.problem
           })

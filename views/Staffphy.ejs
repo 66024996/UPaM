@@ -841,7 +841,7 @@
 </head>
 <body>
   <!-- Header -->
-  <div class="header">
+  <!-- <div class="header">
     <div class="logo">
       <img src="./img/UPaMLOGO.png" class="logo-img"> 
       <div class="phone-number">
@@ -877,7 +877,48 @@
                 </div>
       </div>
     </div>
+  </div> -->
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <img src="./img/UPaMLOGO.png" class="logo-img"> 
+      <div class="phone-number">
+        <i class="fas fa-phone"></i>
+        1234
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <div class="staff-info">
+        <div class="staff-name">นพ. สมชาย วิทยากร</div>
+        <div class="staff-role">เจ้าหน้าที่ห้องปฏิบัติการ</div>
+      </div>
+      <div class="header-icons">
+        <button class="icon-btn" title="ค้นหา">
+          <i class="fas fa-search"></i>
+        </button>
+        <button class="icon-btn notification-btn" title="การแจ้งเตือน">
+          <i class="fas fa-bell"></i>
+        </button>
+        <div class="profile-dropdown">
+              <a href="/Login">
+                    <button class="icon-btn" id="profileBtn" title="บัญชีผู้ใช้">
+                        <i class="fas fa-user"></i>
+                    </button>
+              </a>
+              <div class="dropdown-content" id="profileDropdown">
+                <button class="dropdown-item logout" onclick="logout()">
+                  <i class="fas fa-sign-out-alt"></i>
+                    ออกจากระบบ
+                </button>
+              </div>
+          </div>
+      </div>
+    </div>
   </div>
+
+  
 
   <!-- Main Content -->
   <div class="container">
@@ -1180,9 +1221,156 @@
       }
     ];
 
+    // let bookings = [];
     let currentTab = 'today';
-    let currentBookingId = null;
     let selectedFile = null;
+
+    async function loadAppointments() {
+      const res = await fetch('/api/lab/StaffPhy');
+      bookings = await res.json();
+      // renderTests();
+      updateCounts();
+      renderAppointments(bookings);
+      initializePage();
+    }
+
+    window.addEventListener('DOMContentLoaded', loadAppointments);
+
+    function renderAppointments(list) {
+      console.log('list => ', list)
+      const tbody = document.getElementById('bookingList');
+      tbody.innerHTML = "";
+      list.forEach(appt => {
+        const tr = document.createElement('tr');
+        // console.log('appointment => ', appt)
+        tr.innerHTML = `
+          <td>${appt.id}</td>
+          <td>${appt.name}</td>
+          <td>${appt.price}</td>
+          <td>${appt.date}</td>
+          <td>${appt.time}</td>
+          <td>${appt.status}</td>
+          <td>
+            <button class="detail-btn" data-id="${appt.id}">รายละเอียด</button>
+            <button class="upload-btn" data-id="${appt.id}">อัปโหลดผล</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // bind ปุ่มรายละเอียด
+      document.querySelectorAll('.detail-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const apptId = btn.dataset.id;
+          openDetailModal(apptId);
+        });
+      });
+
+      // bind ปุ่มอัปโหลดผล
+      document.querySelectorAll('.upload-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const testId = btn.dataset.id;
+          openUploadModal(testId);
+        });
+      });
+    }
+
+
+        // Render tests based on current tab
+    function renderTests(filtered = null) {
+      const testList = document.getElementById('bookingList');
+      
+      console.log('bookings => ', bookings)
+      let list = filtered || bookings.filter(t => t.status === currentTab);
+
+      console.log('status => ', currentTab)
+      if (currentTab === 'today'){
+        list = bookings.filter(t => {
+          console.log('day => ', t.date.split('/')[0], new Date().toLocaleString().split('/')[0])
+          return t.date.split('/')[0] == new Date().toLocaleString().split('/')[0]
+        })
+      } 
+
+      console.log('list 2 => ', list )
+
+      if (!list.length) {
+        testList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-vial"></i></div>
+            <div class="empty-title">ไม่มีรายการในสถานะนี้</div>
+            <div class="empty-message">ยังไม่มีรายการตรวจเลือดที่ต้องจัดการ</div>
+          </div>`;
+        return;
+      }
+
+      let html = '';
+        list.forEach(test => {
+          const statusClass = test.status === 'today' ? 'status-today' : 
+                            test.status === 'completed' ? 'status-completed' : 'status-past';
+          const statusText = test.status === 'today' ? 'วันนี้' : 
+                            test.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
+          
+          html += `
+            <div class="booking-card ${test.status}" onclick="openDetailModal('${test.id}')">
+              <div class="booking-header">
+                <div class="booking-id">รหัส ${test.id}</div>
+                <div class="booking-status ${statusClass}">${statusText}</div>
+              </div>
+              
+              <div class="booking-info">
+                <div class="info-item">
+                  <div class="info-label">ชื่อผู้ป่วย</div>
+                  <div class="info-value">${test.patientName}</div>
+                </div>
+                
+                <div class="info-item">
+                  <div class="info-label">ประเภทการกายภาพ</div>
+                  <div class="info-value">${test.name}</div>
+                </div>
+                
+                <div class="info-item">
+                  <div class="info-label">วันที่</div>
+                  <div class="info-value">${test.date}</div>
+                </div>
+                
+                <div class="info-item">
+                  <div class="info-label">เวลา</div>
+                  <div class="info-value">${test.time} น.</div>
+                </div>
+                
+                <div class="info-item">
+                <div class="info-label">ค่าบริการ</div>
+                <div class="info-value price-value">${test.price} บาท</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">เจ้าหน้าที่</div>
+                <div class="info-value">${test.labStaff}</div>
+              </div>
+            </div>
+            
+            <div class="booking-actions" onclick="event.stopPropagation()">
+              <button class="btn btn-view" onclick="openDetailModal('${test.id}')">
+                <i class="fas fa-eye"></i> ดูรายละเอียด
+              </button>
+              
+              ${test.date.split('/')[0] === new Date().toLocaleString().split('/')[0] && !test.results ? `
+                <button class="btn btn-upload" onclick="openUploadModal('${test.id}')">
+                  <i class="fas fa-upload"></i> อัปโหลดผล
+                </button>
+              ` : test.results ? `
+                <button class="btn btn-download" onclick="downloadResult('${test.id}')">
+                  <i class="fas fa-download"></i> ดาวน์โหลด
+                </button>
+              ` : ''}
+            </div>
+          </div>
+          `;
+        });
+        
+        testList.innerHTML = html;
+    }
+
 
     // Initialize page
     function initializePage() {
@@ -1264,7 +1452,9 @@
     // Render bookings based on current tab
     function renderBookings() {
       const bookingList = document.getElementById('bookingList');
-      const filteredBookings = bookings.filter(booking => booking.status === currentTab);
+      let filteredBookings = bookings.filter(booking => booking.status === currentTab);
+
+      if(currentTab === 'today') filteredBookings = bookings.filter(booking => booking.date.split('/')[0] === new Date().toLocaleString().split('/')[0])
       
       if (filteredBookings.length === 0) {
         bookingList.innerHTML = `
@@ -1301,7 +1491,7 @@
               
               <div class="info-item">
                 <div class="info-label">บริการ</div>
-                <div class="info-value">${booking.service}</div>
+                <div class="info-value">${booking.name}</div>
               </div>
               
               <div class="info-item">
@@ -1330,7 +1520,7 @@
                 <i class="fas fa-eye"></i> ดูรายละเอียด
               </button>
               
-              ${booking.status === 'today' && !booking.result ? `
+              ${booking.date.split('/')[0] === new Date().toLocaleString().split('/')[0] && !booking.result ? `
                 <button class="btn btn-upload" onclick="openUploadModal('${booking.id}')">
                   <i class="fas fa-upload"></i> อัปโหลดผล
                 </button>
@@ -1349,7 +1539,7 @@
 
     // Update counts for each tab
     function updateCounts() {
-      const todayCount = bookings.filter(b => b.status === 'today').length;
+      const todayCount = bookings.filter(b => b.date.split('/')[0] === new Date().toLocaleString().split('/')[0]).length;
       const completedCount = bookings.filter(b => b.status === 'completed').length;
       const historyCount = bookings.filter(b => b.status === 'history').length;
       

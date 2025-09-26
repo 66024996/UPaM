@@ -1138,9 +1138,9 @@
         tr.innerHTML = `
           <td>${appt.id}</td>
           <td>${appt.services}</td>
-          <td>${appt.total_price}</td>
-          <td>${appt.appointment_date}</td>
-          <td>${appt.time_slot}</td>
+          <td>${appt.price}</td>
+          <td>${appt.date}</td>
+          <td>${appt.time}</td>
           <td>${appt.status}</td>
           <td>
             <button class="detail-btn" data-id="${appt.id}">รายละเอียด</button>
@@ -1241,7 +1241,14 @@
     // Render tests based on current tab
     function renderTests(filtered = null) {
       const testList = document.getElementById('testList');
-      const list = filtered || bloodTests.filter(t => t.status === currentTab);
+      let list = filtered || bloodTests.filter(t => t.status === currentTab);
+
+      if (currentTab === 'today'){
+        list = bloodTests.filter(t => {
+          console.log('day => ', t.date.split('/')[0], new Date().toLocaleString().split('/')[0])
+          return t.date.split('/')[0] == new Date().toLocaleString().split('/')[0]
+        })
+      } 
 
       if (!list.length) {
         testList.innerHTML = `
@@ -1304,7 +1311,7 @@
                 <i class="fas fa-eye"></i> ดูรายละเอียด
               </button>
               
-              ${test.status === 'today' && !test.results ? `
+              ${test.date.split('/')[0] === new Date().toLocaleString().split('/')[0] && !test.results ? `
                 <button class="btn btn-upload" onclick="openUploadModal('${test.id}')">
                   <i class="fas fa-upload"></i> อัปโหลดผล
                 </button>
@@ -1323,7 +1330,7 @@
 
     // Update counts for each tab
     function updateCounts() {
-      const todayCount = bloodTests.filter(b => b.status === 'today').length;
+      const todayCount = bloodTests.filter(b => b.date.split('/')[0] === new Date().toLocaleString().split('/')[0]).length;
       const completedCount = bloodTests.filter(b => b.status === 'completed').length;
       const historyCount = bloodTests.filter(b => b.status === 'history').length;
       

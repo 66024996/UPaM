@@ -1424,7 +1424,7 @@
       let html = '';
 
       // แปลง baseTimeSlots ให้เช็กว่า slot ไหนถูกจองแล้ว
-      const dateKey = selectedDate.toISOString().split('T')[0];
+      const dateKey = selectedDate.toLocaleString().split('/')[0];
       const bookedSlots = existingBookings[dateKey] || [];
 
       const timeSlots = baseTimeSlots.map(slot => {
@@ -1533,9 +1533,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           service_id: bookingData.serviceId,
-          appointment_date: bookingData.selectedDate.toISOString().split('T')[0], // YYYY-MM-DD
+          appointment_date: bookingData.selectedDate.toLocaleString().split(' ')[0].split('/').reverse().join('-'), // YYYY-MM-DD
           time_slot: bookingData.selectedTime,
-          problem: bookingData.problem
+          problem: bookingData.problem,
+          total_price: bookingData.servicePrice
         })
       })
       .then(res => res.json())

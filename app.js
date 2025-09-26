@@ -190,7 +190,7 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/bookingphy', async (req, res) => {
-  const { service_id, appointment_date, time_slot } = req.body;
+  const { service_id, appointment_date, time_slot, total_price } = req.body;
 
   if (!req.session || !req.session.userId || !req.session.email) {
     return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบก่อนทำการจอง' });
@@ -218,9 +218,9 @@ app.post('/bookingphy', async (req, res) => {
     
     const [result] = await pool.execute(
       `INSERT INTO appointments 
-       (user_id, service_id, appointment_date, time_slot, status, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, 'จองแล้ว', NOW(), NOW())`,
-      [user_id,  service_id, appointment_date, time_slot]
+       (user_id, service_id, appointment_date, time_slot, total_price, status, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?,'จองแล้ว', NOW(), NOW())`,
+      [user_id,  service_id, appointment_date, time_slot, total_price]
     );
 
     const bookingId = result.insertId.toString().padStart(5, '0');
@@ -1678,6 +1678,32 @@ app.get('/api/lab/Staffblood', async (req, res) => {
       }
     });
 
+    res.json(rows);
+  } catch (err) {
+    console.error('❌ Error fetching appointments:', err);
+    res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลได้' });
+  }
+});
+
+app.get('/api/lab/StaffPhy', async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+     SELECT 
+        b.id,
+        CONCAT(p.title, " ",  p.first_name, ' ', p.last_name) AS patientName,
+        b.total_price AS price,
+        DATE_FORMAT(b.appointment_date, '%d/%m/%Y') AS date,
+        b.time_slot AS time,
+        b.status,
+        s.name
+      FROM appointments b
+      JOIN services s ON b.service_id = s.id
+      JOIN personal_info p ON b.user_id = p.user_id
+      ORDER BY b.appointment_date DESC
+    `);
+
+
+    console.log('result => ', rows, rows.length)
     res.json(rows);
   } catch (err) {
     console.error('❌ Error fetching appointments:', err);
