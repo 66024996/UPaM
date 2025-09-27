@@ -807,13 +807,13 @@
     <!-- Status Tabs -->
     <div class="status-tabs">
       <button class="status-tab active" data-status="pending" onclick="switchTab('pending')">
-        รอการยืนยัน <span class="status-count" id="pendingCount">3</span>
+        รอการยืนยัน <span class="status-count" id="pendingCount">0</span>
       </button>
       <button class="status-tab" data-status="confirmed" onclick="switchTab('confirmed')">
-        ยืนยันแล้ว <span class="status-count" id="confirmedCount">15</span>
+        ยืนยันแล้ว <span class="status-count" id="confirmedCount">0</span>
       </button>
       <button class="status-tab" data-status="cancelled" onclick="switchTab('cancelled')">
-        ยกเลิก <span class="status-count" id="cancelledCount">2</span>
+        ยกเลิก <span class="status-count" id="cancelledCount">0</span>
       </button>
     </div>
 
@@ -912,81 +912,76 @@
 
   <script>
     let bookings = [];
-    let currentTab = 'pending'; // ใช้ภาษาอังกฤษใน UI
+    let currentTab = 'pending';
     let currentBookingId = null;
     let currentBookingType = null;
 
-    function mapStatus(dbStatus) {
-      switch (dbStatus) {
-        case 'จองแล้ว': return 'pending';
-        case 'ยืนยันแล้ว': return 'confirmed';
-        case 'ยกเลิกแล้ว': return 'cancelled';
-        default: return 'pending';
-      }
+    // Mapping DB ↔ UI
+    const mapStatus = dbStatus => ({
+      'จองแล้ว': 'pending',
+      'ยืนยันแล้ว': 'confirmed',
+      'ยกเลิกแล้ว': 'cancelled'
+    }[dbStatus] || 'pending');
+
+    const mapStatusToDb = uiStatus => ({
+      'pending': 'จองแล้ว',
+      'confirmed': 'ยืนยันแล้ว',
+      'cancelled': 'ยกเลิกแล้ว'
+    }[uiStatus] || 'จองแล้ว');
+
+    // Profile dropdown
+    const profileBtn = document.getElementById('profileBtn');
+    const profileDropdown = document.getElementById('profileDropdown');
+
+    profileBtn.addEventListener('click', e => { e.stopPropagation(); profileDropdown.classList.toggle('show'); });
+    window.addEventListener('click', () => profileDropdown.classList.remove('show'));
+    profileDropdown.addEventListener('click', e => e.stopPropagation());
+
+    function logout(event) {
+      if (!confirm('คุณต้องการออกจากระบบหรือไม่?')) return;
+      event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
+      setTimeout(() => window.location.href = "/Login", 1500);
     }
 
-    function mapStatusToDb(uiStatus) {
-      switch (uiStatus) {
-        case 'pending': return 'จองแล้ว';
-        case 'confirmed': return 'ยืนยันแล้ว';
-        case 'cancelled': return 'ยกเลิกแล้ว';
-        default: return 'จองแล้ว';
-      }
-    }
-    
-    // Profile dropdown functionality
-        const profileBtn = document.getElementById('profileBtn');
-        const profileDropdown = document.getElementById('profileDropdown');
-
-        profileBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            profileDropdown.classList.toggle('show');
-        });
-
-        // ปิด dropdown เมื่อคลิกข้างนอก
-        window.addEventListener('click', function() {
-            if (profileDropdown.classList.contains('show')) {
-                profileDropdown.classList.remove('show');
-            }
-        });
-
-        // ป้องกันการปิด dropdown เมื่อคลิกข้างใน dropdown
-        profileDropdown.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-
-        // ฟังก์ชัน logout
-        function logout() {
-            if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
-                // เพิ่ม loading effect
-                const logoutBtn = event.target;
-                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
-                
-                setTimeout(() => {
-                    alert('ออกจากระบบเรียบร้อยแล้ว');
-                     window.location.href = "/Login";
-                }, 1500);
-            }
-        }
-    // Sample data
-    
-
-    // Initialize page
+    // Initialize
     function initializePage() {
-      renderBookings();
-      updateCounts();
-      loadBookings();
       setupEventListeners();
+      loadBookings();
     }
-    
+
+    // Event listeners
+    function setupEventListeners() {
+      document.getElementById('searchInput')?.addEventListener('input', handleSearch);
+      document.getElementById('dateFilter')?.addEventListener('change', handleSearch);
+
+      ['detailModal','staffModal','successModal'].forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modal.addEventListener('click', e => { if(e.target === modal) closeModal(modalId); });
+      });
+
+      document.addEventListener('keydown', e => {
+        if(e.key === 'Escape') ['detailModal','staffModal','successModal'].forEach(closeModal);
+      });
+    }
+
+    // Switch tab
+    function switchTab(status) {
+      currentTab = status;
+      document.querySelectorAll('.status-tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelector(`[data-status="${status}"]`)?.classList.add('active');
+      loadBookings();
+    }
+
+    // Load bookings
     async function loadBookings() {
       try {
         const res = await fetch(`/api/admin/appointments?status=${currentTab}`);
         const data = await res.json();
         if (data.success) {
-          const normalized = data.appointments.map(a => ({
+          bookings = data.appointments.map(a => ({
             id: a.id,
-            status: mapStatus(a.status), // ✅ แปลงสถานะ DB → UI
+            status: mapStatus(a.status),
             patientName: a.patientName,
             service: a.service,
             date: a.appointment_date,
@@ -994,474 +989,195 @@
             price: a.total_price,
             assignedStaff: a.assignedStaff || null,
             type: a.appointment_type,
-            problem: a.problem || '-'   // blood appointment จะมีค่า
+            problem: a.problem || '-'
           }));
-          bookings = normalized;
           renderBookings();
           updateCounts();
-        } else {
-          console.error('โหลดข้อมูลล้มเหลว:', data.message);
-        }
-      } catch (err) {
-        console.error('API error:', err);
-      }
+          // Update modal if open
+          if(currentBookingId && document.getElementById('detailModal')?.classList.contains('show')) {
+            openDetailModal(currentBookingId);
+          }
+        } else console.error('โหลดข้อมูลล้มเหลว:', data.message);
+      } catch(err) { console.error('API error:', err); }
     }
 
-    // Setup event listeners
-    function setupEventListeners() {
-      document.getElementById('searchInput').addEventListener('input', handleSearch);
-      document.getElementById('dateFilter').addEventListener('change', handleDateFilter);
-      
-      // Modal event listeners
-      document.getElementById('detailModal').addEventListener('click', function(e) {
-        if (e.target === this) closeDetailModal();
-      });
-      
-      document.getElementById('staffModal').addEventListener('click', function(e) {
-        if (e.target === this) closeStaffModal();
-      });
-      
-      document.getElementById('successModal').addEventListener('click', function(e) {
-        if (e.target === this) closeSuccessModal();
-      });
-      
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          closeDetailModal();
-          closeStaffModal();
-          closeSuccessModal();
-        }
-      });
-    }
-
-    // Switch between tabs
-    function switchTab(status) {
-      currentTab = status;
-      document.querySelectorAll('.status-tab').forEach(tab => tab.classList.remove('active'));
-      document.querySelector(`[data-status="${status}"]`).classList.add('active');
-      loadBookings();
-    }
-
-    const normalized = data.appointments.map(a => ({
-      id: a.id,
-      status: mapStatus(a.status), // แปลงสถานะให้ตรง
-      patientName: a.patientName,
-      service: a.service,
-      date: a.appointment_date,
-      time: a.time_slot,
-      price: a.total_price,
-      assignedStaff: a.assignedStaff || null,
-      type: a.appointment_type,
-      problem: a.problem || '-'   // เผื่อกรณี blood appointment
-    }));
-
-    bookings = normalized;
-    renderBookings();
-
-
-    // Render bookings based on current tab
+    // Render bookings
     function renderBookings() {
-    const bookingList = document.getElementById('bookingList');
-    const filteredBookings = bookings.filter(booking => booking.status === currentTab);
-
-    if (filteredBookings.length === 0) {
-      bookingList.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">
-            <i class="fas fa-calendar-times"></i>
-          </div>
-          <div class="empty-title">ไม่มีการจองในสถานะนี้</div>
-          <div class="empty-message">ยังไม่มีรายการจองที่ต้องจัดการในขณะนี้</div>
-        </div>
-      `;
-      return;
-    }
-
-    let html = '';
-      filteredBookings.forEach(booking => {
-        const statusClass = booking.status === 'pending' ? 'status-pending' : 
-                          booking.status === 'confirmed' ? 'status-confirmed' : 'status-cancelled';
-        const statusText = booking.status === 'pending' ? 'รอการยืนยัน' : 
-                          booking.status === 'confirmed' ? 'ยืนยันแล้ว' : 'ยกเลิก';
-
-        html += `
-          <div class="booking-card ${booking.status}" onclick="openDetailModal('${booking.id}')">
-            <div class="booking-header">
-              <div class="booking-id">รหัส ${booking.id}</div>
-              <div class="booking-status ${statusClass}">${statusText}</div>
-            </div>
-            
-            <div class="booking-info">
-              <div class="info-item">
-                <div class="info-label">ชื่อผู้ป่วย</div>
-                <div class="info-value">${booking.patientName}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">บริการ</div>
-                <div class="info-value">${booking.service}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">วันที่</div>
-                <div class="info-value">${booking.date}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">เวลา</div>
-                <div class="info-value">${booking.time} น.</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">ค่าบริการ</div>
-                <div class="info-value price-value">${booking.price} บาท</div>
-              </div>
-              
-              ${booking.assignedStaff ? `
-                <div class="info-item">
-                  <div class="info-label">เจ้าหน้าที่</div>
-                  <div class="info-value">${booking.assignedStaff}</div>
-                </div>
-              ` : ''}
-            </div>
-            
-            <div class="booking-actions" onclick="event.stopPropagation()">
-              <button class="btn btn-view" onclick="openDetailModal('${booking.id}')">
-                <i class="fas fa-eye"></i> ดูรายละเอียด
-              </button>
-              
-              ${booking.status === 'pending' ? `
-                <button class="btn btn-confirm" onclick="openStaffModal('${booking.id}')">
-                  <i class="fas fa-check"></i> ยืนยัน
-                </button>
-                <button class="btn btn-cancel" onclick="cancelBooking('${booking.id}')">
-                  <i class="fas fa-times"></i> ยกเลิก
-                </button>
-              ` : ''}
-            </div>
-          </div>
-        `;
-      });
-      
-      bookingList.innerHTML = html;
-    }
-
-    // Update counts for each tab
-    function updateCounts() {
-      const pendingCount = bookings.filter(b => b.status === 'pending').length;
-      const confirmedCount = bookings.filter(b => b.status === 'confirmed').length;
-      const cancelledCount = bookings.filter(b => b.status === 'cancelled').length;
-      
-      document.getElementById('pendingCount').textContent = pendingCount;
-      document.getElementById('confirmedCount').textContent = confirmedCount;
-      document.getElementById('cancelledCount').textContent = cancelledCount;
-    }
-
-    // Search functionality
-    function handleSearch() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const dateFilter = document.getElementById('dateFilter').value;
-      
-      let filteredBookings = bookings.filter(booking => booking.status === currentTab);
-      
-      if (searchTerm) {
-        filteredBookings = filteredBookings.filter(booking => 
-          booking.id.toLowerCase().includes(searchTerm) ||
-          booking.patientName.toLowerCase().includes(searchTerm)
-        );
-      }
-      
-      if (dateFilter) {
-        const filterDate = new Date(dateFilter);
-        filteredBookings = filteredBookings.filter(booking => {
-          const bookingDate = parseThaiDate(booking.date);
-          return bookingDate.toDateString() === filterDate.toDateString();
-        });
-      }
-      
-      renderFilteredBookings(filteredBookings);
-    }
-
-    function handleDateFilter() {
-      handleSearch();
-    }
-
-    function parseThaiDate(dateStr) {
-      const [day, month, year] = dateStr.split('/');
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      renderFilteredBookings(bookings.filter(b => b.status === currentTab));
     }
 
     function renderFilteredBookings(filteredBookings) {
       const bookingList = document.getElementById('bookingList');
-      
-      if (filteredBookings.length === 0) {
-        bookingList.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">
-              <i class="fas fa-search"></i>
-            </div>
-            <div class="empty-title">ไม่พบรายการที่ค้นหา</div>
-            <div class="empty-message">ลองเปลี่ยนคำค้นหาหรือกรองข้อมูลใหม่</div>
-          </div>
-        `;
+      if (!filteredBookings.length) {
+        bookingList.innerHTML = `<div class="empty-state">
+          <div class="empty-icon"><i class="fas fa-calendar-times"></i></div>
+          <div class="empty-title">ไม่มีการจองในสถานะนี้</div>
+          <div class="empty-message">ยังไม่มีรายการจองที่ต้องจัดการในขณะนี้</div>
+        </div>`;
         return;
       }
 
       let html = '';
-      filteredBookings.forEach(booking => {
-        const statusClass = booking.status === 'pending' ? 'status-pending' : 
-                           booking.status === 'confirmed' ? 'status-confirmed' : 'status-cancelled';
-        const statusText = booking.status === 'pending' ? 'รอการยืนยัน' : 
-                          booking.status === 'confirmed' ? 'ยืนยันแล้ว' : 'ยกเลิก';
-        
-        html += `
-          <div class="booking-card ${booking.status}" onclick="openDetailModal('${booking.id}')">
-            <div class="booking-header">
-              <div class="booking-id">รหัส ${booking.id}</div>
-              <div class="booking-status ${statusClass}">${statusText}</div>
-            </div>
-            
-            <div class="booking-info">
-              <div class="info-item">
-                <div class="info-label">ชื่อผู้ป่วย</div>
-                <div class="info-value">${booking.patientName}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">บริการ</div>
-                <div class="info-value">${booking.service}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">วันที่</div>
-                <div class="info-value">${booking.date}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">เวลา</div>
-                <div class="info-value">${booking.time} น.</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">ค่าบริการ</div>
-                <div class="info-value price-value">${booking.price} บาท</div>
-              </div>
-              
-              ${booking.assignedStaff ? `
-                <div class="info-item">
-                  <div class="info-label">เจ้าหน้าที่</div>
-                  <div class="info-value">${booking.assignedStaff}</div>
-                </div>
-              ` : ''}
-            </div>
-            
-            <div class="booking-actions" onclick="event.stopPropagation()">
-              <button class="btn btn-view" onclick="openDetailModal('${booking.id}')">
-                <i class="fas fa-eye"></i> ดูรายละเอียด
-              </button>
-              
-              ${booking.status === 'pending' ? `
-                <button class="btn btn-confirm" onclick="openStaffModal('${booking.id}')">
-                  <i class="fas fa-check"></i> ยืนยัน
-                </button>
-                <button class="btn btn-cancel" onclick="cancelBooking('${booking.id}')">
-                  <i class="fas fa-times"></i> ยกเลิก
-                </button>
-              ` : ''}
-            </div>
+      filteredBookings.forEach(b => {
+        let statusClass = '', statusText = '', actionsHtml = '';
+        switch(b.status) {
+          case 'pending':
+            statusClass = 'status-pending'; statusText = 'รอการยืนยัน';
+            actionsHtml = `<button class="btn btn-confirm" onclick="openStaffModal('${b.id}')"><i class="fas fa-check"></i> ยืนยัน</button>
+                          <button class="btn btn-cancel" onclick="cancelBooking('${b.id}')"><i class="fas fa-times"></i> ยกเลิก</button>`;
+            break;
+          case 'confirmed':
+            statusClass = 'status-confirmed'; statusText = 'ยืนยันแล้ว'; actionsHtml = '';
+            break;
+          case 'cancelled':
+            statusClass = 'status-cancelled'; statusText = 'ยกเลิกแล้ว'; actionsHtml = '';
+            break;
+        }
+
+        html += `<div class="booking-card ${b.status}" onclick="openDetailModal('${b.id}')">
+          <div class="booking-header">
+            <div class="booking-id">รหัส ${b.id}</div>
+            <div class="booking-status ${statusClass}">${statusText}</div>
           </div>
-        `;
+          <div class="booking-info">
+            <div class="info-item"><div class="info-label">ชื่อผู้ป่วย</div><div class="info-value">${b.patientName}</div></div>
+            <div class="info-item"><div class="info-label">บริการ</div><div class="info-value">${b.service}</div></div>
+            <div class="info-item"><div class="info-label">วันที่</div><div class="info-value">${b.date}</div></div>
+            <div class="info-item"><div class="info-label">เวลา</div><div class="info-value">${b.time} น.</div></div>
+            <div class="info-item"><div class="info-label">ค่าบริการ</div><div class="info-value">${b.price} บาท</div></div>
+            ${b.assignedStaff ? `<div class="info-item"><div class="info-label">เจ้าหน้าที่</div><div class="info-value">${b.assignedStaff}</div></div>` : ''}
+          </div>
+          <div class="booking-actions" onclick="event.stopPropagation()">
+            <button class="btn btn-view" onclick="openDetailModal('${b.id}')"><i class="fas fa-eye"></i> ดูรายละเอียด</button>
+            ${actionsHtml}
+          </div>
+        </div>`;
       });
-      
+
       bookingList.innerHTML = html;
     }
 
-    // Modal functions
-    function openDetailModal(bookingId) {
-      const booking = bookings.find(b => b.id === bookingId);
-      if (!booking) return;
-      
-      currentBookingId = bookingId;
-      currentBookingType = booking.type;
-      
-      document.getElementById('modalBookingId').textContent = booking.id;
-      document.getElementById('modalPatientName').textContent = booking.patientName;
-      document.getElementById('modalService').textContent = booking.service;
-      document.getElementById('modalDate').textContent = booking.date;
-      document.getElementById('modalTime').textContent = booking.time + ' น.';
-      document.getElementById('modalPrice').textContent = booking.price + ' บาท';
-      document.getElementById('modalProblem').textContent = booking.problem;
-      
-      // Update modal actions based on status
-      const modalActions = document.getElementById('modalActions');
-      if (booking.status === 'pending') {
-        modalActions.innerHTML = `
-          <button class="btn btn-confirm" onclick="openStaffModal('${booking.id}')">
-            <i class="fas fa-check"></i> ยืนยันการจอง
-          </button>
-          <button class="btn btn-cancel" onclick="cancelBooking('${booking.id}')">
-            <i class="fas fa-times"></i> ยกเลิกการจอง
-          </button>
-        `;
-      } else {
-        modalActions.innerHTML = `
-          <button class="btn btn-view" onclick="closeDetailModal()">
-            <i class="fas fa-times"></i> ปิด
-          </button>
-        `;
-      }
-      
+    // Update counts
+    function updateCounts() {
+      document.getElementById('pendingCount').textContent = bookings.filter(b => b.status === 'pending').length;
+      document.getElementById('confirmedCount').textContent = bookings.filter(b => b.status === 'confirmed').length;
+      document.getElementById('cancelledCount').textContent = bookings.filter(b => b.status === 'cancelled').length;
+    }
+
+    // Search/filter
+    function handleSearch() {
+      const term = document.getElementById('searchInput')?.value.toLowerCase() || '';
+      const dateFilter = document.getElementById('dateFilter')?.value;
+      let filtered = bookings.filter(b => b.status === currentTab);
+      if(term) filtered = filtered.filter(b => b.id.toString().includes(term) || b.patientName.toLowerCase().includes(term));
+      if(dateFilter) filtered = filtered.filter(b => new Date(b.date).toDateString() === new Date(dateFilter).toDateString());
+      renderFilteredBookings(filtered);
+    }
+
+    // Modal
+    function openDetailModal(id) {
+      const b = bookings.find(x => x.id === id);
+      if(!b) return;
+      currentBookingId = b.id; currentBookingType = b.type;
+      document.getElementById('modalBookingId').textContent = b.id;
+      document.getElementById('modalPatientName').textContent = b.patientName;
+      document.getElementById('modalService').textContent = b.service;
+      document.getElementById('modalDate').textContent = b.date;
+      document.getElementById('modalTime').textContent = b.time + ' น.';
+      document.getElementById('modalPrice').textContent = b.price + ' บาท';
+      document.getElementById('modalProblem').textContent = b.problem;
+
+      const actions = document.getElementById('modalActions');
+      if(b.status === 'pending') {
+        actions.innerHTML = `<button class="btn btn-confirm" onclick="openStaffModal('${b.id}')"><i class="fas fa-check"></i> ยืนยันการจอง</button>
+                            <button class="btn btn-cancel" onclick="cancelBooking('${b.id}')"><i class="fas fa-times"></i> ยกเลิกการจอง</button>`;
+      } else actions.innerHTML = `<button class="btn btn-view" onclick="closeModal('detailModal')"><i class="fas fa-times"></i> ปิด</button>`;
+
       document.getElementById('detailModal').classList.add('show');
     }
 
-    function closeDetailModal() {
-      document.getElementById('detailModal').classList.remove('show');
-      currentBookingId = null;
-    }
-
-    function openStaffModal(bookingId) {
-      const booking = bookings.find(b => b.id === bookingId);
-      currentBookingId = bookingId;
-      currentBookingType = booking.type;
+    function openStaffModal(id) {
+      const b = bookings.find(x => x.id === id); if(!b) return;
+      currentBookingId = b.id; currentBookingType = b.type;
       document.getElementById('staffSelect').value = '';
       document.getElementById('staffModal').classList.add('show');
-      closeDetailModal();
+      closeModal('detailModal');
     }
 
-    function closeStaffModal() {
-      document.getElementById('staffModal').classList.remove('show');
-      currentBookingId = null;
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if(modal) modal.classList.remove('show');
+      if(id !== 'successModal') currentBookingId = null;
     }
 
-    function switchTab(status) {
-      currentTab = status;
-      document.querySelectorAll('.status-tab').forEach(tab => tab.classList.remove('active'));
-      document.querySelector(`[data-status="${status}"]`).classList.add('active');
-      loadBookings();
-    }
-
+    // Confirm staff
     async function confirmStaffAssignment() {
-      const selectedStaff = document.getElementById('staffSelect').value;
-      if (!selectedStaff) return alert('กรุณาเลือกเจ้าหน้าที่');
-
+      const staff = document.getElementById('staffSelect').value;
+      if(!staff) return alert('กรุณาเลือกเจ้าหน้าที่');
       try {
         const res = await fetch(`/api/admin/appointments/${currentBookingId}/status`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'ยืนยันแล้ว', staffName: selectedStaff, type: bookingType })
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({status:'ยืนยันแล้ว', staffName:staff, type:currentBookingType})
         });
         const data = await res.json();
-        if (data.success) {
-          closeStaffModal();
+        if(data.success) {
+          const b = bookings.find(x => x.id === currentBookingId);
+          if(b){ b.status='confirmed'; b.assignedStaff = staff; }
+          closeModal('staffModal');
           document.getElementById('successMessage').innerHTML = data.message;
           document.getElementById('successModal').classList.add('show');
-          loadBookings();
-        } else {
-          alert('❌ ' + data.message);
-        }
-      } catch (err) {
-        console.error(err);
-        alert('เกิดข้อผิดพลาด');
-      }
-    }
-    function closeSuccessModal() {
-      document.getElementById('successModal').classList.remove('show');
-      currentBookingId = null;
+          renderBookings(); updateCounts();
+        } else alert('❌ ' + data.message);
+      } catch(err){ console.error(err); alert('เกิดข้อผิดพลาด'); }
     }
 
-    async function cancelBooking(bookingId) {
-      if (!confirm('คุณแน่ใจหรือไม่ที่จะยกเลิกการจองนี้?')) return;
-
+    // Cancel booking
+    async function cancelBooking(id) {
+      if(!confirm('คุณแน่ใจหรือไม่ที่จะยกเลิกการจองนี้?')) return;
       try {
-        const res = await fetch(`/api/admin/appointments/${bookingId}/status`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'ยกเลิกแล้ว', reason: 'ยกเลิกโดยผู้ดูแล', type: bookingType })
+        const res = await fetch(`/api/admin/appointments/${id}/status`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({status:'ยกเลิกแล้ว', reason:'ยกเลิกโดยผู้ดูแล', type:currentBookingType})
         });
         const data = await res.json();
-        if (data.success) {
-          closeDetailModal();
-          showNotification(data.message, 'warning');
-          loadBookings();
-        } else {
-          alert('❌ ' + data.message);
-        }
-      } catch (err) {
-        console.error(err);
-        alert('เกิดข้อผิดพลาด');
-      }
+        if(data.success){
+          const b = bookings.find(x=>x.id===id);
+          if(b) b.status='cancelled';
+          closeModal('detailModal');
+          showNotification(data.message,'warning');
+          renderBookings(); updateCounts();
+        } else alert('❌ ' + data.message);
+      } catch(err){ console.error(err); alert('เกิดข้อผิดพลาด'); }
     }
 
-    // Show notification
-    function showNotification(message, type = 'success') {
-      const notification = document.createElement('div');
-      notification.className = `notification ${type}`;
-      notification.innerHTML = `
-        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
-        ${message}
-      `;
-      
-      notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#10B981' : '#F59E0B'};
-        color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 2000;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 500;
-        animation: slideIn 0.3s ease-out;
-      `;
-      
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease-in forwards';
-        setTimeout(() => {
-          document.body.removeChild(notification);
-        }, 300);
-      }, 3000);
+    // Notification
+    function showNotification(msg,type='success'){
+      const n = document.createElement('div');
+      n.className = `notification ${type}`;
+      n.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle':'fa-exclamation-triangle'}"></i> ${msg}`;
+      Object.assign(n.style,{
+        position:'fixed', top:'20px', right:'20px', background:type==='success'?'#10B981':'#F59E0B',
+        color:'#fff', padding:'12px 20px', borderRadius:'8px', boxShadow:'0 4px 12px rgba(0,0,0,0.15)',
+        zIndex:2000, display:'flex', alignItems:'center', gap:'8px', fontWeight:'500',
+        animation:'slideIn 0.3s ease-out'
+      });
+      document.body.appendChild(n);
+      setTimeout(()=>{ n.style.animation='slideOut 0.3s ease-in forwards'; setTimeout(()=>n.remove(),300); },3000);
     }
 
-    // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-      initializePage();
-    });
+    // Auto-refresh
+    function startAutoRefresh(interval=5000){ setInterval(loadBookings,interval); }
 
-    // Add CSS for notification animations
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes slideIn {
-        from {
-          transform: translateX(100%);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
-      }
-      
-      @keyframes slideOut {
-        from {
-          transform: translateX(0);
-          opacity: 1;
-        }
-        to {
-          transform: translateX(100%);
-          opacity: 0;
-        }
-      }
-    `;
+    // Notification animation CSS
+    const style=document.createElement('style');
+    style.textContent=`@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    @keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}`;
     document.head.appendChild(style);
-    document.addEventListener('DOMContentLoaded', function() {
-      loadBookings();  // เรียกใช้ loadBookings ของ admin
-    });
+
+    // Init
+    document.addEventListener('DOMContentLoaded',()=>{ initializePage(); startAutoRefresh(5000); });
   </script>
+
+
 </body>
 </html>

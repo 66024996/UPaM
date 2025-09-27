@@ -956,21 +956,7 @@
       <!-- Tests will be populated here -->
     </div>
   </div>
-  <h2>รายการจองตรวจเลือด</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        
-        <th>Services</th>
-        <th>ราคา</th>
-        <th>วันที่</th>
-        <th>เวลา</th>
-        <th>สถานะ</th>
-        <th>การจัดการ</th>
-      </tr>
-    </thead>
-    <tbody id="appointmentsBody"></tbody>
+  
   </table>
   <!-- Detail Modal -->
   <div class="detail-modal" id="detailModal">
@@ -1023,6 +1009,15 @@
       <div class="modal-actions" id="modalActions">
         <!-- Actions will be populated based on status -->
       </div>
+    </div>
+  </div>
+
+  <div class="container">
+  <!-- ...ส่วนอื่นๆ... -->
+
+
+    <div class="test-list" id="testList">
+      <!-- Tests will be populated here -->
     </div>
   </div>
 
@@ -1134,18 +1129,37 @@
       const tbody = document.getElementById('appointmentsBody');
       tbody.innerHTML = "";
       list.forEach(appt => {
+        // Services
+        let servicesText = '';
+        try {
+          const arr = JSON.parse(appt.services);
+          servicesText = Array.isArray(arr) ? arr.join(', ') : appt.services;
+        } catch {
+          servicesText = Array.isArray(appt.services) ? appt.services.join(', ') : appt.services;
+        }
+
+        // ตรวจสอบว่ามีผลตรวจหรือยัง
+        const hasResults = Array.isArray(appt.results)
+          ? appt.results.length > 0
+          : !!appt.results;
+
+        let actions = `<button class="detail-btn" data-id="${appt.id}">รายละเอียด</button>`;
+        if (appt.status === 'จองแล้ว' && !hasResults) {
+          actions += `<button class="upload-btn" data-id="${appt.id}">อัปโหลดผล</button>`;
+        }
+        if (hasResults) {
+          actions += `<button class="download-btn" data-id="${appt.id}">ดาวน์โหลด</button>`;
+        }
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${appt.id}</td>
-          <td>${appt.services}</td>
+          <td>${servicesText}</td>
           <td>${appt.price}</td>
           <td>${appt.date}</td>
           <td>${appt.time}</td>
           <td>${appt.status}</td>
-          <td>
-            <button class="detail-btn" data-id="${appt.id}">รายละเอียด</button>
-            <button class="upload-btn" data-id="${appt.id}">อัปโหลดผล</button>
-          </td>
+          <td>${actions}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -1163,6 +1177,14 @@
         btn.addEventListener('click', () => {
           const testId = btn.dataset.id;
           openUploadModal(testId);
+        });
+      });
+
+      // bind ปุ่มดาวน์โหลด
+      document.querySelectorAll('.download-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const testId = btn.dataset.id;
+          downloadResult(testId);
         });
       });
     }
@@ -1243,12 +1265,17 @@
       const testList = document.getElementById('testList');
       let list = filtered || bloodTests.filter(t => t.status === currentTab);
 
-      if (currentTab === 'today'){
-        list = bloodTests.filter(t => {
-          console.log('day => ', t.date.split('/')[0], new Date().toLocaleString().split('/')[0])
-          return t.date.split('/')[0] == new Date().toLocaleString().split('/')[0]
-        })
-      } 
+      if (currentTab === 'today') {
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const todayStr = `${dd}/${mm}/${yyyy}`;
+        // แสดงเฉพาะรายการที่ "วันที่" ตรงกับวันนี้ และ status เป็น "จองแล้ว"
+        list = bloodTests.filter(t => t.date === todayStr && t.status === 'จองแล้ว');
+      } else {
+        list = bloodTests.filter(t => t.status === currentTab);
+      }
 
       if (!list.length) {
         testList.innerHTML = `
@@ -1311,15 +1338,19 @@
                 <i class="fas fa-eye"></i> ดูรายละเอียด
               </button>
               
-              ${test.date.split('/')[0] === new Date().toLocaleString().split('/')[0] && !test.results ? `
+              ${!(
+                Array.isArray(test.results)
+                  ? test.results.length > 0
+                  : !!test.results
+              ) ? `
                 <button class="btn btn-upload" onclick="openUploadModal('${test.id}')">
                   <i class="fas fa-upload"></i> อัปโหลดผล
                 </button>
-              ` : test.results ? `
+              ` : `
                 <button class="btn btn-download" onclick="downloadResult('${test.id}')">
                   <i class="fas fa-download"></i> ดาวน์โหลด
                 </button>
-              ` : ''}
+              `}
             </div>
           </div>
           `;
@@ -1330,9 +1361,14 @@
 
     // Update counts for each tab
     function updateCounts() {
-      const todayCount = bloodTests.filter(b => b.date.split('/')[0] === new Date().toLocaleString().split('/')[0]).length;
       const completedCount = bloodTests.filter(b => b.status === 'completed').length;
       const historyCount = bloodTests.filter(b => b.status === 'history').length;
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      const todayStr = `${dd}/${mm}/${yyyy}`;
+      const todayCount = bloodTests.filter(b => b.date === todayStr && b.status === 'จองแล้ว').length;
       
       document.getElementById('todayCount').textContent = todayCount;
       document.getElementById('completedCount').textContent = completedCount;
@@ -1440,7 +1476,7 @@
                 <i class="fas fa-eye"></i> ดูรายละเอียด
               </button>
               
-              ${test.status === 'today' && !test.results ? `
+              ${test.status === 'จองแล้ว' && !test.results ? `
                 <button class="btn btn-upload" onclick="openUploadModal('${test.id}')">
                   <i class="fas fa-upload"></i> อัปโหลดผล
                 </button>
@@ -1750,9 +1786,12 @@
           .then(res => res.json())
           .then(data => {
             if (data.success) {
-              alert('อัปโหลดผลตรวจสำเร็จ');
               closeUploadModal();
-              switchTab('completed'); // refresh tab
+              // โหลดข้อมูลใหม่และเปลี่ยนแท็บ
+              loadBloodTests().then(() => {
+                switchTab('completed');
+                showNotification('อัปโหลดผลตรวจสำเร็จ', 'success');
+              });
             } else {
               alert('อัปโหลดไม่สำเร็จ: ' + data.message);
             }

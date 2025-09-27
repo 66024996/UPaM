@@ -1112,6 +1112,55 @@
       window.print();
     }
     
+    // เลื่อนหรือยกเลิก appointment (admin + user reason)
+    async function manageAppointment(action) {
+      if (!currentAppointment) return alert('ไม่พบการจอง');
+
+      const reason = prompt('กรุณาระบุเหตุผล:');
+      if (!reason) return alert('กรุณาระบุเหตุผล');
+
+      let payload = {
+        appointmentId: currentAppointment.id,
+        type: currentAppointment.type,
+        action,
+        reason
+      };
+
+      if (action === 'reschedule') {
+        const newDate = prompt('ระบุวันที่ใหม่ (dd/mm/yyyy):', currentAppointment.date);
+        const newTime = prompt('ระบุเวลาที่ใหม่ (HH:MM-HH:MM):', currentAppointment.time);
+        if (!newDate || !newTime) return alert('กรุณากรอกวันที่และเวลาใหม่');
+        payload.new_date = newDate;
+        payload.new_time = newTime;
+      }
+
+      try {
+        const res = await fetch('/api/admin/appointments/manage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        console.log('📊 Manage response:', data);
+
+        if (data.success) {
+          if (action === 'cancel') currentAppointment.status = 'ยกเลิกแล้ว';
+          if (action === 'reschedule') {
+            currentAppointment.status = 'เลื่อนแล้ว';
+            currentAppointment.date = payload.new_date;
+            currentAppointment.time = payload.new_time;
+          }
+          updateAppointmentDisplay();
+          alert(data.message || 'ดำเนินการเรียบร้อย');
+        } else {
+          alert(data.message || 'เกิดข้อผิดพลาด');
+        }
+      } catch (err) {
+        console.error('❌ Manage appointment error:', err);
+        alert('เกิดข้อผิดพลาดในการดำเนินการ');
+      }
+    }
+
   </script>
 
 </body>

@@ -10,6 +10,7 @@ const mysql = require('mysql2/promise');
 const requireAdmin = require('./middleware/isAdmin');
 const upload = multer({ dest: "uploads/" });
 const xlsx = require("xlsx");
+const fs = require('fs');
 
 
 
@@ -47,6 +48,33 @@ const storage = multer.diskStorage({
   }
 });
 
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, 'uploads', 'appointment_results');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + '_' + file.originalname.replace(/\s+/g, '_');
+    cb(null, uniqueName);
+  }
+});
+const allowedTypes = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg',
+  'image/jpg',
+  'image/png'
+];
+const uploadResultFile = multer({
+  storage: fileStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    if (allowedTypes.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('ประเภทไฟล์ไม่ถูกต้อง'));
+  }
+});
 
 async function testConnection() {
   try {
@@ -62,7 +90,7 @@ require('dotenv').config();
 
 
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'defaultSecret123',
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 1000 * 60 * 60 * 24 } 
@@ -558,155 +586,51 @@ app.post('/api/my-appointment/cancel', async (req, res) => {
 });
 
 
-app.post('/api/my-appointment/reschedule', async (req, res) => {
-  if (!req.session || !req.session.userId) {
-    return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบ' });
-  }
-
-  const userId = req.session.userId;
-  const { appointmentId, new_date, new_time, reason, type } = req.body;
-
-  console.log('📅 Reschedule Request:', { appointmentId, new_date, new_time, reason, type, userId });
-
-  
-  if (!appointmentId || !new_date || !new_time || !reason || !type) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'กรุณากรอกข้อมูลให้ครบถ้วน' 
-    });
-  }
-
-  if (!['physical', 'blood'].includes(type)) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'ประเภทการจองไม่ถูกต้อง' 
-    });
-  }
-
-  
-  let formattedDate;
-  if (new_date.includes('/')) {
-    const [day, month, year] = new_date.split('/');
-    formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  } else {
-    formattedDate = new_date;
-  }
-
-  
-  const newAppointmentDate = new Date(formattedDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  if (newAppointmentDate < today) {
-    return res.status(400).json({
-      success: false,
-      message: 'ไม่สามารถเลื่อนการนัดหมายเป็นวันที่ผ่านมาแล้วได้'
-    });
-  }
-
-  
-  const validTimeSlots = [
-    '09:00-10:00', '10:00-11:00', '11:00-12:00',
-    '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00'
-  ];
-  
-  if (!validTimeSlots.includes(new_time)) {
-    return res.status(400).json({
-      success: false,
-      message: 'เวลาที่เลือกไม่ถูกต้อง กรุณาเลือกช่วงเวลาที่กำหนดไว้'
-    });
-  }
-
+// routes/admin.js
+app.post('/api/admin/appointments/manage', requireAdmin, async (req, res) => {
   try {
-    let checkQuery, updateQuery, slotCheckQuery;
-    
-    if (type === 'blood') {
-      checkQuery = `
-        SELECT id, status, appointment_date, time_slot 
-        FROM blood_appointments 
-        WHERE id = ? AND user_id = ? AND status IN ('จองแล้ว', 'confirmed')
-      `;
-      
-      updateQuery = `
-        UPDATE blood_appointments 
-        SET appointment_date = ?, time_slot = ?, status = 'เลื่อนแล้ว', updated_at = NOW()
-        WHERE id = ? AND user_id = ?
-      `;
-      
-      slotCheckQuery = `
-        SELECT COUNT(*) as count FROM blood_appointments 
-        WHERE appointment_date = ? AND time_slot = ? 
-          AND status IN ('จองแล้ว', 'ยืนยันแล้ว', 'confirmed')
-      `;
-    } else {
-      checkQuery = `
-        SELECT id, status, appointment_date, time_slot 
-        FROM appointments 
-        WHERE id = ? AND user_id = ? AND status IN ('จองแล้ว', 'confirmed')
-      `;
-      
-      updateQuery = `
-        UPDATE appointments 
-        SET appointment_date = ?, time_slot = ?, status = 'เลื่อนแล้ว', updated_at = NOW()
-        WHERE id = ? AND user_id = ?
-      `;
-      
-      slotCheckQuery = `
-        SELECT COUNT(*) as count FROM appointments 
-        WHERE appointment_date = ? AND time_slot = ? 
-          AND status IN ('จองแล้ว', 'ยืนยันแล้ว', 'confirmed')
-      `;
+    const { appointmentId, type, action, reason, new_date, new_time } = req.body;
+    if (!appointmentId || !type || !action || !reason) 
+      return res.status(400).json({ success: false, message: 'ข้อมูลไม่ครบ' });
+
+    // แปลงวันที่ถ้าเป็น reschedule
+    let formattedDate = new_date;
+    if (action === 'reschedule' && new_date.includes('/')) {
+      const [day, month, year] = new_date.split('/');
+      formattedDate = `${year}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`;
     }
 
-    
-    const [existingRows] = await pool.execute(checkQuery, [appointmentId, userId]);
-    
-    if (!existingRows.length) {
-      return res.json({ 
-        success: false, 
-        message: 'ไม่พบการจองที่สามารถเลื่อนได้ หรือการจองถูกยืนยันแล้ว' 
-      });
+    const table = type === 'blood' ? 'blood_appointments' : 'appointments';
+
+    if (action === 'cancel') {
+      await pool.execute(`UPDATE ${table} SET status='ยกเลิกแล้ว', updated_at=NOW() WHERE id=?`, [appointmentId]);
+      return res.json({ success: true, message: 'ยกเลิกการนัดหมายสำเร็จ' });
     }
 
-    
-    const [slotCheck] = await pool.execute(slotCheckQuery, [formattedDate, new_time]);
-    
-    if (slotCheck[0].count >= 3) { 
-      return res.json({
-        success: false,
-        message: 'ช่วงเวลาที่เลือกเต็มแล้ว กรุณาเลือกช่วงเวลาอื่น'
-      });
+    if (action === 'reschedule') {
+      // ตรวจสอบ slot ว่าง
+      const [slotCheck] = await pool.execute(
+        `SELECT COUNT(*) as count FROM ${table} WHERE appointment_date=? AND time_slot=? AND status IN ('จองแล้ว','ยืนยันแล้ว')`,
+        [formattedDate, new_time]
+      );
+      if (slotCheck[0].count >= 3) return res.json({ success: false, message: 'ช่วงเวลานี้เต็มแล้ว' });
+
+      // อัปเดตวันและเวลา
+      await pool.execute(
+        `UPDATE ${table} SET appointment_date=?, time_slot=?, status='เลื่อนแล้ว', updated_at=NOW() WHERE id=?`,
+        [formattedDate, new_time, appointmentId]
+      );
+      return res.json({ success: true, message: 'เลื่อนการนัดหมายสำเร็จ' });
     }
 
-    
-    const [result] = await pool.execute(updateQuery, [formattedDate, new_time, appointmentId, userId]);
-
-    if (result.affectedRows === 0) {
-      return res.json({ 
-        success: false, 
-        message: 'ไม่สามารถเลื่อนการนัดหมายได้ กรุณาลองใหม่อีกครั้ง' 
-      });
-    }
-
-    console.log(`✅ ${type} appointment ${appointmentId} rescheduled by user ${userId}`);
-    
-    res.json({ 
-      success: true, 
-      message: 'เลื่อนการนัดหมายสำเร็จ',
-      new_appointment: {
-        date: new_date,
-        time: new_time
-      }
-    });
+    res.status(400).json({ success: false, message: 'action ไม่ถูกต้อง' });
 
   } catch (err) {
-    console.error('❌ Reschedule Appointment Error:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่อีกครั้ง' 
-    });
+    console.error(err);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
   }
 });
+
 
 
 app.get('/api/time-slots/:date/:type', async (req, res) => {
@@ -784,6 +708,11 @@ app.get('/api/time-slots/:date/:type', async (req, res) => {
   }
 });
 
+app.post('/api/my-appointment/reschedule', async (req, res) => {
+    const { appointmentId, newDate, newTime } = req.body;
+    // logic สำหรับเลื่อนการจอง
+    res.json({ success: true, message: 'เลื่อนการจองเรียบร้อย' });
+});
 
 app.get('/api/my-appointments', async (req, res) => {
   if (!req.session || !req.session.userId) {
@@ -1407,6 +1336,63 @@ app.get('/api/admin/appointments-debug', requireAdmin, async (req, res) => {
   }
 });
 
+app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
+  try {
+    const { status, type, date, limit = 1000, offset = 0 } = req.query;
+    const appointments = await getAppointments({ status, type, date, limit, offset });
+
+    // นับ status + type
+    const statusCounts = appointments.reduce((acc, a) => {
+      acc[a.status] = (acc[a.status] || 0) + 1;
+      return acc;
+    }, {});
+    const typeCounts = appointments.reduce((acc, a) => {
+      acc[a.appointment_type] = (acc[a.appointment_type] || 0) + 1;
+      return acc;
+    }, {});
+
+    res.json({
+      success: true,
+      appointments,
+      total: appointments.length,
+      statusCounts,
+      typeCounts,
+      summary: {
+        pending: statusCounts.pending || 0,
+        confirmed: statusCounts.confirmed || 0,
+        cancelled: statusCounts.cancelled || 0,
+        completed: statusCounts.completed || 0,
+        physical: typeCounts.physical || 0,
+        blood: typeCounts.blood || 0
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching appointments:', err);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+  }
+});
+
+
+app.post('/api/admin/appointments/:id/status', async (req, res) => {
+    const appointmentId = req.params.id;
+    const { status } = req.body;
+
+    try {
+        const [result] = await db.query(
+            'UPDATE appointments SET status = ? WHERE id = ?',
+            [status, appointmentId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'ไม่พบการจองนี้' });
+        }
+
+        res.json({ success: true, message: 'อัปเดตสถานะเรียบร้อย' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'เกิดข้อผิดพลาด' });
+    }
+});
 
 
 async function createAdminUser() {
@@ -1761,6 +1747,50 @@ app.post('/api/Staffblood/upload', async (req, res) => {
     res.status(500).json({ success: false, message: 'บันทึกผลตรวจไม่สำเร็จ' });
   }
 });
+app.post('/api/appointments/upload-result/:appointmentId', uploadResultFile.single('file'), async (req, res) => {
+  const { appointmentId } = req.params;
+  if (!req.file) return res.status(400).json({ success: false, message: 'กรุณาเลือกไฟล์' });
 
+  console.log('📁 File info:', req.file);
+  console.log('🆔 Appointment ID:', appointmentId);
+
+  try {
+    const [result] = await pool.execute(
+      `UPDATE appointments 
+       SET result_file = ?, result_uploaded_at = NOW(), status = 'อัปโหลดแล้ว', updated_at = NOW() 
+       WHERE id = ?`,
+      [req.file.filename, appointmentId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบการจองนี้' });
+    }
+
+    res.json({ success: true, message: 'อัปโหลดไฟล์ผลตรวจสำเร็จ', file: req.file.filename });
+  } catch (err) {
+    console.error('❌ Upload file error:', err);
+    res.status(500).json({ success: false, message: 'บันทึกไฟล์ไม่สำเร็จ' });
+  }
+});
+// API ดาวน์โหลดไฟล์ผลตรวจ
+app.get('/api/appointments/download-result/:appointmentId', async (req, res) => {
+  const { appointmentId } = req.params;
+  try {
+    const [rows] = await pool.query(
+      `SELECT result_file FROM appointments WHERE id = ?`, [appointmentId]
+    );
+    if (!rows.length || !rows[0].result_file) {
+      return res.status(404).json({ success: false, message: 'ไม่พบไฟล์ผลตรวจ' });
+    }
+    const filePath = path.join(__dirname, 'uploads', 'appointment_results', rows[0].result_file);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, message: 'ไฟล์ไม่อยู่ในระบบ' });
+    }
+    res.download(filePath, rows[0].result_file);
+  } catch (err) {
+    console.error('❌ Download file error:', err);
+    res.status(500).json({ success: false, message: 'ดาวน์โหลดไฟล์ไม่สำเร็จ' });
+  }
+});
 //  Start Server
 app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));

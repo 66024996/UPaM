@@ -1723,7 +1723,12 @@
       document.getElementById('summaryTime').textContent = bookingData.selectedTime ? bookingData.selectedTime + ' น.' : '-';
       document.getElementById('summaryPrice').textContent = `${bookingData.totalPrice.toLocaleString()} บาท`;
     }
-
+    function formatDateToYMD(dateObj) {
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
     // Booking confirmation
     async function confirmBooking() {
       const btn = document.querySelector('.btn-primary');
@@ -1737,7 +1742,7 @@
           body: JSON.stringify({
             services: bookingData.services,
             totalPrice: bookingData.totalPrice,
-            appointment_date: bookingData.selectedDate.toLocaleString().split(' ')[0].split('/').reverse().join("-"),
+            appointment_date: formatDateToYMD(bookingData.selectedDate),
             time_slot: bookingData.selectedTime,
             problem: bookingData.problem
           })

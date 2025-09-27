@@ -936,7 +936,7 @@
     <!-- Status Tabs -->
     <div class="status-tabs">
       <button class="status-tab active" data-status="today" onclick="switchTab('today')">
-        วันนี้ <span class="status-count" id="todayCount">3</span>
+        วันนี้ <span class="status-count" id="todayCount">0</span>
       </button>
       <button class="status-tab" data-status="completed" onclick="switchTab('completed')">
         ที่อัปโหลดแล้ว <span class="status-count" id="completedCount">5</span>
@@ -1034,8 +1034,9 @@
       </div>
       
       <div class="upload-modal-actions">
+        
+        <button class="btn-modal btn-modal-primary" id="uploadBtn" onclick="uploadFile()">อัปโหลด</button>
         <button class="btn-modal btn-modal-secondary" onclick="closeUploadModal()">ยกเลิก</button>
-        <button class="btn-modal btn-modal-primary" id="uploadBtn" onclick="uploadFile()" disabled>อัปโหลด</button>
       </div>
     </div>
   </div>
@@ -1134,96 +1135,12 @@
             });
         });
     // Sample data
-    let bookings = [
-      {
-        id: '00010',
-        patientName: 'ประสิทธิโชค กรรเชียง',
-        service: 'กายภาพขา',
-        problem: 'กล้ามเนื้อขาอ่อนแรง ต้องการฟื้นฟูสมรรถภาพ',
-        date: '01/09/2025',
-        time: '11:00-12:00',
-        price: '1,250',
-        status: 'today',
-        assignedStaff: 'ทนพ. กำปั่น แสงจันทร์',
-        result: null
-      },
-      {
-        id: '00011',
-        patientName: 'สมชาย ใจดี',
-        service: 'กายภาพกล้ามเนื้อส่วนมือ',
-        problem: 'ปวดมือจากการทำงานหน้าคอมพิวเตอร์นาน',
-        date: '01/09/2025',
-        time: '09:00-10:00',
-        price: '1,250',
-        status: 'today',
-        assignedStaff: 'ทนพ. กำปั่น แสงจันทร์',
-        result: null
-      },
-      {
-        id: '00012',
-        patientName: 'สมหญิง รักสุขภาพ',
-        service: 'กายภาพหมอนรองกระดูกทับเส้น',
-        problem: 'หมอนรองกระดูกเคลื่อน ระดับ L4-L5',
-        date: '01/09/2025',
-        time: '14:00-15:00',
-        price: '1,250',
-        status: 'today',
-        assignedStaff: 'ทนพ. กำปั่น แสงจันทร์',
-        result: null
-      },
-      {
-        id: '00009',
-        patientName: 'จินตรา จันทร์เจ้า',
-        service: 'กายภาพขา',
-        problem: 'เข่าปวดจากการกีฬา ต้องการฟื้นฟูหลังการผ่าตัด',
-        date: '31/08/2025',
-        time: '10:00-11:00',
-        price: '1,250',
-        status: 'completed',
-        assignedStaff: 'ทนพ. กำปั่น แสงจันทร์',
-        result: 'ผลการตรวจ: กล้ามเนื้อขาฟื้นตัวดี แนะนำออกกำลังกายต่อเป็นเวลา 2 สัปดาห์'
-      },
-      {
-        id: '00008',
-        patientName: 'นางสาว B',
-        service: 'กายภาพข้อเท้า กล้ามเนื้ออักเสบ',
-        problem: 'ข้อเท้าบิดจากการล้ม มีอาการบวม',
-        date: '31/08/2025',
-        time: '13:00-14:00',
-        price: '1,250',
-        status: 'completed',
-        assignedStaff: 'ทนพ. กำปั่น แสงจันทร์',
-        result: 'ผลการตรวจ: อาการบวมลดลง แนะนำพักขา และประคบร้อน 2 ครั้งต่อวัน'
-      },
-      {
-        id: '00007',
-        patientName: 'สมศักดิ์ แข็งแรง',
-        service: 'กายภาพไหล่',
-        problem: 'ไหล่แข็ง หมุนไม่ได้เต็มที่',
-        date: '30/08/2025',
-        time: '09:00-10:00',
-        price: '1,250',
-        status: 'history',
-        assignedStaff: 'ทนพ. กำปั่น แสงจันทร์',
-        result: 'ผลการตรวจ: ไหล่มีความยืดหยุ่นเพิ่มขึ้น 60% แนะนำยืดกล้ามเนื้อทุกวัน'
-      },
-      {
-        id: '00006',
-        patientName: 'วิชัย สุขใจ',
-        service: 'กายภาพหลัง',
-        problem: 'ปวดหลังส่วนล่าง จากการนั่งทำงานนาน',
-        date: '29/08/2025',
-        time: '11:00-12:00',
-        price: '1,250',
-        status: 'history',
-        assignedStaff: 'ทนพ. กำปั่น แสงจันทร์',
-        result: 'ผลการตรวจ: กล้ามเนื้อหลังแข็งตึงลดลง แนะนำปรับท่านั่งและพักทุก 30 นาที'
-      }
-    ];
+    
 
     // let bookings = [];
     let currentTab = 'today';
     let selectedFile = null;
+    
 
     async function loadAppointments() {
       const res = await fetch('/api/lab/StaffPhy');
@@ -1242,7 +1159,7 @@
       tbody.innerHTML = "";
       list.forEach(appt => {
         const tr = document.createElement('tr');
-        // console.log('appointment => ', appt)
+         console.log('appointment => ', appt)
         tr.innerHTML = `
           <td>${appt.id}</td>
           <td>${appt.name}</td>
@@ -1279,19 +1196,21 @@
         // Render tests based on current tab
     function renderTests(filtered = null) {
       const testList = document.getElementById('bookingList');
-      
-      console.log('bookings => ', bookings)
-      let list = filtered || bookings.filter(t => t.status === currentTab);
+      let list;
 
-      console.log('status => ', currentTab)
-      if (currentTab === 'today'){
-        list = bookings.filter(t => {
-          console.log('day => ', t.date.split('/')[0], new Date().toLocaleString().split('/')[0])
-          return t.date.split('/')[0] == new Date().toLocaleString().split('/')[0]
-        })
-      } 
-
-      console.log('list 2 => ', list )
+      if (filtered) {
+        list = filtered;
+      } else if (currentTab === 'today') {
+        // เปรียบเทียบวันที่แบบเต็ม
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const todayStr = `${dd}/${mm}/${yyyy}`;
+        list = bookings.filter(t => t.date === todayStr);
+      } else {
+        list = bookings.filter(t => t.status === currentTab);
+      }
 
       if (!list.length) {
         testList.innerHTML = `
@@ -1304,45 +1223,40 @@
       }
 
       let html = '';
-        list.forEach(test => {
-          const statusClass = test.status === 'today' ? 'status-today' : 
-                            test.status === 'completed' ? 'status-completed' : 'status-past';
-          const statusText = test.status === 'today' ? 'วันนี้' : 
-                            test.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
-          
-          html += `
-            <div class="booking-card ${test.status}" onclick="openDetailModal('${test.id}')">
-              <div class="booking-header">
-                <div class="booking-id">รหัส ${test.id}</div>
-                <div class="booking-status ${statusClass}">${statusText}</div>
+      list.forEach(test => {
+        const statusClass = test.status === 'today' ? 'status-today' : 
+                          test.status === 'completed' ? 'status-completed' : 'status-past';
+        const statusText = test.status === 'today' ? 'วันนี้' : 
+                          test.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
+
+        html += `
+          <div class="booking-card ${test.status}" onclick="openDetailModal('${test.id}')">
+            <div class="booking-header">
+              <div class="booking-id">รหัส ${test.id}</div>
+              <div class="booking-status ${statusClass}">${statusText}</div>
+            </div>
+            
+            <div class="booking-info">
+              <div class="info-item">
+                <div class="info-label">ชื่อผู้ป่วย</div>
+                <div class="info-value">${test.patientName}</div>
               </div>
-              
-              <div class="booking-info">
-                <div class="info-item">
-                  <div class="info-label">ชื่อผู้ป่วย</div>
-                  <div class="info-value">${test.patientName}</div>
-                </div>
-                
-                <div class="info-item">
-                  <div class="info-label">ประเภทการกายภาพ</div>
-                  <div class="info-value">${test.name}</div>
-                </div>
-                
-                <div class="info-item">
-                  <div class="info-label">วันที่</div>
-                  <div class="info-value">${test.date}</div>
-                </div>
-                
-                <div class="info-item">
-                  <div class="info-label">เวลา</div>
-                  <div class="info-value">${test.time} น.</div>
-                </div>
-                
-                <div class="info-item">
+              <div class="info-item">
+                <div class="info-label">ประเภทการกายภาพ</div>
+                <div class="info-value">${test.name}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">วันที่</div>
+                <div class="info-value">${test.date}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">เวลา</div>
+                <div class="info-value">${test.time} น.</div>
+              </div>
+              <div class="info-item">
                 <div class="info-label">ค่าบริการ</div>
                 <div class="info-value price-value">${test.price} บาท</div>
               </div>
-              
               <div class="info-item">
                 <div class="info-label">เจ้าหน้าที่</div>
                 <div class="info-value">${test.labStaff}</div>
@@ -1353,22 +1267,21 @@
               <button class="btn btn-view" onclick="openDetailModal('${test.id}')">
                 <i class="fas fa-eye"></i> ดูรายละเอียด
               </button>
-              
-              ${test.date.split('/')[0] === new Date().toLocaleString().split('/')[0] && !test.results ? `
+              ${test.status === 'today' && !test.result ? `
                 <button class="btn btn-upload" onclick="openUploadModal('${test.id}')">
                   <i class="fas fa-upload"></i> อัปโหลดผล
                 </button>
-              ` : test.results ? `
+              ` : test.result ? `
                 <button class="btn btn-download" onclick="downloadResult('${test.id}')">
                   <i class="fas fa-download"></i> ดาวน์โหลด
                 </button>
               ` : ''}
             </div>
           </div>
-          `;
-        });
-        
-        testList.innerHTML = html;
+        `;
+      });
+
+      testList.innerHTML = html;
     }
 
 
@@ -1451,11 +1364,21 @@
 
     // Render bookings based on current tab
     function renderBookings() {
+      
       const bookingList = document.getElementById('bookingList');
       let filteredBookings = bookings.filter(booking => booking.status === currentTab);
-
-      if(currentTab === 'today') filteredBookings = bookings.filter(booking => booking.date.split('/')[0] === new Date().toLocaleString().split('/')[0])
+      console.log(bookings)
       
+      if (currentTab === 'today') {
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const todayStr = `${dd}/${mm}/${yyyy}`;
+        const todayCount = bookings.filter(b => b.date === todayStr && b.status === 'จองแล้ว').length;
+        filteredBookings = bookings.filter(booking => booking.date === todayStr && booking.status === 'จองแล้ว')
+      }
+
       if (filteredBookings.length === 0) {
         bookingList.innerHTML = `
           <div class="empty-state">
@@ -1520,7 +1443,7 @@
                 <i class="fas fa-eye"></i> ดูรายละเอียด
               </button>
               
-              ${booking.date.split('/')[0] === new Date().toLocaleString().split('/')[0] && !booking.result ? `
+              ${currentTab === 'today' && !booking.result ? `
                 <button class="btn btn-upload" onclick="openUploadModal('${booking.id}')">
                   <i class="fas fa-upload"></i> อัปโหลดผล
                 </button>
@@ -1539,10 +1462,16 @@
 
     // Update counts for each tab
     function updateCounts() {
-      const todayCount = bookings.filter(b => b.date.split('/')[0] === new Date().toLocaleString().split('/')[0]).length;
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      const todayStr = `${dd}/${mm}/${yyyy}`;
+      // นับเฉพาะรายการที่เป็น "วันนี้" และ status "จองแล้ว"
+      const todayCount = bookings.filter(b => b.date === todayStr && b.status === 'จองแล้ว').length;
       const completedCount = bookings.filter(b => b.status === 'completed').length;
       const historyCount = bookings.filter(b => b.status === 'history').length;
-      
+
       document.getElementById('todayCount').textContent = todayCount;
       document.getElementById('completedCount').textContent = completedCount;
       document.getElementById('historyCount').textContent = historyCount;
@@ -1649,11 +1578,11 @@
                 <i class="fas fa-eye"></i> ดูรายละเอียด
               </button>
               
-              ${booking.status === 'today' && !booking.result ? `
+              ${booking.status === 'จองแล้ว' && !booking.result_file ? `
                 <button class="btn btn-upload" onclick="openUploadModal('${booking.id}')">
                   <i class="fas fa-upload"></i> อัปโหลดผล
                 </button>
-              ` : booking.result ? `
+              ` : booking.result_file ? `
                 <button class="btn btn-download" onclick="downloadResult('${booking.id}')">
                   <i class="fas fa-download"></i> ดาวน์โหลด
                 </button>
@@ -1664,6 +1593,69 @@
       });
       
       bookingList.innerHTML = html;
+    }
+
+    function uploadFile() {
+      console.log('uploadFile called');
+      console.log("selectedFile", selectedFile);
+      console.log("currentBookingId", currentBookingId);
+      if (!selectedFile || !currentBookingId) return;
+
+      if (!selectedFile) {
+        showNotification('กรุณาเลือกไฟล์ก่อนอัปโหลด', 'error');
+        return;
+      }
+      if (!currentBookingId) {
+        showNotification('ไม่พบรหัสการจอง กรุณาลองใหม่', 'error');
+        return;
+      }
+
+      const uploadBtn = document.getElementById('uploadBtn');
+      uploadBtn.classList.add('loading');
+      uploadBtn.textContent = 'กำลังอัปโหลด...';
+      uploadBtn.disabled = true;
+
+      // สร้าง FormData สำหรับอัปโหลดไฟล์
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      // เรียก API อัปโหลดไฟล์ (เปลี่ยน endpoint ตาม backend จริง)
+      fetch(`/api/appointments/upload-result/${currentBookingId}`, {
+        method: 'POST',
+        body: formData
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            closeUploadModal();
+
+            // โหลดข้อมูลใหม่แบบ real-time
+            return fetch('/api/lab/StaffPhy')
+              .then(res => res.json())
+              .then(newBookings => {
+                bookings = newBookings;
+                updateCounts();
+                renderBookings();
+
+                // แสดง success modal
+                document.getElementById('successMessage').innerHTML = `
+                  ไฟล์ผลการตรวจสำหรับผู้ป่วยรหัส <strong>${currentBookingId}</strong><br>
+                  ได้ถูกอัปโหลดเรียบร้อยแล้ว
+                `;
+                document.getElementById('successModal').classList.add('show');
+              });
+          } else {
+            showNotification(data.message || 'อัปโหลดไม่สำเร็จ', 'error');
+          }
+        })
+        .catch(err => {
+          showNotification('เกิดข้อผิดพลาดในการอัปโหลด', 'error');
+        })
+        .finally(() => {
+          uploadBtn.classList.remove('loading');
+          uploadBtn.textContent = 'อัปโหลด';
+          uploadBtn.disabled = false;
+        });
     }
 
     // Modal functions
@@ -1723,10 +1715,10 @@
 
     function closeDetailModal() {
       document.getElementById('detailModal').classList.remove('show');
-      currentBookingId = null;
     }
 
     function openUploadModal(bookingId) {
+      console.log("openUploadModal called with bookingId:", bookingId);
       currentBookingId = bookingId;
       selectedFile = null;
       document.getElementById('selectedFile').style.display = 'none';
@@ -1744,24 +1736,31 @@
     function handleFileSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
-      
+
       // Validate file type
-      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/jpg', 'image/png'];
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'image/jpeg',
+        'image/jpg',
+        'image/png'
+      ];
       if (!allowedTypes.includes(file.type)) {
         showNotification('ประเภทไฟล์ไม่ถูกต้อง กรุณาเลือกไฟล์ PDF, DOC, DOCX, JPG หรือ PNG', 'error');
         return;
       }
-      
+
       // Validate file size (10MB)
       if (file.size > 10 * 1024 * 1024) {
         showNotification('ไฟล์มีขนาดใหญ่เกินไป (สูงสุด 10MB)', 'error');
         return;
       }
-      
+
       selectedFile = file;
       document.getElementById('fileName').textContent = file.name;
       document.getElementById('selectedFile').style.display = 'flex';
-      document.getElementById('uploadBtn').disabled = false;
+      document.getElementById('uploadBtn').disabled = false; // <-- สำคัญ!
     }
 
     function removeFile() {
@@ -1769,44 +1768,6 @@
       document.getElementById('selectedFile').style.display = 'none';
       document.getElementById('uploadBtn').disabled = true;
       document.getElementById('fileInput').value = '';
-    }
-
-    function uploadFile() {
-      if (!selectedFile || !currentBookingId) return;
-      
-      // Simulate file upload
-      const uploadBtn = document.getElementById('uploadBtn');
-      uploadBtn.classList.add('loading');
-      uploadBtn.textContent = 'กำลังอัปโหลด...';
-      uploadBtn.disabled = true;
-      
-      // Simulate upload delay
-      setTimeout(() => {
-        // Update booking with result
-        const bookingIndex = bookings.findIndex(b => b.id === currentBookingId);
-        if (bookingIndex !== -1) {
-          bookings[bookingIndex].result = `ไฟล์: ${selectedFile.name} (อัปโหลดเมื่อ ${new Date().toLocaleString('th-TH')})`;
-          bookings[bookingIndex].status = 'completed';
-        }
-        
-        closeUploadModal();
-        
-        // Show success modal
-        document.getElementById('successMessage').innerHTML = `
-          ไฟล์ผลการตรวจสำหรับผู้ป่วยรหัส <strong>${currentBookingId}</strong><br>
-          ได้ถูกอัปโหลดเรียบร้อยแล้ว
-        `;
-        document.getElementById('successModal').classList.add('show');
-        
-        // Update display
-        updateCounts();
-        renderBookings();
-        
-        // Reset upload button
-        uploadBtn.classList.remove('loading');
-        uploadBtn.textContent = 'อัปโหลด';
-        uploadBtn.disabled = false;
-      }, 2000);
     }
 
     function closeSuccessModal() {
