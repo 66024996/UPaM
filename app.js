@@ -93,14 +93,14 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'defaultSecret123',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 24 } 
+  cookie: { maxAge: 1000 * 60 * 60 * 24 }
 }));
 
 function isLoggedIn(req, res, next) {
   if (req.session.userId) {
-    return next(); 
+    return next();
   }
-  res.redirect('/login'); 
+  res.redirect('/login');
 }
 
 function isAdmin(req, res, next) {
@@ -114,8 +114,8 @@ function isAdmin(req, res, next) {
 app.post('/register', async (req, res) => {
   console.log('📌 Received Data:', req.body);
 
-  const { 
-    title, first_name, last_name, 
+  const {
+    title, first_name, last_name,
     permanent_address, current_address, use_permanent_as_current,
     birth_date, phone, congenital_disease, drug_allergy,
     newsletter, medical_data_consent, email, password
@@ -128,7 +128,7 @@ app.post('/register', async (req, res) => {
   }
 
   try {
-    
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [userResult] = await pool.execute(
@@ -138,7 +138,7 @@ app.post('/register', async (req, res) => {
 
     const userId = userResult.insertId;
 
-    
+
     await pool.execute(
       `INSERT INTO personal_info 
        (user_id, title, first_name, last_name, permanent_address, current_address, use_permanent_as_current,
@@ -173,20 +173,20 @@ app.post('/register', async (req, res) => {
 
 
 app.get('/ListAdmin', (req, res) => {
-  res.render('ListAdmin'); 
+  res.render('ListAdmin');
 });
 
 app.get('/home', (req, res) => {
-  res.render('home'); 
+  res.render('home');
 });
 
 app.get('/BookingCard', (req, res) => {
-  res.render('BookingCard'); 
+  res.render('BookingCard');
 });
 
 
 app.get('/bookingphy', (req, res) => {
-  res.render('bookingphy'); 
+  res.render('bookingphy');
 
 });
 
@@ -200,7 +200,7 @@ app.get('/Bookingblood', (req, res) => {
 
 
 app.get('/login', (req, res) => {
-  res.render('login'); 
+  res.render('login');
 });
 
 
@@ -214,7 +214,7 @@ app.get('/Staffblood', (req, res) => {
 
 
 app.get('/register', (req, res) => {
-  res.render('register'); 
+  res.render('register');
 });
 
 app.post('/bookingphy', async (req, res) => {
@@ -232,7 +232,7 @@ app.post('/bookingphy', async (req, res) => {
   }
 
   try {
-    
+
     const [existing] = await pool.execute(
       `SELECT id FROM appointments 
        WHERE appointment_date = ? AND time_slot = ? AND status = 'จองแล้ว'`,
@@ -243,21 +243,21 @@ app.post('/bookingphy', async (req, res) => {
       return res.status(400).json({ success: false, message: 'เวลานี้ถูกจองแล้ว' });
     }
 
-    
+
     const [result] = await pool.execute(
       `INSERT INTO appointments 
        (user_id, service_id, appointment_date, time_slot, total_price, status, created_at, updated_at) 
        VALUES (?, ?, ?, ?, ?,'จองแล้ว', NOW(), NOW())`,
-      [user_id,  service_id, appointment_date, time_slot, total_price]
+      [user_id, service_id, appointment_date, time_slot, total_price]
     );
 
     const bookingId = result.insertId.toString().padStart(5, '0');
 
-    res.json({ 
-      success: true, 
-      message: 'จองคิวสำเร็จ!', 
-      appointment_id: result.insertId, 
-      booking_code: bookingId 
+    res.json({
+      success: true,
+      message: 'จองคิวสำเร็จ!',
+      appointment_id: result.insertId,
+      booking_code: bookingId
     });
 
   } catch (err) {
@@ -281,7 +281,7 @@ app.post('/bookingblood', async (req, res) => {
   }
 
   try {
-    
+
     const [existing] = await pool.execute(
       `SELECT id FROM blood_appointments 
        WHERE appointment_date = ? AND time_slot = ? AND status = 'จองแล้ว'`,
@@ -292,7 +292,7 @@ app.post('/bookingblood', async (req, res) => {
       return res.status(400).json({ success: false, message: 'เวลานี้ถูกจองแล้ว' });
     }
 
-   
+
     const [result] = await pool.execute(
       `INSERT INTO blood_appointments 
        (user_id, email, services, total_price, appointment_date, time_slot, problem, status, created_at, updated_at) 
@@ -316,7 +316,7 @@ app.post('/bookingblood', async (req, res) => {
 
 
 app.get('/', (req, res) => {
-  res.redirect('/home'); 
+  res.redirect('/home');
 });
 
 app.post('/login', async (req, res) => {
@@ -327,7 +327,7 @@ app.post('/login', async (req, res) => {
   }
 
   try {
-    
+
     const [rows] = await pool.execute(
       'SELECT * FROM users WHERE email = ?',
       [email]
@@ -339,23 +339,23 @@ app.post('/login', async (req, res) => {
 
     const user = rows[0];
 
-    
+
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
       return res.status(400).json({ success: false, message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
     }
 
-    
+
     req.session.userId = user.id;
     req.session.email = user.email;
-    req.session.role = user.role;   
+    req.session.role = user.role;
 
-    
+
     if (user.role === 'admin') {
       return res.redirect('/admin/listadmin');
     }
 
-    
+
     res.redirect('/home');
   } catch (err) {
     console.error('Login Error:', err);
@@ -369,8 +369,8 @@ app.get('/logout', (req, res) => {
     if (err) {
       return res.status(500).json({ success: false, message: 'ออกจากระบบไม่สำเร็จ' });
     }
-    res.clearCookie('connect.sid'); 
-    res.redirect('/login'); 
+    res.clearCookie('connect.sid');
+    res.redirect('/login');
   });
 });
 
@@ -392,7 +392,7 @@ app.get('/api/my-appointment', async (req, res) => {
   console.log('✅ User ID found:', userId);
 
   try {
-    
+
     const [appointments] = await pool.execute(`
       (
         SELECT 
@@ -444,33 +444,33 @@ app.get('/api/my-appointment', async (req, res) => {
 
     if (!appointments.length) {
       console.log('❌ No appointments found for user:', userId);
-      return res.json({ 
-        success: false, 
-        message: 'คุณยังไม่มีการจองล่าสุด หรือการจองเก่ากว่า 7 วัน' 
+      return res.json({
+        success: false,
+        message: 'คุณยังไม่มีการจองล่าสุด หรือการจองเก่ากว่า 7 วัน'
       });
     }
 
     const latestAppointment = appointments[0];
-    
-   
+
+
     latestAppointment.can_cancel = ['จองแล้ว', 'ยืนยันแล้ว', 'confirmed'].includes(latestAppointment.status);
     latestAppointment.can_reschedule = ['จองแล้ว'].includes(latestAppointment.status);
-    
-    
+
+
     if (latestAppointment.total_price && latestAppointment.total_price > 0) {
       latestAppointment.formatted_price = `${parseFloat(latestAppointment.total_price).toLocaleString()} บาท`;
     } else {
       latestAppointment.formatted_price = 'ไม่ระบุ';
     }
-    
+
     console.log('✅ Returning appointment:', latestAppointment);
     res.json({ success: true, appointment: latestAppointment });
 
   } catch (err) {
     console.error('❌ Get My Appointment Error:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่อีกครั้ง' 
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่อีกครั้ง'
     });
   }
 });
@@ -486,47 +486,47 @@ app.post('/api/my-appointment/cancel', async (req, res) => {
 
   console.log('🚫 Cancel Request:', { appointmentId, reason, type, userId });
 
-  
+
   if (!appointmentId || !reason || !type) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'กรุณาระบุรหัสการนัดหมาย เหตุผลในการยกเลิก และประเภทการจอง' 
+    return res.status(400).json({
+      success: false,
+      message: 'กรุณาระบุรหัสการนัดหมาย เหตุผลในการยกเลิก และประเภทการจอง'
     });
   }
 
-  if (!['physical','phy', 'blood'].includes(type)) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'ประเภทการจองไม่ถูกต้อง' 
+  if (!['physical', 'phy', 'blood'].includes(type)) {
+    return res.status(400).json({
+      success: false,
+      message: 'ประเภทการจองไม่ถูกต้อง'
     });
   }
 
   try {
     let checkQuery, updateQuery;
-    
+
     if (type === 'blood') {
-      
+
       checkQuery = `
         SELECT b.id, b.status, b.appointment_date, b.time_slot 
         FROM blood_appointments b
         WHERE b.id = ? AND b.user_id = ? 
           AND b.status IN ('จองแล้ว', 'ยืนยันแล้ว', 'confirmed')
       `;
-      
+
       updateQuery = `
         UPDATE blood_appointments
         SET status = 'ยกเลิกแล้ว', updated_at = NOW()
         WHERE id = ? AND user_id = ?
       `;
     } else {
-      
+
       checkQuery = `
         SELECT a.id, a.status, a.appointment_date, a.time_slot 
         FROM appointments a
         WHERE a.id = ? AND a.user_id = ? 
           AND a.status IN ('จองแล้ว', 'ยืนยันแล้ว', 'confirmed')
       `;
-      
+
       updateQuery = `
         UPDATE appointments
         SET status = 'ยกเลิกแล้ว', updated_at = NOW()
@@ -534,24 +534,24 @@ app.post('/api/my-appointment/cancel', async (req, res) => {
       `;
     }
 
-    
+
     const [existingRows] = await pool.execute(checkQuery, [appointmentId, userId]);
-    
+
     if (!existingRows.length) {
-      return res.json({ 
-        success: false, 
-        message: 'ไม่พบการจองที่สามารถยกเลิกได้ หรือการจองถูกยกเลิกแล้ว' 
+      return res.json({
+        success: false,
+        message: 'ไม่พบการจองที่สามารถยกเลิกได้ หรือการจองถูกยกเลิกแล้ว'
       });
     }
 
     const appointment = existingRows[0];
     console.log('📋 Found appointment:', appointment);
-    
-    
+
+
     const appointmentDateTime = new Date(`${appointment.appointment_date} ${appointment.time_slot.split('-')[0]}:00`);
     const currentTime = new Date();
     const timeDifference = appointmentDateTime - currentTime;
-    
+
     if (timeDifference > 0 && timeDifference < 2 * 60 * 60 * 1000) {
       return res.json({
         success: false,
@@ -559,28 +559,28 @@ app.post('/api/my-appointment/cancel', async (req, res) => {
       });
     }
 
-    
+
     const [result] = await pool.execute(updateQuery, [appointmentId, userId]);
 
     if (result.affectedRows === 0) {
-      return res.json({ 
-        success: false, 
-        message: 'ไม่สามารถยกเลิกการนัดหมายได้ กรุณาลองใหม่อีกครั้ง' 
+      return res.json({
+        success: false,
+        message: 'ไม่สามารถยกเลิกการนัดหมายได้ กรุณาลองใหม่อีกครั้ง'
       });
     }
 
     console.log(`✅ ${type} appointment ${appointmentId} cancelled by user ${userId}`);
-    
-    res.json({ 
-      success: true, 
-      message: 'ยกเลิกการนัดหมายสำเร็จ' 
+
+    res.json({
+      success: true,
+      message: 'ยกเลิกการนัดหมายสำเร็จ'
     });
 
   } catch (err) {
     console.error('❌ Cancel Appointment Error:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่อีกครั้งหรือติดต่อเจ้าหน้าที่' 
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่อีกครั้งหรือติดต่อเจ้าหน้าที่'
     });
   }
 });
@@ -590,14 +590,14 @@ app.post('/api/my-appointment/cancel', async (req, res) => {
 app.post('/api/admin/appointments/manage', requireAdmin, async (req, res) => {
   try {
     const { appointmentId, type, action, reason, new_date, new_time } = req.body;
-    if (!appointmentId || !type || !action || !reason) 
+    if (!appointmentId || !type || !action || !reason)
       return res.status(400).json({ success: false, message: 'ข้อมูลไม่ครบ' });
 
     // แปลงวันที่ถ้าเป็น reschedule
     let formattedDate = new_date;
     if (action === 'reschedule' && new_date.includes('/')) {
       const [day, month, year] = new_date.split('/');
-      formattedDate = `${year}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`;
+      formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
 
     const table = type === 'blood' ? 'blood_appointments' : 'appointments';
@@ -635,7 +635,7 @@ app.post('/api/admin/appointments/manage', requireAdmin, async (req, res) => {
 
 app.get('/api/time-slots/:date/:type', async (req, res) => {
   const { date, type } = req.params;
-  
+
   if (!['physical', 'blood'].includes(type)) {
     return res.status(400).json({
       success: false,
@@ -654,8 +654,8 @@ app.get('/api/time-slots/:date/:type', async (req, res) => {
       { time: '16:00-17:00', display: '16:00 - 17:00 น.' }
     ];
 
-    const maxPerSlot = 3; 
-    
+    const maxPerSlot = 3;
+
     า
     let countQuery;
     if (type === 'blood') {
@@ -675,13 +675,13 @@ app.get('/api/time-slots/:date/:type', async (req, res) => {
     }
 
     const [bookingCounts] = await pool.execute(countQuery, [date]);
-    
-    
+
+
     const availableSlots = timeSlots.map(slot => {
       const booking = bookingCounts.find(b => b.time_slot === slot.time);
       const bookedCount = booking ? booking.count : 0;
       const availableCount = maxPerSlot - bookedCount;
-      
+
       return {
         slot_time: slot.time,
         display_name: slot.display,
@@ -709,9 +709,9 @@ app.get('/api/time-slots/:date/:type', async (req, res) => {
 });
 
 app.post('/api/my-appointment/reschedule', async (req, res) => {
-    const { appointmentId, newDate, newTime } = req.body;
-    // logic สำหรับเลื่อนการจอง
-    res.json({ success: true, message: 'เลื่อนการจองเรียบร้อย' });
+  const { appointmentId, newDate, newTime } = req.body;
+  // logic สำหรับเลื่อนการจอง
+  res.json({ success: true, message: 'เลื่อนการจองเรียบร้อย' });
 });
 
 app.get('/api/my-appointments', async (req, res) => {
@@ -725,7 +725,7 @@ app.get('/api/my-appointments', async (req, res) => {
   try {
     let statusCondition = '';
     let params = [userId, userId];
-    
+
     if (status && ['จองแล้ว', 'ยืนยันแล้ว', 'เสร็จสิ้น', 'ยกเลิกแล้ว', 'เลื่อนแล้ว'].includes(status)) {
       statusCondition = 'AND a.status = ?';
       params.push(status);
@@ -774,13 +774,13 @@ app.get('/api/my-appointments', async (req, res) => {
       LIMIT ? OFFSET ?
     `, [...params, parseInt(limit), parseInt(offset)]);
 
-    
+
     appointments.forEach(apt => {
       apt.can_cancel = ['จองแล้ว', 'ยืนยันแล้ว', 'confirmed'].includes(apt.status);
       apt.can_reschedule = ['จองแล้ว'].includes(apt.status);
       apt.is_upcoming = new Date(apt.appointment_date.split('/').reverse().join('-')) >= new Date();
-      
-      
+
+
       if (apt.total_price && apt.total_price > 0) {
         apt.formatted_price = `${parseFloat(apt.total_price).toLocaleString()} บาท`;
       } else {
@@ -788,8 +788,8 @@ app.get('/api/my-appointments', async (req, res) => {
       }
     });
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       appointments,
       total: appointments.length,
       hasMore: appointments.length === parseInt(limit)
@@ -804,7 +804,7 @@ app.get('/api/my-appointments', async (req, res) => {
 
 app.get('/admin/Listadmin', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    
+
     const [physicalAppointments] = await pool.execute(`
       SELECT 
         a.id,
@@ -844,7 +844,7 @@ app.get('/admin/Listadmin', isLoggedIn, isAdmin, async (req, res) => {
       LIMIT 100
     `);
 
-    
+
     const allAppointments = [...physicalAppointments, ...bloodAppointments]
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -860,7 +860,7 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
   try {
     const { status, type, date, limit = 1000, offset = 0 } = req.query; // เพิ่ม default limit
 
-    
+
     const mapStatusToDB = (status) => {
       switch (status) {
         case 'pending': return 'จองแล้ว';
@@ -886,7 +886,7 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
 
     let appointments = [];
 
-    
+
     if (!type || type === 'physical') {
       let physicalQuery = `
         SELECT 
@@ -906,10 +906,10 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
         JOIN personal_info p ON a.user_id = p.user_id
         LEFT JOIN services s ON a.service_id = s.id
       `;
-      
+
       let conditions = [];
       let params = [];
-      
+
       if (status) {
         conditions.push('a.status = ?');
         params.push(mapStatusToDB(status));
@@ -918,13 +918,13 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
         conditions.push('a.appointment_date = ?');
         params.push(date);
       }
-      
+
       if (conditions.length > 0) {
         physicalQuery += ` WHERE ${conditions.join(' AND ')}`;
       }
-      
+
       physicalQuery += ` ORDER BY a.created_at DESC LIMIT ${limitNum} OFFSET ${offsetNum}`;
-      
+
       try {
         let physicalRows;
         if (params.length > 0) {
@@ -938,7 +938,7 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
       }
     }
 
-    
+
     if (!type || type === 'blood') {
       let bloodQuery = `
         SELECT 
@@ -957,10 +957,10 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
         FROM blood_appointments a
         JOIN personal_info p ON a.user_id = p.user_id
       `;
-      
+
       let conditions = [];
       let params = [];
-      
+
       if (status) {
         conditions.push('a.status = ?');
         params.push(mapStatusToDB(status));
@@ -969,13 +969,13 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
         conditions.push('a.appointment_date = ?');
         params.push(date);
       }
-      
+
       if (conditions.length > 0) {
         bloodQuery += ` WHERE ${conditions.join(' AND ')}`;
       }
-      
+
       bloodQuery += ` ORDER BY a.created_at DESC LIMIT ${limitNum} OFFSET ${offsetNum}`;
-      
+
       try {
         let bloodRows;
         if (params.length > 0) {
@@ -989,13 +989,13 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
       }
     }
 
-    
+
     appointments = appointments.map(a => ({
       ...a,
       status: normalizeStatus(a.status)
     }));
 
-    
+
     appointments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     res.json({ success: true, appointments, total: appointments.length });
@@ -1033,7 +1033,7 @@ app.get('/api/admin/all-appointments', requireAdmin, async (req, res) => {
 
     let appointments = [];
 
-    
+
     let whereConditions = [];
     let whereParams = [];
 
@@ -1048,7 +1048,7 @@ app.get('/api/admin/all-appointments', requireAdmin, async (req, res) => {
 
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
-    
+
     if (!type || type === 'physical') {
       const physicalQuery = `
         SELECT 
@@ -1071,7 +1071,7 @@ app.get('/api/admin/all-appointments', requireAdmin, async (req, res) => {
         ${whereClause}
         ORDER BY a.created_at DESC
       `;
-      
+
       try {
         let physicalRows;
         if (whereParams.length > 0) {
@@ -1085,7 +1085,7 @@ app.get('/api/admin/all-appointments', requireAdmin, async (req, res) => {
       }
     }
 
-    
+
     if (!type || type === 'blood') {
       const bloodQuery = `
         SELECT 
@@ -1107,7 +1107,7 @@ app.get('/api/admin/all-appointments', requireAdmin, async (req, res) => {
         ${whereClause}
         ORDER BY a.created_at DESC
       `;
-      
+
       try {
         let bloodRows;
         if (whereParams.length > 0) {
@@ -1121,32 +1121,32 @@ app.get('/api/admin/all-appointments', requireAdmin, async (req, res) => {
       }
     }
 
-    
+
     appointments = appointments.map(a => ({
       ...a,
       status: normalizeStatus(a.status),
-      statusText: a.status, 
+      statusText: a.status,
       typeText: a.appointment_type === 'physical' ? 'นัดหมายทั่วไป' : 'ตรวจเลือด'
     }));
 
-    
+
     appointments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-    
+
     const statusCounts = appointments.reduce((acc, appointment) => {
       acc[appointment.status] = (acc[appointment.status] || 0) + 1;
       return acc;
     }, {});
 
-    
+
     const typeCounts = appointments.reduce((acc, appointment) => {
       acc[appointment.appointment_type] = (acc[appointment.appointment_type] || 0) + 1;
       return acc;
     }, {});
 
-    res.json({ 
-      success: true, 
-      appointments, 
+    res.json({
+      success: true,
+      appointments,
       total: appointments.length,
       statusCounts,
       typeCounts,
@@ -1167,10 +1167,38 @@ app.get('/api/admin/all-appointments', requireAdmin, async (req, res) => {
 });
 
 
+app.get('/api/admin/manangeBookingCount', requireAdmin, async (req, res) => {
+  try {
+
+    const [waitingPhysical] = await pool.query(`SELECT count(a.id) AS count FROM appointments a JOIN personal_info p ON a.user_id = p.user_id
+        LEFT JOIN services s ON a.service_id = s.id WHERE status = "จองแล้ว"`)
+    const [waitingBlood] = await pool.query(`SELECT count(a.id) AS count FROM upam.blood_appointments a JOIN personal_info p ON a.user_id = p.user_id WHERE status = 'จองแล้ว';`)
+
+    const [confirmPhysical] = await pool.query(`SELECT count(a.id) AS count FROM appointments a JOIN personal_info p ON a.user_id = p.user_id
+        LEFT JOIN services s ON a.service_id = s.id WHERE status = "ยืนยันแล้ว"`)
+    const [confirmBlood] = await pool.query(`SELECT count(a.id) AS count FROM upam.blood_appointments a JOIN personal_info p ON a.user_id = p.user_id WHERE status = 'ยืนยันแล้ว';`)
+
+    const [cancelPhysical] = await pool.query(`SELECT count(a.id) AS count FROM appointments a JOIN personal_info p ON a.user_id = p.user_id
+      LEFT JOIN services s ON a.service_id = s.id WHERE status = "ยกเลิกแล้ว"`)
+    const [cancelBlood] = await pool.query(`SELECT count(a.id) AS count FROM upam.blood_appointments a JOIN personal_info p ON a.user_id = p.user_id WHERE status = 'ยกเลิกแล้ว';`)
+
+    const waiting = waitingBlood[0].count + waitingPhysical[0].count
+    const confirmed = confirmBlood[0].count + confirmPhysical[0].count
+    const cancelled = cancelBlood[0].count + cancelPhysical[0].count
+
+    res.status(200).json({ waiting, confirmed, cancelled })
+  } catch (error) {
+    console.error('Error updating appointment status:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+  }
+})
+
 app.put('/api/admin/appointments/:id/status', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("🚀 ~ req.params:", req.params)
     const { status, type } = req.body;
+    console.log("🚀 ~ req.body:", req.body)
 
     if (!['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
       return res.status(400).json({ success: false, message: 'สถานะไม่ถูกต้อง' });
@@ -1186,11 +1214,18 @@ app.put('/api/admin/appointments/:id/status', requireAdmin, async (req, res) => 
       }
     })();
 
+    const mapStatus = {
+      pending: 'จองแล้ว',
+      confirmed: "ยืนยันแล้ว",
+      cancelled: 'ยกเลิกแล้ว',
+      conpleted: 'เสร็จสิ้น'
+    }
+
     const table = type === 'blood' ? 'blood_appointments' : 'appointments';
-    
+
     const [result] = await pool.execute(
       `UPDATE ${table} SET status = ?, updated_at = NOW() WHERE id = ?`,
-      [dbStatus, id]
+      [mapStatus[status], id]
     );
 
     if (result.affectedRows === 0) {
@@ -1220,10 +1255,10 @@ app.get('/api/admin/appointments-debug', requireAdmin, async (req, res) => {
       }
     };
 
-    
+
     let whereClause = '';
     let params = [];
-    
+
     if (status || date) {
       let conditions = [];
       if (status) {
@@ -1239,7 +1274,7 @@ app.get('/api/admin/appointments-debug', requireAdmin, async (req, res) => {
 
     let appointments = [];
 
-    
+
     if (!type || type === 'physical') {
       const physicalQuery = `
         SELECT 
@@ -1262,10 +1297,10 @@ app.get('/api/admin/appointments-debug', requireAdmin, async (req, res) => {
         ORDER BY a.created_at DESC
         LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
       `;
-      
+
       console.log('Physical Query:', physicalQuery);
       console.log('Physical Params:', params);
-      
+
       if (params.length > 0) {
         const [physicalRows] = await pool.execute(physicalQuery, params);
         appointments.push(...physicalRows);
@@ -1275,7 +1310,7 @@ app.get('/api/admin/appointments-debug', requireAdmin, async (req, res) => {
       }
     }
 
-    
+
     if (!type || type === 'blood') {
       const bloodQuery = `
         SELECT 
@@ -1297,10 +1332,10 @@ app.get('/api/admin/appointments-debug', requireAdmin, async (req, res) => {
         ORDER BY a.created_at DESC
         LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
       `;
-      
+
       console.log('Blood Query:', bloodQuery);
       console.log('Blood Params:', params);
-      
+
       if (params.length > 0) {
         const [bloodRows] = await pool.execute(bloodQuery, params);
         appointments.push(...bloodRows);
@@ -1310,7 +1345,7 @@ app.get('/api/admin/appointments-debug', requireAdmin, async (req, res) => {
       }
     }
 
-    
+
     const normalizeStatus = (status) => {
       switch (status) {
         case 'จองแล้ว': return 'pending';
@@ -1372,65 +1407,42 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
   }
 });
 
-
-app.post('/api/admin/appointments/:id/status', async (req, res) => {
-    const appointmentId = req.params.id;
-    const { status } = req.body;
-
-    try {
-        const [result] = await db.query(
-            'UPDATE appointments SET status = ? WHERE id = ?',
-            [status, appointmentId]
-        );
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'ไม่พบการจองนี้' });
-        }
-
-        res.json({ success: true, message: 'อัปเดตสถานะเรียบร้อย' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'เกิดข้อผิดพลาด' });
-    }
-});
-
-
 async function createAdminUser() {
   try {
     const adminEmail = 'admin@upam.com';
-    const adminPassword = 'admin123'; 
-    
-    
+    const adminPassword = 'admin123';
+
+
     const [existing] = await pool.execute(
       'SELECT id FROM users WHERE email = ?',
       [adminEmail]
     );
-    
+
     if (existing.length > 0) {
       console.log('✅ Admin user already exists');
       return;
     }
-    
-    
+
+
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
-    
+
     const [result] = await pool.execute(
       `INSERT INTO users (email, password, role) VALUES (?, ?, 'admin')`,
       [adminEmail, hashedPassword]
     );
-    
-   
+
+
     await pool.execute(
       `INSERT INTO personal_info 
        (user_id, title, first_name, last_name, email, password) 
        VALUES (?, 'นาย', 'Admin', 'System', ?, ?)`,
       [result.insertId, adminEmail, hashedPassword]
     );
-    
+
     console.log('✅ Admin user created successfully');
     console.log('📧 Email:', adminEmail);
     console.log('🔑 Password:', adminPassword);
-    
+
   } catch (error) {
     console.error('❌ Error creating admin user:', error);
   }
@@ -1553,7 +1565,7 @@ app.post("/api/upload-excel/:appointmentId", upload.single("file"), async (req, 
 
     const processed = processExcelData(jsonData);
 
-    
+
     for (const row of processed) {
       const { test_name, result, unit, reference_min, reference_max } = row;
 
@@ -1569,7 +1581,7 @@ app.post("/api/upload-excel/:appointmentId", upload.single("file"), async (req, 
       );
     }
 
-    
+
     await pool.query(
       "UPDATE blood_appointments SET status = 'ที่อัปโหลดแล้ว' WHERE id = ?",
       [appointmentId]
@@ -1646,7 +1658,7 @@ app.get('/api/lab/Staffblood', async (req, res) => {
       ORDER BY b.appointment_date DESC
     `);
 
-    
+
     rows.forEach(row => {
       try {
         const servicesArr = JSON.parse(row.services);
@@ -1654,7 +1666,7 @@ app.get('/api/lab/Staffblood', async (req, res) => {
       } catch {
         row.testType = row.services;
       }
-      
+
       if (typeof row.results === 'string') {
         try {
           row.results = JSON.parse(row.results);
@@ -1733,7 +1745,7 @@ app.post('/api/Staffblood/upload', async (req, res) => {
   }
 
   try {
-    
+
     await pool.execute(
       `UPDATE blood_appointments 
        SET status = 'completed', results = ? 

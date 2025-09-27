@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
-      margin: 0; padding: 0; box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
+
     body {
       font-family: 'Inter', sans-serif;
       background: #f8fafc;
@@ -95,80 +99,83 @@
       border-radius: 50%;
       border: 2px solid white;
     }
+
     /* Profile Dropdown Styles */
-        .profile-dropdown {
-            position: relative;
-            display: inline-block;
-        }
+    .profile-dropdown {
+      position: relative;
+      display: inline-block;
+    }
 
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: white;
-            min-width: 180px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-            z-index: 1000;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid #e5e7eb;
-            margin-top: 8px;
-        }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: white;
+      min-width: 180px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      margin-top: 8px;
+    }
 
-        .dropdown-content.show {
-            display: block;
-            animation: dropdownFadeIn 0.3s ease-out;
-        }
+    .dropdown-content.show {
+      display: block;
+      animation: dropdownFadeIn 0.3s ease-out;
+    }
 
-        @keyframes dropdownFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    @keyframes dropdownFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
 
-        .dropdown-item {
-            color: #374151;
-            padding: 12px 20px;
-            text-decoration: none;
-            display: block;
-            transition: all 0.3s ease;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            font-size: 14px;
-            cursor: pointer;
-        }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-        .dropdown-item:hover {
-            background-color: #f9fafb;
-            color: #1f2937;
-        }
+    .dropdown-item {
+      color: #374151;
+      padding: 12px 20px;
+      text-decoration: none;
+      display: block;
+      transition: all 0.3s ease;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 14px;
+      cursor: pointer;
+    }
 
-        .dropdown-item i {
-            margin-right: 10px;
-            width: 16px;
-            color: #6b7280;
-        }
+    .dropdown-item:hover {
+      background-color: #f9fafb;
+      color: #1f2937;
+    }
 
-        .dropdown-item.logout {
-            border-top: 1px solid #e5e7eb;
-            color: #dc2626;
-        }
+    .dropdown-item i {
+      margin-right: 10px;
+      width: 16px;
+      color: #6b7280;
+    }
 
-        .dropdown-item.logout:hover {
-            background-color: #fef2f2;
-            color: #dc2626;
-        }
+    .dropdown-item.logout {
+      border-top: 1px solid #e5e7eb;
+      color: #dc2626;
+    }
 
-        .dropdown-item.logout i {
-            color: #dc2626;
-        }
+    .dropdown-item.logout:hover {
+      background-color: #fef2f2;
+      color: #dc2626;
+    }
+
+    .dropdown-item.logout i {
+      color: #dc2626;
+    }
+
     /* Container */
     .container {
       max-width: 1200px;
@@ -197,7 +204,7 @@
       border-radius: 16px;
       padding: 24px;
       margin-bottom: 24px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
 
     .filter-row {
@@ -246,7 +253,7 @@
       background: white;
       padding: 8px;
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
     .status-tab {
@@ -283,7 +290,7 @@
     }
 
     .status-tab.active .status-count {
-      background: rgba(255,255,255,0.3);
+      background: rgba(255, 255, 255, 0.3);
     }
 
     /* Booking Cards */
@@ -297,7 +304,7 @@
       background: white;
       border-radius: 16px;
       padding: 24px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
       border-left: 4px solid #F59E0B;
       transition: all 0.2s ease;
       cursor: pointer;
@@ -305,7 +312,7 @@
 
     .booking-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
 
     .booking-card.confirmed {
@@ -457,7 +464,7 @@
       width: 90%;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     }
 
     .modal-header {
@@ -558,7 +565,7 @@
       max-width: 400px;
       width: 90%;
       text-align: center;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     }
 
     .staff-modal-title {
@@ -642,7 +649,7 @@
       max-width: 400px;
       width: 90%;
       text-align: center;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     }
 
     .success-icon {
@@ -714,8 +721,13 @@
     }
 
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
 
     /* Responsive */
@@ -755,17 +767,18 @@
     }
   </style>
 </head>
+
 <body>
   <!-- Header -->
   <div class="header">
     <div class="logo">
-      <img src="public/img/UPaMLOGO.png" class="logo-img"> 
+      <img src="public/img/UPaMLOGO.png" class="logo-img">
       <div class="phone-number">
         <i class="fas fa-phone"></i>
         1234
       </div>
     </div>
-    
+
     <div class="header-right">
       <div class="header-icons">
         <button class="icon-btn" title="ค้นหา">
@@ -775,18 +788,18 @@
           <i class="fas fa-bell"></i>
         </button>
         <div class="profile-dropdown">
-                    <a href="/Login">
-                      <button class="icon-btn" title="บัญชีผู้ใช้">
-                          <i class="fas fa-user"></i>
-                      </button>
-                    </a>
-                    <div class="dropdown-content" id="profileDropdown">
-                        <button class="dropdown-item logout" onclick="logout()">
-                            <i class="fas fa-sign-out-alt"></i>
-                            ออกจากระบบ
-                        </button>
-                    </div>
-                </div>
+          <a href="/Login">
+            <button class="icon-btn" title="บัญชีผู้ใช้">
+              <i class="fas fa-user"></i>
+            </button>
+          </a>
+          <div class="dropdown-content" id="profileDropdown">
+            <button class="dropdown-item logout" onclick="logout()">
+              <i class="fas fa-sign-out-alt"></i>
+              ออกจากระบบ
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -832,44 +845,44 @@
           <i class="fas fa-times"></i>
         </button>
       </div>
-      
+
       <div class="detail-grid">
         <div class="detail-item">
           <div class="detail-label">รหัสการจอง</div>
           <div class="detail-value" id="modalBookingId">-</div>
         </div>
-        
+
         <div class="detail-item">
           <div class="detail-label">ชื่อ-นามสกุล</div>
           <div class="detail-value" id="modalPatientName">-</div>
         </div>
-        
+
         <div class="detail-item">
           <div class="detail-label">บริการ</div>
           <div class="detail-value" id="modalService">-</div>
         </div>
-        
+
         <div class="detail-item">
           <div class="detail-label">วันที่นัดหมาย</div>
           <div class="detail-value" id="modalDate">-</div>
         </div>
-        
+
         <div class="detail-item">
           <div class="detail-label">เวลา</div>
           <div class="detail-value" id="modalTime">-</div>
         </div>
-        
+
         <div class="detail-item">
           <div class="detail-label">ค่าบริการ</div>
           <div class="detail-value price-value" id="modalPrice">-</div>
         </div>
-        
+
         <div class="detail-item problem-section">
           <div class="detail-label">ปัญหาสุขภาพ</div>
           <div class="detail-value" id="modalProblem">-</div>
         </div>
       </div>
-      
+
       <div class="modal-actions" id="modalActions">
         <!-- Actions will be populated based on status -->
       </div>
@@ -888,7 +901,7 @@
         <option value="ทพ. ประสิทธิโชค กรรเชียง">ทนพ. ประสิทธิโชค กรรเชียง</option>
       </select>
       <div class="staff-modal-actions">
-        <button class="btn-modal btn-modal-secondary" onclick="closeStaffModal()">ยกเลิก</button>
+        <button class="btn-modal btn-modal-secondary" onclick="closeModal('staffModal')">ยกเลิก</button>
         <button class="btn-modal btn-modal-primary" onclick="confirmStaffAssignment()">ยืนยัน</button>
       </div>
     </div>
@@ -915,7 +928,9 @@
     let currentTab = 'pending';
     let currentBookingId = null;
     let currentBookingType = null;
+    let confirmAppointment = null
 
+    document.addEventListener('DOMContentLoaded', initializePage);
     // Mapping DB ↔ UI
     const mapStatus = dbStatus => ({
       'จองแล้ว': 'pending',
@@ -954,14 +969,14 @@
       document.getElementById('searchInput')?.addEventListener('input', handleSearch);
       document.getElementById('dateFilter')?.addEventListener('change', handleSearch);
 
-      ['detailModal','staffModal','successModal'].forEach(modalId => {
+      ['detailModal', 'staffModal', 'successModal'].forEach(modalId => {
         const modal = document.getElementById(modalId);
         if (!modal) return;
-        modal.addEventListener('click', e => { if(e.target === modal) closeModal(modalId); });
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(modalId); });
       });
 
       document.addEventListener('keydown', e => {
-        if(e.key === 'Escape') ['detailModal','staffModal','successModal'].forEach(closeModal);
+        if (e.key === 'Escape') ['detailModal', 'staffModal', 'successModal'].forEach(closeModal);
       });
     }
 
@@ -978,35 +993,43 @@
       try {
         const res = await fetch(`/api/admin/appointments?status=${currentTab}`);
         const data = await res.json();
+
         if (data.success) {
-          bookings = data.appointments.map(a => ({
-            id: a.id,
-            status: mapStatus(a.status),
-            patientName: a.patientName,
-            service: a.service,
-            date: a.appointment_date,
-            time: a.time_slot,
-            price: a.total_price,
-            assignedStaff: a.assignedStaff || null,
-            type: a.appointment_type,
-            problem: a.problem || '-'
-          }));
-          renderBookings();
-          updateCounts();
+          bookings = data.appointments.map(a => {
+            return {
+              id: a.id,
+              status: a.status,
+              patientName: a.patientName,
+              service: a.service,
+              date: a.appointment_date,
+              time: a.time_slot,
+              price: a.total_price,
+              assignedStaff: a.assignedStaff || null,
+              type: a.appointment_type,
+              problem: a.problem || '-'
+            }
+          });
+          renderBookings(bookings, currentTab);
+          await updateCounts();
           // Update modal if open
-          if(currentBookingId && document.getElementById('detailModal')?.classList.contains('show')) {
+          if (currentBookingId && document.getElementById('detailModal')?.classList.contains('show')) {
             openDetailModal(currentBookingId);
           }
         } else console.error('โหลดข้อมูลล้มเหลว:', data.message);
-      } catch(err) { console.error('API error:', err); }
+      } catch (err) { console.error('API error:', err); }
     }
 
+
     // Render bookings
-    function renderBookings() {
-      renderFilteredBookings(bookings.filter(b => b.status === currentTab));
+    function renderBookings(bookingInput, currentTabInput) {
+      const data = bookingInput?.length ? bookingInput : bookings
+      const tab = currentTabInput ? currentTabInput : currentTab
+      const filterd = data.filter(b => b.status === tab)
+      renderFilteredBookings(filterd);
     }
 
     function renderFilteredBookings(filteredBookings) {
+
       const bookingList = document.getElementById('bookingList');
       if (!filteredBookings.length) {
         bookingList.innerHTML = `<div class="empty-state">
@@ -1020,11 +1043,11 @@
       let html = '';
       filteredBookings.forEach(b => {
         let statusClass = '', statusText = '', actionsHtml = '';
-        switch(b.status) {
+        switch (b.status) {
           case 'pending':
             statusClass = 'status-pending'; statusText = 'รอการยืนยัน';
             actionsHtml = `<button class="btn btn-confirm" onclick="openStaffModal('${b.id}')"><i class="fas fa-check"></i> ยืนยัน</button>
-                          <button class="btn btn-cancel" onclick="cancelBooking('${b.id}')"><i class="fas fa-times"></i> ยกเลิก</button>`;
+                          <button class="btn btn-cancel" onclick="cancelBooking('${b.id}', '${b.type}')"><i class="fas fa-times"></i> ยกเลิก</button>`;
             break;
           case 'confirmed':
             statusClass = 'status-confirmed'; statusText = 'ยืนยันแล้ว'; actionsHtml = '';
@@ -1058,10 +1081,12 @@
     }
 
     // Update counts
-    function updateCounts() {
-      document.getElementById('pendingCount').textContent = bookings.filter(b => b.status === 'pending').length;
-      document.getElementById('confirmedCount').textContent = bookings.filter(b => b.status === 'confirmed').length;
-      document.getElementById('cancelledCount').textContent = bookings.filter(b => b.status === 'cancelled').length;
+    async function updateCounts() {
+      const resBookingCount = await fetch(`/api/admin/manangeBookingCount`)
+      const bookingCounts = await resBookingCount.json()
+      document.getElementById('pendingCount').textContent = bookingCounts.waiting
+      document.getElementById('confirmedCount').textContent = bookingCounts.confirmed
+      document.getElementById('cancelledCount').textContent = bookingCounts.cancelled
     }
 
     // Search/filter
@@ -1069,16 +1094,17 @@
       const term = document.getElementById('searchInput')?.value.toLowerCase() || '';
       const dateFilter = document.getElementById('dateFilter')?.value;
       let filtered = bookings.filter(b => b.status === currentTab);
-      if(term) filtered = filtered.filter(b => b.id.toString().includes(term) || b.patientName.toLowerCase().includes(term));
-      if(dateFilter) filtered = filtered.filter(b => new Date(b.date).toDateString() === new Date(dateFilter).toDateString());
+      if (term) filtered = filtered.filter(b => b.id.toString().includes(term) || b.patientName.toLowerCase().includes(term));
+      if (dateFilter) filtered = filtered.filter(b => new Date(b.date).toDateString() === new Date(dateFilter).toDateString());
       renderFilteredBookings(filtered);
     }
 
     // Modal
     function openDetailModal(id) {
       const b = bookings.find(x => x.id === id);
-      if(!b) return;
-      currentBookingId = b.id; currentBookingType = b.type;
+      if (!b) return;
+      currentBookingId = b.id;
+      currentBookingType = b.type;
       document.getElementById('modalBookingId').textContent = b.id;
       document.getElementById('modalPatientName').textContent = b.patientName;
       document.getElementById('modalService').textContent = b.service;
@@ -1088,7 +1114,7 @@
       document.getElementById('modalProblem').textContent = b.problem;
 
       const actions = document.getElementById('modalActions');
-      if(b.status === 'pending') {
+      if (b.status === 'pending') {
         actions.innerHTML = `<button class="btn btn-confirm" onclick="openStaffModal('${b.id}')"><i class="fas fa-check"></i> ยืนยันการจอง</button>
                             <button class="btn btn-cancel" onclick="cancelBooking('${b.id}')"><i class="fas fa-times"></i> ยกเลิกการจอง</button>`;
       } else actions.innerHTML = `<button class="btn btn-view" onclick="closeModal('detailModal')"><i class="fas fa-times"></i> ปิด</button>`;
@@ -1097,87 +1123,96 @@
     }
 
     function openStaffModal(id) {
-      const b = bookings.find(x => x.id === id); if(!b) return;
-      currentBookingId = b.id; currentBookingType = b.type;
+      const b = bookings.filter(x => x.id == id);
+      if (!b.length) return;
+      currentBookingId = b[0].id;
+      confirmAppointment = currentBookingId
+      currentBookingType = b[0].type;
       document.getElementById('staffSelect').value = '';
       document.getElementById('staffModal').classList.add('show');
       closeModal('detailModal');
     }
 
+    function closeSuccessModal() {
+      document.getElementById("successModal").remove()
+    }
+
     function closeModal(id) {
       const modal = document.getElementById(id);
-      if(modal) modal.classList.remove('show');
-      if(id !== 'successModal') currentBookingId = null;
+      if (modal) modal.classList.remove('show');
+      if (id !== 'successModal') currentBookingId = null;
     }
 
     // Confirm staff
     async function confirmStaffAssignment() {
       const staff = document.getElementById('staffSelect').value;
-      if(!staff) return alert('กรุณาเลือกเจ้าหน้าที่');
+      if (!staff) return alert('กรุณาเลือกเจ้าหน้าที่');
       try {
-        const res = await fetch(`/api/admin/appointments/${currentBookingId}/status`, {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({status:'ยืนยันแล้ว', staffName:staff, type:currentBookingType})
+        const res = await fetch(`/api/admin/appointments/${confirmAppointment}/status`, {
+          method: "PUT",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'confirmed', staffName: staff, type: currentBookingType })
         });
         const data = await res.json();
-        if(data.success) {
+        if (data.success) {
           const b = bookings.find(x => x.id === currentBookingId);
-          if(b){ b.status='confirmed'; b.assignedStaff = staff; }
+          if (b) { b.status = 'confirmed'; b.assignedStaff = staff; }
           closeModal('staffModal');
           document.getElementById('successMessage').innerHTML = data.message;
           document.getElementById('successModal').classList.add('show');
-          renderBookings(); updateCounts();
+          loadBookings()
+          await updateCounts();
         } else alert('❌ ' + data.message);
-      } catch(err){ console.error(err); alert('เกิดข้อผิดพลาด'); }
+      } catch (err) { console.error(err); alert('เกิดข้อผิดพลาด'); }
     }
 
     // Cancel booking
-    async function cancelBooking(id) {
-      if(!confirm('คุณแน่ใจหรือไม่ที่จะยกเลิกการจองนี้?')) return;
+    async function cancelBooking(id, type) {
+      if (!confirm('คุณแน่ใจหรือไม่ที่จะยกเลิกการจองนี้?')) return;
       try {
         const res = await fetch(`/api/admin/appointments/${id}/status`, {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({status:'ยกเลิกแล้ว', reason:'ยกเลิกโดยผู้ดูแล', type:currentBookingType})
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'cancelled', reason: 'ยกเลิกโดยผู้ดูแล', type })
         });
         const data = await res.json();
-        if(data.success){
-          const b = bookings.find(x=>x.id===id);
-          if(b) b.status='cancelled';
+        if (data.success) {
+          const b = bookings.find(x => x.id === id);
+          if (b) b.status = 'cancelled';
           closeModal('detailModal');
-          showNotification(data.message,'warning');
-          renderBookings(); updateCounts();
+          showNotification(data.message, 'warning');
+          initializePage()
+          await updateCounts();
         } else alert('❌ ' + data.message);
-      } catch(err){ console.error(err); alert('เกิดข้อผิดพลาด'); }
+      } catch (err) { console.error(err); alert('เกิดข้อผิดพลาด'); }
     }
 
     // Notification
-    function showNotification(msg,type='success'){
+    function showNotification(msg, type = 'success') {
       const n = document.createElement('div');
       n.className = `notification ${type}`;
-      n.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle':'fa-exclamation-triangle'}"></i> ${msg}`;
-      Object.assign(n.style,{
-        position:'fixed', top:'20px', right:'20px', background:type==='success'?'#10B981':'#F59E0B',
-        color:'#fff', padding:'12px 20px', borderRadius:'8px', boxShadow:'0 4px 12px rgba(0,0,0,0.15)',
-        zIndex:2000, display:'flex', alignItems:'center', gap:'8px', fontWeight:'500',
-        animation:'slideIn 0.3s ease-out'
+      n.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> ${msg}`;
+      Object.assign(n.style, {
+        position: 'fixed', top: '20px', right: '20px', background: type === 'success' ? '#10B981' : '#F59E0B',
+        color: '#fff', padding: '12px 20px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        zIndex: 2000, display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500',
+        animation: 'slideIn 0.3s ease-out'
       });
       document.body.appendChild(n);
-      setTimeout(()=>{ n.style.animation='slideOut 0.3s ease-in forwards'; setTimeout(()=>n.remove(),300); },3000);
+      setTimeout(() => { n.style.animation = 'slideOut 0.3s ease-in forwards'; setTimeout(() => n.remove(), 300); }, 3000);
     }
 
-    // Auto-refresh
-    function startAutoRefresh(interval=5000){ setInterval(loadBookings,interval); }
+    // // Auto-refresh
+    // function startAutoRefresh(interval=5000){ setInterval(loadBookings,interval); }
 
     // Notification animation CSS
-    const style=document.createElement('style');
-    style.textContent=`@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    const style = document.createElement('style');
+    style.textContent = `@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
     @keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}`;
     document.head.appendChild(style);
 
     // Init
-    document.addEventListener('DOMContentLoaded',()=>{ initializePage(); startAutoRefresh(5000); });
+    // document.addEventListener('DOMContentLoaded',()=>{ initializePage(); startAutoRefresh(5000); });
   </script>
-
-
 </body>
+
 </html>
