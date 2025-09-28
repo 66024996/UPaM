@@ -181,7 +181,7 @@ app.post('/register', async (req, res) => {
 });
 
 
-app.get('/ListAdmin',isAdmin, (req, res) => {
+app.get('/ListAdmin', isAdmin, (req, res) => {
   res.render('ListAdmin');
 });
 
@@ -189,17 +189,17 @@ app.get('/home', isLoggedIn, (req, res) => {
   res.render('home');
 });
 
-app.get('/BookingCard', isLoggedIn,(req, res) => {
+app.get('/BookingCard', isLoggedIn, (req, res) => {
   res.render('BookingCard');
 });
 
 
-app.get('/bookingphy',isLoggedIn, (req, res) => {
+app.get('/bookingphy', isLoggedIn, (req, res) => {
   res.render('bookingphy');
 
 });
 
-app.get('/Bookingblood', isLoggedIn,(req, res) => {
+app.get('/Bookingblood', isLoggedIn, (req, res) => {
   res.render('Bookingblood');
 });
 
@@ -209,7 +209,7 @@ app.get('/login', (req, res) => {
 });
 
 
-app.get('/Staffphy',requireDoctor, (req, res) => {
+app.get('/Staffphy', requireDoctor, (req, res) => {
   res.render('Staffphy');
 });
 
@@ -222,7 +222,7 @@ app.get('/register', (req, res) => {
   res.render('register');
 });
 
-app.post('/bookingphy',isLoggedIn, async (req, res) => {
+app.post('/bookingphy', isLoggedIn, async (req, res) => {
   const { service_id, appointment_date, time_slot, total_price } = req.body;
 
   if (!req.session || !req.session.userId || !req.session.email) {
@@ -272,7 +272,7 @@ app.post('/bookingphy',isLoggedIn, async (req, res) => {
 });
 
 
-app.post('/bookingblood',isLoggedIn, async (req, res) => {
+app.post('/bookingblood', isLoggedIn, async (req, res) => {
   if (!req.session || !req.session.userId || !req.session.email) {
     return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบก่อนทำการจอง' });
   }
@@ -343,6 +343,20 @@ app.post('/login', async (req, res) => {
   }
 });
 
+app.get('/api/user', async (req, res) => {
+  try {
+    console.log('session => ', req.session)
+
+    const userId = req.session.userId
+    const [result] = await pool.query('SELECT id, fullname, email, role, created_at, updated_at FROM users WHERE id = ?', [userId])
+    console.log("🚀 ~ result:", result)
+
+    res.status(200).json(result[0])
+  } catch (error) {
+    console.error('Login Error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+  }
+})
 
 app.get('/logout', (req, res) => {
   req.session.destroy(err => {
@@ -370,7 +384,7 @@ app.get('/api/session', (req, res) => {
 });
 
 
-app.get('/api/my-appointment',isLoggedIn, async (req, res) => {
+app.get('/api/my-appointment', isLoggedIn, async (req, res) => {
   console.log('📊 Session Debug:', {
     sessionExists: !!req.session,
     sessionData: req.session,
@@ -471,7 +485,7 @@ app.get('/api/my-appointment',isLoggedIn, async (req, res) => {
 });
 
 
-app.post('/api/my-appointment/cancel',isLoggedIn, async (req, res) => {
+app.post('/api/my-appointment/cancel', isLoggedIn, async (req, res) => {
   if (!req.session || !req.session.userId) {
     return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบ' });
   }
@@ -703,13 +717,13 @@ app.get('/api/time-slots/:date/:type', async (req, res) => {
   }
 });
 
-app.post('/api/my-appointment/reschedule',isLoggedIn, async (req, res) => {
+app.post('/api/my-appointment/reschedule', isLoggedIn, async (req, res) => {
   const { appointmentId, newDate, newTime } = req.body;
   // logic สำหรับเลื่อนการจอง
   res.json({ success: true, message: 'เลื่อนการจองเรียบร้อย' });
 });
 
-app.get('/api/my-appointments',isLoggedIn, async (req, res) => {
+app.get('/api/my-appointments', isLoggedIn, async (req, res) => {
   if (!req.session || !req.session.userId) {
     return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบ' });
   }
@@ -1194,7 +1208,7 @@ app.put('/api/admin/appointments/:id/status', requireAdmin, async (req, res) => 
     console.log("🚀 ~ req.params:", req.params)
     const { status, type } = req.body;
     console.log("🚀 ~ req.body:", req.body)
-    
+
 
     if (!['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
       return res.status(400).json({ success: false, message: 'สถานะไม่ถูกต้อง' });
@@ -1682,7 +1696,7 @@ app.post('/api/Staffblood/upload-result', async (req, res) => {
   }
 });
 
-app.get('/api/lab/Staffblood',requireDoctor, async (req, res) => {
+app.get('/api/lab/Staffblood', requireDoctor, async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT 
@@ -1725,7 +1739,7 @@ app.get('/api/lab/Staffblood',requireDoctor, async (req, res) => {
   }
 });
 
-app.get('/api/lab/StaffPhy',requireDoctor, async (req, res) => {
+app.get('/api/lab/StaffPhy', requireDoctor, async (req, res) => {
   try {
     const [rows] = await pool.query(`
      SELECT 
@@ -1752,7 +1766,7 @@ app.get('/api/lab/StaffPhy',requireDoctor, async (req, res) => {
 });
 
 
-app.get('/api/blood-appointments/:id',requireDoctor, async (req, res) => {
+app.get('/api/blood-appointments/:id', requireDoctor, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -1779,7 +1793,7 @@ app.get('/api/blood-appointments/:id',requireDoctor, async (req, res) => {
 });
 
 
-app.post('/api/Staffblood/upload',requireDoctor, async (req, res) => {
+app.post('/api/Staffblood/upload', requireDoctor, async (req, res) => {
   const { testId, results } = req.body;
 
   if (!testId || !results) {
@@ -1801,7 +1815,7 @@ app.post('/api/Staffblood/upload',requireDoctor, async (req, res) => {
     res.status(500).json({ success: false, message: 'บันทึกผลตรวจไม่สำเร็จ' });
   }
 });
-app.post('/api/appointments/upload-result/:appointmentId',requireDoctor, uploadResultFile.single('file'), async (req, res) => {
+app.post('/api/appointments/upload-result/:appointmentId', requireDoctor, uploadResultFile.single('file'), async (req, res) => {
   const { appointmentId } = req.params;
   if (!req.file) return res.status(400).json({ success: false, message: 'กรุณาเลือกไฟล์' });
 
@@ -1827,7 +1841,7 @@ app.post('/api/appointments/upload-result/:appointmentId',requireDoctor, uploadR
   }
 });
 // API ดาวน์โหลดไฟล์ผลตรวจ
-app.get('/api/appointments/download-result/:appointmentId',requireDoctor, async (req, res) => {
+app.get('/api/appointments/download-result/:appointmentId', requireDoctor, async (req, res) => {
   const { appointmentId } = req.params;
   try {
     const [rows] = await pool.query(

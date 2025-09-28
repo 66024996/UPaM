@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +10,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     * {
-      margin: 0; padding: 0; box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
+
     body {
       font-family: 'Inter', sans-serif;
       background: #f8fafc;
@@ -114,80 +118,82 @@
       border: 2px solid white;
     }
 
-        /* Profile Dropdown Styles */
-        .profile-dropdown {
-            position: relative;
-            display: inline-block;
-        }
+    /* Profile Dropdown Styles */
+    .profile-dropdown {
+      position: relative;
+      display: inline-block;
+    }
 
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: white;
-            min-width: 180px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-            z-index: 1000;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid #e5e7eb;
-            margin-top: 8px;
-        }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: white;
+      min-width: 180px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      margin-top: 8px;
+    }
 
-        .dropdown-content.show {
-            display: block;
-            animation: dropdownFadeIn 0.3s ease-out;
-        }
+    .dropdown-content.show {
+      display: block;
+      animation: dropdownFadeIn 0.3s ease-out;
+    }
 
-        @keyframes dropdownFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    @keyframes dropdownFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
 
-        .dropdown-item {
-            color: #374151;
-            padding: 12px 20px;
-            text-decoration: none;
-            display: block;
-            transition: all 0.3s ease;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            font-size: 14px;
-            cursor: pointer;
-        }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-        .dropdown-item:hover {
-            background-color: #f9fafb;
-            color: #1f2937;
-        }
+    .dropdown-item {
+      color: #374151;
+      padding: 12px 20px;
+      text-decoration: none;
+      display: block;
+      transition: all 0.3s ease;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 14px;
+      cursor: pointer;
+    }
 
-        .dropdown-item i {
-            margin-right: 10px;
-            width: 16px;
-            color: #6b7280;
-        }
+    .dropdown-item:hover {
+      background-color: #f9fafb;
+      color: #1f2937;
+    }
 
-        .dropdown-item.logout {
-            border-top: 1px solid #e5e7eb;
-            color: #dc2626;
-        }
+    .dropdown-item i {
+      margin-right: 10px;
+      width: 16px;
+      color: #6b7280;
+    }
 
-        .dropdown-item.logout:hover {
-            background-color: #fef2f2;
-            color: #dc2626;
-        }
+    .dropdown-item.logout {
+      border-top: 1px solid #e5e7eb;
+      color: #dc2626;
+    }
 
-        .dropdown-item.logout i {
-            color: #dc2626;
-        }
+    .dropdown-item.logout:hover {
+      background-color: #fef2f2;
+      color: #dc2626;
+    }
+
+    .dropdown-item.logout i {
+      color: #dc2626;
+    }
+
     /* Container */
     .container {
       max-width: 1200px;
@@ -216,7 +222,7 @@
       border-radius: 16px;
       padding: 24px;
       margin-bottom: 24px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
 
     .filter-row {
@@ -265,7 +271,7 @@
       background: white;
       padding: 8px;
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
     .status-tab {
@@ -302,7 +308,7 @@
     }
 
     .status-tab.active .status-count {
-      background: rgba(255,255,255,0.3);
+      background: rgba(255, 255, 255, 0.3);
     }
 
     /* Test Cards */
@@ -316,7 +322,7 @@
       background: white;
       border-radius: 16px;
       padding: 24px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
       border-left: 4px solid #10B981;
       transition: all 0.2s ease;
       cursor: pointer;
@@ -324,7 +330,7 @@
 
     .test-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
 
     .test-card.completed {
@@ -460,7 +466,7 @@
       background: white;
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .results-table th,
@@ -535,7 +541,7 @@
       width: 90%;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     }
 
     .modal-header {
@@ -627,7 +633,7 @@
       padding: 32px;
       max-width: 500px;
       width: 90%;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     }
 
     .upload-modal-title {
@@ -768,7 +774,7 @@
       max-width: 400px;
       width: 90%;
       text-align: center;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     }
 
     .success-icon {
@@ -825,6 +831,7 @@
       pointer-events: none;
       opacity: 0.7;
     }
+
     /* Loading */
     .loading {
       opacity: 0.7;
@@ -844,8 +851,13 @@
     }
 
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
 
     /* Responsive */
@@ -885,51 +897,52 @@
     }
   </style>
 </head>
+
 <body>
   <!-- Header -->
   <div class="header">
     <div class="logo">
-      <img src="/public/img/UPaMLOGO.png" class="logo-img"> 
+      <img src="/public/img/UPaMLOGO.png" class="logo-img">
       <div class="phone-number">
         <i class="fas fa-phone"></i>
         1234
       </div>
     </div>
-    
+
     <div class="header-right">
       <div class="staff-info">
-        <div class="staff-name">นพ. สมชาย วิทยากร</div>
-        <div class="staff-role">เจ้าหน้าที่ห้องปฏิบัติการ</div>
+        <div class="staff-name" id="profileName"></div>
+        <div class="staff-role" id="profileRole"></div>
       </div>
-            <div class="header-icons">
-                <button class="icon-btn" title="ค้นหา">
-                    <i class="fas fa-search"></i>
-                </button>
-                <button class="icon-btn notification-btn" title="การแจ้งเตือน">
-                    <i class="fas fa-bell"></i>
-                </button>
+      <div class="header-icons">
+        <button class="icon-btn" title="ค้นหา">
+          <i class="fas fa-search"></i>
+        </button>
+        <button class="icon-btn notification-btn" title="การแจ้งเตือน">
+          <i class="fas fa-bell"></i>
+        </button>
 
-                <a href="/Login">
-                    <button class="icon-btn" title="บัญชีผู้ใช้">
-                        <i class="fas fa-user"></i>
-                    </button>
-                </a>
+        <a href="/Login">
+          <button class="icon-btn" title="บัญชีผู้ใช้">
+            <i class="fas fa-user"></i>
+          </button>
+        </a>
 
-                <div class="profile-dropdown">
-                    <button class="icon-btn" id="profileBtn" title="บัญชีผู้ใช้">
-                        <i class="fa-solid fa-right-to-bracket"></i>
-                    </button>
-                    <div class="dropdown-content" id="profileDropdown">
-                        <button class="dropdown-item logout" onclick="logout()">
-                            <i class="fas fa-sign-out-alt"></i>
-                            ออกจากระบบ
-                        </button>
-                    </div>
-                </div>
-
-            </div>
+        <div class="profile-dropdown">
+          <button class="icon-btn" id="profileBtn" title="บัญชีผู้ใช้">
+            <i class="fa-solid fa-right-to-bracket"></i>
+          </button>
+          <div class="dropdown-content" id="profileDropdown">
+            <button class="dropdown-item logout" onclick="logout()">
+              <i class="fas fa-sign-out-alt"></i>
+              ออกจากระบบ
+            </button>
+          </div>
         </div>
+
+      </div>
     </div>
+  </div>
 
   <!-- Main Content -->
   <div class="container">
@@ -962,7 +975,7 @@
       <!-- Tests will be populated here -->
     </div>
   </div>
-  
+
   </table>
   <!-- Detail Modal -->
   <div class="detail-modal" id="detailModal">
@@ -973,33 +986,33 @@
           <i class="fas fa-times"></i>
         </button>
       </div>
-      
+
       <div class="detail-grid">
         <div class="detail-item">
           <div class="detail-label">รหัสตรวจ</div>
           <div class="detail-value" id="modalTestId">-</div>
         </div>
-        
+
         <div class="detail-item">
           <div class="detail-label">ชื่อ-นามสกุล</div>
           <div class="detail-value" id="modalPatientName">-</div>
         </div>
-        
+
         <div class="detail-item">
           <div class="detail-label">ประเภทการตรวจ</div>
           <div class="detail-value" id="modalTestType">-</div>
         </div>
-        
+
         <div class="detail-item">
           <div class="detail-label">วันที่ตรวจ</div>
           <div class="detail-value" id="modalDate">-</div>
         </div>
-        
+
         <div class="detail-item">
           <div class="detail-label">เวลา</div>
           <div class="detail-value" id="modalTime">-</div>
         </div>
-        
+
         <div class="detail-item">
           <div class="detail-label">ค่าบริการ</div>
           <div class="detail-value price-value" id="modalPrice">-</div>
@@ -1011,7 +1024,7 @@
         <div class="results-summary" id="resultsSummary"></div>
         <div id="resultsTableContainer"></div>
       </div>
-      
+
       <div class="modal-actions" id="modalActions">
         <!-- Actions will be populated based on status -->
       </div>
@@ -1019,7 +1032,7 @@
   </div>
 
   <div class="container">
-  <!-- ...ส่วนอื่นๆ... -->
+    <!-- ...ส่วนอื่นๆ... -->
 
 
     <div class="test-list" id="testList">
@@ -1071,47 +1084,59 @@
     const profileBtn = document.getElementById('profileBtn');
     const profileDropdown = document.getElementById('profileDropdown');
 
-        profileBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            profileDropdown.classList.toggle('show');
-        });
+    profileBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      profileDropdown.classList.toggle('show');
+    });
 
-        // ปิด dropdown เมื่อคลิกข้างนอก
-        window.addEventListener('click', function() {
-            if (profileDropdown.classList.contains('show')) {
-                profileDropdown.classList.remove('show');
-            }
-        });
+    // ปิด dropdown เมื่อคลิกข้างนอก
+    window.addEventListener('click', function () {
+      if (profileDropdown.classList.contains('show')) {
+        profileDropdown.classList.remove('show');
+      }
+    });
 
-        // ป้องกันการปิด dropdown เมื่อคลิกข้างใน dropdown
-        profileDropdown.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
+    // ป้องกันการปิด dropdown เมื่อคลิกข้างใน dropdown
+    profileDropdown.addEventListener('click', function (e) {
+      e.stopPropagation();
+    });
 
-        // ฟังก์ชัน logout
-        function logout() {
-            if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
-                // เพิ่ม loading effect
-                const logoutBtn = event.target;
-                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
-                
-                setTimeout(() => {
-                    alert('ออกจากระบบเรียบร้อยแล้ว');
-                     window.location.href = "/Login";
-                }, 1500);
-            }
-        }
+    // ฟังก์ชัน logout
+    function logout() {
+      if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+        // เพิ่ม loading effect
+        const logoutBtn = event.target;
+        logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
+
+        setTimeout(() => {
+          alert('ออกจากระบบเรียบร้อยแล้ว');
+          window.location.href = "/Login";
+        }, 1500);
+      }
+    }
 
     async function loadBloodTests() {
       const res = await fetch('/api/lab/Staffblood');
       bloodTests = await res.json();
       renderTests();
       updateCounts();
-      renderAppointments(bloodTests); // <-- เพิ่มบรรทัดนี้
       initializePage();
+      getUserProfile()
+      renderAppointments(bloodTests); // <-- เพิ่มบรรทัดนี้
     }
 
-    window.addEventListener('DOMContentLoaded', loadBloodTests);
+    async function getUserProfile() {
+      const res = await fetch(`/api/user`)
+      const data = await res.json()
+      console.log("🚀 ~ getUserProfile ~ data:", data)
+      const profileName = document.getElementById('profileName')
+      const profileRole = document.getElementById('profileRole')
+
+      profileName.textContent = data.fullname
+      profileRole.textContent = data.role
+    }
+
+    window.addEventListener('DOMContentLoaded', () => loadBloodTests());
     // Profile dropdown functionality
     function bookService(service, event) {
       const card = event.currentTarget;
@@ -1129,23 +1154,23 @@
       setTimeout(() => window.location.href = "/lab-tests", 800);
     }
 
-        function openLabTestSystem() {
-          alert('กำลังไปที่ระบบดูผลตรวจเลือด...');
-          setTimeout(() => {
-              window.location.href = "/lab-tests";
-          }, 800);
-        }
+    function openLabTestSystem() {
+      alert('กำลังไปที่ระบบดูผลตรวจเลือด...');
+      setTimeout(() => {
+        window.location.href = "/lab-tests";
+      }, 800);
+    }
 
-        // Header button interactions (ยกเว้น profile button ที่มี dropdown)
-        document.querySelectorAll('.icon-btn:not(#profileBtn)').forEach(btn => {
-          btn.addEventListener('click', function() {
-              console.log('Clicked:', this.title || 'Header button');
-              this.style.transform = 'scale(0.9)';
-              setTimeout(() => {
-                  this.style.transform = '';
-              }, 150);
-          });
-        });
+    // Header button interactions (ยกเว้น profile button ที่มี dropdown)
+    document.querySelectorAll('.icon-btn:not(#profileBtn)').forEach(btn => {
+      btn.addEventListener('click', function () {
+        console.log('Clicked:', this.title || 'Header button');
+        this.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+          this.style.transform = '';
+        }, 150);
+      });
+    });
     // Lab test reference data based on the document
     function renderAppointments(list) {
       const tbody = document.getElementById('appointmentsBody');
@@ -1216,6 +1241,7 @@
       renderTests();
       updateCounts();
       setupEventListeners();
+      getUserProfile()
     }
 
     // Set today's date as default
@@ -1229,34 +1255,34 @@
     function setupEventListeners() {
       document.getElementById('searchInput').addEventListener('input', handleSearch);
       document.getElementById('dateFilter').addEventListener('change', handleDateFilter);
-      
+
       // Modal event listeners
-      document.getElementById('detailModal').addEventListener('click', function(e) {
+      document.getElementById('detailModal').addEventListener('click', function (e) {
         if (e.target === this) closeDetailModal();
       });
-      
-      document.getElementById('uploadModal').addEventListener('click', function(e) {
+
+      document.getElementById('uploadModal').addEventListener('click', function (e) {
         if (e.target === this) closeUploadModal();
       });
-      
-      document.getElementById('successModal').addEventListener('click', function(e) {
+
+      document.getElementById('successModal').addEventListener('click', function (e) {
         if (e.target === this) closeSuccessModal();
       });
-      
+
       // File upload drag and drop
       const uploadArea = document.getElementById('fileUploadArea');
-      
-      uploadArea.addEventListener('dragover', function(e) {
+
+      uploadArea.addEventListener('dragover', function (e) {
         e.preventDefault();
         uploadArea.classList.add('dragover');
       });
-      
-      uploadArea.addEventListener('dragleave', function(e) {
+
+      uploadArea.addEventListener('dragleave', function (e) {
         e.preventDefault();
         uploadArea.classList.remove('dragover');
       });
-      
-      uploadArea.addEventListener('drop', function(e) {
+
+      uploadArea.addEventListener('drop', function (e) {
         e.preventDefault();
         uploadArea.classList.remove('dragover');
         const files = e.dataTransfer.files;
@@ -1264,8 +1290,8 @@
           handleFileSelect({ target: { files: files } });
         }
       });
-      
-      document.addEventListener('keydown', function(e) {
+
+      document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
           closeDetailModal();
           closeUploadModal();
@@ -1310,13 +1336,13 @@
       }
 
       let html = '';
-        list.forEach(test => {
-          const statusClass = test.status === 'today' ? 'status-today' : 
-                            test.status === 'completed' ? 'status-completed' : 'status-past';
-          const statusText = test.status === 'today' ? 'วันนี้' : 
-                            test.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
-          
-          html += `
+      list.forEach(test => {
+        const statusClass = test.status === 'today' ? 'status-today' :
+          test.status === 'completed' ? 'status-completed' : 'status-past';
+        const statusText = test.status === 'today' ? 'วันนี้' :
+          test.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
+
+        html += `
             <div class="test-card ${test.status}" onclick="openDetailModal('${test.id}')">
               <div class="test-header">
                 <div class="test-id">รหัส ${test.id}</div>
@@ -1361,10 +1387,10 @@
               </button>
               
               ${!(
-                Array.isArray(test.results)
-                  ? test.results.length > 0
-                  : !!test.results
-              ) ? `
+            Array.isArray(test.results)
+              ? test.results.length > 0
+              : !!test.results
+          ) ? `
                 <button class="btn btn-upload" onclick="openUploadModal('${test.id}')">
                   <i class="fas fa-upload"></i> อัปโหลดผล
                 </button>
@@ -1376,9 +1402,9 @@
             </div>
           </div>
           `;
-        });
-        
-        testList.innerHTML = html;
+      });
+
+      testList.innerHTML = html;
     }
 
     // Update counts for each tab
@@ -1391,7 +1417,7 @@
       const yyyy = today.getFullYear();
       const todayStr = `${dd}/${mm}/${yyyy}`;
       const todayCount = bloodTests.filter(b => b.date === todayStr && b.status === 'จองแล้ว').length;
-      
+
       document.getElementById('todayCount').textContent = todayCount;
       document.getElementById('completedCount').textContent = completedCount;
       document.getElementById('historyCount').textContent = historyCount;
@@ -1401,16 +1427,16 @@
     function handleSearch() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
       const dateFilter = document.getElementById('dateFilter').value;
-      
+
       let filteredTests = bloodTests.filter(test => test.status === currentTab);
-      
+
       if (searchTerm) {
-        filteredTests = filteredTests.filter(test => 
+        filteredTests = filteredTests.filter(test =>
           test.id.toLowerCase().includes(searchTerm) ||
           test.patientName.toLowerCase().includes(searchTerm)
         );
       }
-      
+
       if (dateFilter) {
         const filterDate = new Date(dateFilter);
         filteredTests = filteredTests.filter(test => {
@@ -1418,7 +1444,7 @@
           return testDate.toDateString() === filterDate.toDateString();
         });
       }
-      
+
       renderFilteredTests(filteredTests);
     }
 
@@ -1433,7 +1459,7 @@
 
     function renderFilteredTests(filteredTests) {
       const testList = document.getElementById('testList');
-      
+
       if (filteredTests.length === 0) {
         testList.innerHTML = `
           <div class="empty-state">
@@ -1449,11 +1475,11 @@
 
       let html = '';
       filteredTests.forEach(test => {
-        const statusClass = test.status === 'today' ? 'status-today' : 
-                           test.status === 'completed' ? 'status-completed' : 'status-past';
-        const statusText = test.status === 'today' ? 'วันนี้' : 
-                          test.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
-        
+        const statusClass = test.status === 'today' ? 'status-today' :
+          test.status === 'completed' ? 'status-completed' : 'status-past';
+        const statusText = test.status === 'today' ? 'วันนี้' :
+          test.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
+
         html += `
           <div class="test-card ${test.status}" onclick="openDetailModal('${test.id}')">
             <div class="test-header">
@@ -1511,7 +1537,7 @@
           </div>
         `;
       });
-      
+
       testList.innerHTML = html;
     }
 
@@ -1519,16 +1545,16 @@
     function openDetailModal(testId) {
       const test = bloodTests.find(b => b.id === testId);
       if (!test) return;
-      
+
       currentTestId = testId;
-      
+
       document.getElementById('modalTestId').textContent = test.id;
       document.getElementById('modalPatientName').textContent = test.patientName;
       document.getElementById('modalTestType').textContent = test.testType;
       document.getElementById('modalDate').textContent = test.date;
       document.getElementById('modalTime').textContent = test.time + ' น.';
       document.getElementById('modalPrice').textContent = test.price + ' บาท';
-      
+
       // Show results if available
       const resultsSection = document.getElementById('resultsSection');
       if (test.results && test.results.length > 0) {
@@ -1537,7 +1563,7 @@
       } else {
         resultsSection.style.display = 'none';
       }
-      
+
       // Update modal actions based on status
       const modalActions = document.getElementById('modalActions');
       if (test.status === 'today' && !test.results) {
@@ -1565,11 +1591,11 @@
           </button>
         `;
       }
-      
+
       document.getElementById('detailModal').classList.add('show');
       console.log('✅ Detail modal opened for test:', test.id);
     }
-    
+
     function testUploadModal() {
       console.log('🧪 Testing upload modal with sample test ID');
       openUploadModal('BT001');
@@ -1579,7 +1605,7 @@
       // Display summary
       const summaryDiv = document.getElementById('resultsSummary');
       const abnormalCount = excelData.filter(item => item.status !== 'ปกติ').length;
-      
+
       summaryDiv.innerHTML = `
         <div class="summary-title">สรุปผลตรวจ</div>
         <div class="summary-content">
@@ -1588,7 +1614,7 @@
           ผลผิดปกติ: ${abnormalCount} รายการ
         </div>
       `;
-      
+
       // Display detailed results table
       const tableContainer = document.getElementById('resultsTableContainer');
       let tableHtml = `
@@ -1604,7 +1630,7 @@
           </thead>
           <tbody>
       `;
-      
+
       excelData.forEach(item => {
         const statusClass = item.status === 'ปกติ' ? 'normal-value' : 'abnormal-value';
         tableHtml += `
@@ -1617,7 +1643,7 @@
           </tr>
         `;
       });
-      
+
       tableHtml += '</tbody></table>';
       tableContainer.innerHTML = tableHtml;
     }
@@ -1684,12 +1710,12 @@
         const fileExtension = file.name.toLowerCase().split('.').pop();
         const isValidExtension = ['xlsx', 'xls'].includes(fileExtension);
         const isValidType = allowedTypes.includes(file.type);
-          
+
         console.log('📄 File type:', file.type); // Debug log
         console.log('📄 File extension:', fileExtension); // Debug log
         console.log('✅ Valid type:', isValidType); // Debug log
         console.log('✅ Valid extension:', isValidExtension); // Debug log
-        
+
         if (!allowedTypes.includes(file.type)) {
           alert("กรุณาเลือกไฟล์ Excel (.xlsx, .xls) เท่านั้น");
           event.target.value = "";
@@ -1727,7 +1753,7 @@
     function checkUploadButtonStatus() {
       const uploadBtn = document.getElementById('uploadBtn');
       const fileInput = document.getElementById('fileInput');
-      
+
       console.log('🔍 Upload Button Check:');
       console.log('- Button exists:', !!uploadBtn);
       console.log('- Button disabled:', uploadBtn ? uploadBtn.disabled : 'N/A');
@@ -1735,7 +1761,7 @@
       console.log('- Current test ID:', currentTestId);
       console.log('- Selected file variable:', selectedFile);
       console.log('- File input files:', fileInput ? fileInput.files.length : 'N/A');
-      
+
       return {
         buttonExists: !!uploadBtn,
         buttonDisabled: uploadBtn ? uploadBtn.disabled : true,
@@ -1751,11 +1777,11 @@
       document.getElementById('uploadBtn').disabled = true;
     }
 
-  
+
     function quickFixCurrentTestId() {
       // หาคาร์ดที่มี status 'today' และยังไม่มี results
       const todayTests = bloodTests.filter(test => test.status === 'today' && !test.results);
-      
+
       if (todayTests.length > 0) {
         const testId = todayTests[0].id;
         currentTestId = testId;
@@ -1798,14 +1824,14 @@
 
         // 📌 ส่งไป Backend
         fetch('/api/Staffblood/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              testId: currentTestId,
-              results: processedData
-            })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            testId: currentTestId,
+            results: processedData
           })
-          
+        })
+
           .then(res => res.json())
           .then(data => {
             if (data.success) {
@@ -1836,24 +1862,24 @@
 
     function testCompleteUploadFlow() {
       console.log('Testing complete upload flow...');
-      
+
       // Step 1: เปิด modal
       openUploadModal('BT001');
-      
+
       // Step 2: จำลองการเลือกไฟล์
       setTimeout(() => {
         console.log('Simulating file selection...');
         selectedFile = new File(['test'], 'test.xlsx', {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         });
-        
+
         const uploadBtn = document.getElementById('uploadBtn');
         if (uploadBtn) {
           uploadBtn.disabled = false;
           uploadBtn.style.opacity = '1';
           uploadBtn.style.pointerEvents = 'auto';
         }
-        
+
         console.log('File simulation complete. Ready for upload test.');
         console.log('Current state:', {
           currentTestId,
@@ -1865,14 +1891,14 @@
 
     function emergencyUploadFix() {
       console.log('Applying emergency upload fix...');
-      
+
       // กำหนด currentTestId ให้เป็น test แรกที่หาเจอ
       const availableTest = bloodTests.find(test => test.status === 'today' && !test.results);
-      
+
       if (availableTest) {
         currentTestId = availableTest.id;
         console.log('Emergency fix: currentTestId set to:', currentTestId);
-        
+
         // เปิดใช้งานปุ่มอัปโหลด
         const uploadBtn = document.getElementById('uploadBtn');
         if (uploadBtn && selectedFile) {
@@ -1882,7 +1908,7 @@
           uploadBtn.classList.remove('disabled');
           console.log('Emergency fix: Upload button enabled');
         }
-        
+
         return true;
       } else {
         console.error('Emergency fix failed: No available tests found');
@@ -1895,20 +1921,20 @@
       if (uploadBtn) {
         // ลบ onclick attribute เก่า
         uploadBtn.removeAttribute('onclick');
-        
+
         // เพิ่ม event listener ใหม่
-        uploadBtn.addEventListener('click', function(e) {
+        uploadBtn.addEventListener('click', function (e) {
           e.preventDefault();
-          
+
           console.log('Direct upload handler called');
           console.log('Button disabled:', this.disabled);
-          
+
           if (!this.disabled) {
             // ตรวจสอบและแก้ไขก่อนอัปโหลด
             if (!currentTestId) {
               emergencyUploadFix();
             }
-            
+
             if (currentTestId && selectedFile) {
               uploadFile();
             } else {
@@ -1916,7 +1942,7 @@
             }
           }
         });
-        
+
         console.log('Direct upload handler added');
       }
     }
@@ -1927,11 +1953,11 @@
       console.log('currentTestId:', currentTestId);
       console.log('selectedFile:', selectedFile);
       console.log('bloodTests:', bloodTests);
-      
+
       const uploadBtn = document.getElementById('uploadBtn');
       console.log('uploadBtn exists:', !!uploadBtn);
       console.log('uploadBtn disabled:', uploadBtn ? uploadBtn.disabled : 'N/A');
-      
+
       return {
         currentTab,
         currentTestId,
@@ -2076,7 +2102,7 @@
         <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
         ${message}
       `;
-      
+
       notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -2094,9 +2120,9 @@
         animation: slideIn 0.3s ease-out;
         max-width: 300px;
       `;
-      
+
       document.body.appendChild(notification);
-      
+
       setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease-in forwards';
         setTimeout(() => {
@@ -2108,17 +2134,17 @@
     }
 
     // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       // เพิ่ม click listener ให้ปุ่มอัปโหลดเพื่อ debug
       const uploadBtn = document.getElementById('uploadBtn');
       if (uploadBtn) {
-        uploadBtn.addEventListener('click', function(e) {
+        uploadBtn.addEventListener('click', function (e) {
           console.log('🔍 Upload button clicked');
           console.log('- Event:', e);
           console.log('- Button disabled:', this.disabled);
           console.log('- Current test ID:', currentTestId);
           console.log('- Selected file:', selectedFile);
-          
+
           if (this.disabled) {
             console.log('❌ Button is disabled, preventing upload');
             e.preventDefault();
@@ -2168,6 +2194,7 @@
     `;
     document.head.appendChild(style);
   </script>
-  
+
 </body>
+
 </html>
