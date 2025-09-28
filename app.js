@@ -2,15 +2,19 @@
 const express = require('express');
 const path = require('path');
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const multer = require("multer");
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const mysql = require('mysql2/promise');
 const requireAdmin = require('./middleware/isAdmin');
+const requireDoctor = require('./middleware/requireDoctor');
+const requireisLoggedIn = require('./middleware/isLoggedIn');
 const upload = multer({ dest: "uploads/" });
 const xlsx = require("xlsx");
 const fs = require('fs');
+
+require('dotenv').config();
 
 
 
@@ -27,10 +31,10 @@ app.use(express.urlencoded({ extended: true }));
 
 
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: 'non1150',
-  database: 'Upam',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -86,8 +90,6 @@ async function testConnection() {
 }
 testConnection();
 
-require('dotenv').config();
-
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'defaultSecret123',
@@ -110,6 +112,13 @@ function isAdmin(req, res, next) {
   return res.status(403).send('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
 }
 
+app.get('/', (req, res) => {
+  res.redirect('/login');
+});
+
+app.get('/login', (req, res) => {
+  res.render('login');
+});
 
 app.post('/register', async (req, res) => {
   console.log('📌 Received Data:', req.body);
@@ -172,29 +181,25 @@ app.post('/register', async (req, res) => {
 });
 
 
-app.get('/ListAdmin', (req, res) => {
+app.get('/ListAdmin',isAdmin, (req, res) => {
   res.render('ListAdmin');
 });
 
-app.get('/home', (req, res) => {
+app.get('/home', isLoggedIn, (req, res) => {
   res.render('home');
 });
 
-app.get('/BookingCard', (req, res) => {
+app.get('/BookingCard', isLoggedIn,(req, res) => {
   res.render('BookingCard');
 });
 
 
-app.get('/bookingphy', (req, res) => {
+app.get('/bookingphy',isLoggedIn, (req, res) => {
   res.render('bookingphy');
 
 });
 
-app.get('/ListAdmin', (req, res) => {
-  res.render('ListAdmin');
-});
-
-app.get('/Bookingblood', (req, res) => {
+app.get('/Bookingblood', isLoggedIn,(req, res) => {
   res.render('Bookingblood');
 });
 
@@ -204,11 +209,11 @@ app.get('/login', (req, res) => {
 });
 
 
-app.get('/Staffphy', (req, res) => {
+app.get('/Staffphy',requireDoctor, (req, res) => {
   res.render('Staffphy');
 });
 
-app.get('/Staffblood', (req, res) => {
+app.get('/Staffblood', requireDoctor, (req, res) => {
   res.render('Staffblood');
 });
 
@@ -217,7 +222,7 @@ app.get('/register', (req, res) => {
   res.render('register');
 });
 
-app.post('/bookingphy', async (req, res) => {
+app.post('/bookingphy',isLoggedIn, async (req, res) => {
   const { service_id, appointment_date, time_slot, total_price } = req.body;
 
   if (!req.session || !req.session.userId || !req.session.email) {
@@ -267,7 +272,7 @@ app.post('/bookingphy', async (req, res) => {
 });
 
 
-app.post('/bookingblood', async (req, res) => {
+app.post('/bookingblood',isLoggedIn, async (req, res) => {
   if (!req.session || !req.session.userId || !req.session.email) {
     return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบก่อนทำการจอง' });
   }
@@ -314,48 +319,23 @@ app.post('/bookingblood', async (req, res) => {
   }
 });
 
-
-app.get('/', (req, res) => {
-  res.redirect('/home');
-});
-
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
-  }
+  if (!email || !password) return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
 
   try {
-
-    const [rows] = await pool.execute(
-      'SELECT * FROM users WHERE email = ?',
-      [email]
-    );
-
-    if (rows.length === 0) {
-      return res.status(400).json({ success: false, message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
-    }
+    const [rows] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
+    if (rows.length === 0) return res.status(400).json({ success: false, message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
 
     const user = rows[0];
-
-
     const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.status(400).json({ success: false, message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
-    }
-
+    if (!match) return res.status(400).json({ success: false, message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
 
     req.session.userId = user.id;
     req.session.email = user.email;
     req.session.role = user.role;
 
-
-    if (user.role === 'admin') {
-      return res.redirect('/admin/listadmin');
-    }
-
-
+    if (user.role === 'admin') return res.redirect('/admin/listadmin');
     res.redirect('/home');
   } catch (err) {
     console.error('Login Error:', err);
@@ -373,9 +353,24 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
   });
 });
+// ตรวจสอบ session ของผู้ใช้
+app.get('/api/session', (req, res) => {
+  if (req.session.userId) {
+    res.json({
+      loggedIn: true,
+      user: {
+        id: req.session.userId,
+        email: req.session.email,
+        role: req.session.role
+      }
+    });
+  } else {
+    res.json({ loggedIn: false });
+  }
+});
 
 
-app.get('/api/my-appointment', async (req, res) => {
+app.get('/api/my-appointment',isLoggedIn, async (req, res) => {
   console.log('📊 Session Debug:', {
     sessionExists: !!req.session,
     sessionData: req.session,
@@ -476,7 +471,7 @@ app.get('/api/my-appointment', async (req, res) => {
 });
 
 
-app.post('/api/my-appointment/cancel', async (req, res) => {
+app.post('/api/my-appointment/cancel',isLoggedIn, async (req, res) => {
   if (!req.session || !req.session.userId) {
     return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบ' });
   }
@@ -708,13 +703,13 @@ app.get('/api/time-slots/:date/:type', async (req, res) => {
   }
 });
 
-app.post('/api/my-appointment/reschedule', async (req, res) => {
+app.post('/api/my-appointment/reschedule',isLoggedIn, async (req, res) => {
   const { appointmentId, newDate, newTime } = req.body;
   // logic สำหรับเลื่อนการจอง
   res.json({ success: true, message: 'เลื่อนการจองเรียบร้อย' });
 });
 
-app.get('/api/my-appointments', async (req, res) => {
+app.get('/api/my-appointments',isLoggedIn, async (req, res) => {
   if (!req.session || !req.session.userId) {
     return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบ' });
   }
@@ -1199,6 +1194,7 @@ app.put('/api/admin/appointments/:id/status', requireAdmin, async (req, res) => 
     console.log("🚀 ~ req.params:", req.params)
     const { status, type } = req.body;
     console.log("🚀 ~ req.body:", req.body)
+    
 
     if (!['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
       return res.status(400).json({ success: false, message: 'สถานะไม่ถูกต้อง' });
@@ -1209,7 +1205,7 @@ app.put('/api/admin/appointments/:id/status', requireAdmin, async (req, res) => 
         case 'pending': return 'จองแล้ว';
         case 'confirmed': return 'ยืนยันแล้ว';
         case 'cancelled': return 'ยกเลิกแล้ว';
-        case 'completed': return 'เสร็จสิ้น';
+        case 'conpleted': return 'เสร็จสิ้น';
         default: return status;
       }
     })();
@@ -1218,15 +1214,16 @@ app.put('/api/admin/appointments/:id/status', requireAdmin, async (req, res) => 
       pending: 'จองแล้ว',
       confirmed: "ยืนยันแล้ว",
       cancelled: 'ยกเลิกแล้ว',
-      conpleted: 'เสร็จสิ้น'
+      completed: 'เสร็จสิ้น'
     }
 
     const table = type === 'blood' ? 'blood_appointments' : 'appointments';
 
     const [result] = await pool.execute(
       `UPDATE ${table} SET status = ?, updated_at = NOW() WHERE id = ?`,
-      [mapStatus[status], id]
+      [dbStatus, id]
     );
+
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลการจอง' });
@@ -1407,6 +1404,7 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
   }
 });
 
+
 async function createAdminUser() {
   try {
     const adminEmail = 'admin@upam.com';
@@ -1450,6 +1448,50 @@ async function createAdminUser() {
 
 
 createAdminUser();
+
+async function createdoctorUser() {
+  try {
+    const doctorEmail = 'doctor@upam.com';
+    const doctorPassword = 'doctor123';
+
+
+    const [existing] = await pool.execute(
+      'SELECT id FROM users WHERE email = ?',
+      [doctorEmail]
+    );
+
+    if (existing.length > 0) {
+      console.log('✅ doctor user already exists');
+      return;
+    }
+
+
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+    const [result] = await pool.execute(
+      `INSERT INTO users (email, password, role) VALUES (?, ?, 'admin')`,
+      [doctorEmail, hashedPassword]
+    );
+
+
+    await pool.execute(
+      `INSERT INTO personal_info 
+       (user_id, title, first_name, last_name, email, password) 
+       VALUES (?, 'นาย', 'doctor', 'System', ?, ?)`,
+      [result.insertId, doctorEmail, hashedPassword]
+    );
+
+    console.log('✅ Admin user created successfully');
+    console.log('📧 Email:', doctorEmail);
+    console.log('🔑 Password:', doctorPassword);
+
+  } catch (error) {
+    console.error('❌ Error creating admin user:', error);
+  }
+}
+
+
+createdoctorUser();
 
 app.get('/api/lab/categories', async (req, res) => {
   try {
@@ -1640,7 +1682,7 @@ app.post('/api/Staffblood/upload-result', async (req, res) => {
   }
 });
 
-app.get('/api/lab/Staffblood', async (req, res) => {
+app.get('/api/lab/Staffblood',requireDoctor, async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT 
@@ -1683,7 +1725,7 @@ app.get('/api/lab/Staffblood', async (req, res) => {
   }
 });
 
-app.get('/api/lab/StaffPhy', async (req, res) => {
+app.get('/api/lab/StaffPhy',requireDoctor, async (req, res) => {
   try {
     const [rows] = await pool.query(`
      SELECT 
@@ -1710,7 +1752,7 @@ app.get('/api/lab/StaffPhy', async (req, res) => {
 });
 
 
-app.get('/api/blood-appointments/:id', async (req, res) => {
+app.get('/api/blood-appointments/:id',requireDoctor, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -1737,7 +1779,7 @@ app.get('/api/blood-appointments/:id', async (req, res) => {
 });
 
 
-app.post('/api/Staffblood/upload', async (req, res) => {
+app.post('/api/Staffblood/upload',requireDoctor, async (req, res) => {
   const { testId, results } = req.body;
 
   if (!testId || !results) {
@@ -1759,7 +1801,7 @@ app.post('/api/Staffblood/upload', async (req, res) => {
     res.status(500).json({ success: false, message: 'บันทึกผลตรวจไม่สำเร็จ' });
   }
 });
-app.post('/api/appointments/upload-result/:appointmentId', uploadResultFile.single('file'), async (req, res) => {
+app.post('/api/appointments/upload-result/:appointmentId',requireDoctor, uploadResultFile.single('file'), async (req, res) => {
   const { appointmentId } = req.params;
   if (!req.file) return res.status(400).json({ success: false, message: 'กรุณาเลือกไฟล์' });
 
@@ -1785,7 +1827,7 @@ app.post('/api/appointments/upload-result/:appointmentId', uploadResultFile.sing
   }
 });
 // API ดาวน์โหลดไฟล์ผลตรวจ
-app.get('/api/appointments/download-result/:appointmentId', async (req, res) => {
+app.get('/api/appointments/download-result/:appointmentId',requireDoctor, async (req, res) => {
   const { appointmentId } = req.params;
   try {
     const [rows] = await pool.query(
@@ -1804,5 +1846,12 @@ app.get('/api/appointments/download-result/:appointmentId', async (req, res) => 
     res.status(500).json({ success: false, message: 'ดาวน์โหลดไฟล์ไม่สำเร็จ' });
   }
 });
+
+app.get("/", (req, res) => {
+  res.send("Hello from Express on Vercel 🚀");
+});
 //  Start Server
-app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
+

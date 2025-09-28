@@ -820,13 +820,13 @@
     <!-- Status Tabs -->
     <div class="status-tabs">
       <button class="status-tab active" data-status="pending" onclick="switchTab('pending')">
-        รอการยืนยัน <span class="status-count" id="pendingCount">0</span>
+        รอการยืนยันเลือกเจ้าหน้าที่ <span class="status-count" id="pendingCount">0</span>
       </button>
       <button class="status-tab" data-status="confirmed" onclick="switchTab('confirmed')">
-        ยืนยันแล้ว <span class="status-count" id="confirmedCount">0</span>
+        ยืนยันการเลื่อนแล้ว <span class="status-count" id="confirmedCount">0</span>
       </button>
       <button class="status-tab" data-status="cancelled" onclick="switchTab('cancelled')">
-        ยกเลิก <span class="status-count" id="cancelledCount">0</span>
+        ยืนยันการยกเลิก <span class="status-count" id="cancelledCount">0</span>
       </button>
     </div>
 
@@ -895,10 +895,10 @@
       <h3 class="staff-modal-title">เลือกเจ้าหน้าที่ผู้ดูแล</h3>
       <select class="staff-select" id="staffSelect">
         <option value="">-- เลือกเจ้าหน้าที่ --</option>
-        <option value="ทพ. กำปั่น ดอกจันทร์">ทนพ. กำปั่น แสงจันทร์</option>
-        <option value="ทพ. เชษฐา เอี่ยมจินดา">ทนพ. เชษฐา เอี่ยมจินดา</option>
-        <option value="ทพ. กรรเชียง">ทนพ. ขจวยศร กรรเชียง</option>
-        <option value="ทพ. ประสิทธิโชค กรรเชียง">ทนพ. ประสิทธิโชค กรรเชียง</option>
+        <option value="ทนพ. กำปั่น แสงจันทร์">ทนพ. กำปั่น แสงจันทร์</option>
+        <option value="ทนพ. เชษฐา เอี่ยมจินดา">ทนพ. เชษฐา เอี่ยมจินดา</option>
+        <option value="ทนพ. ขจวยศร กรรเชียง">ทนพ. ขจวยศร กรรเชียง</option>
+        <option value="ทนพ. ประสิทธิโชค กรรเชียง">ทนพ. ประสิทธิโชค กรรเชียง</option>
       </select>
       <div class="staff-modal-actions">
         <button class="btn-modal btn-modal-secondary" onclick="closeModal('staffModal')">ยกเลิก</button>
@@ -1050,7 +1050,7 @@
                           <button class="btn btn-cancel" onclick="cancelBooking('${b.id}', '${b.type}')"><i class="fas fa-times"></i> ยกเลิก</button>`;
             break;
           case 'confirmed':
-            statusClass = 'status-confirmed'; statusText = 'ยืนยันแล้ว'; actionsHtml = '';
+            statusClass = 'status-confirmed'; statusText = 'ยืนยัน'; actionsHtml = '';
             break;
           case 'cancelled':
             statusClass = 'status-cancelled'; statusText = 'ยกเลิกแล้ว'; actionsHtml = '';
@@ -1164,6 +1164,9 @@
           await updateCounts();
         } else alert('❌ ' + data.message);
       } catch (err) { console.error(err); alert('เกิดข้อผิดพลาด'); }
+      console.log("📌 staff_id:", staffId);
+      console.log("📌 staff_name:", staffName);
+      
     }
 
     // Cancel booking

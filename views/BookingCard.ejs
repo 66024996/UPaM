@@ -622,19 +622,24 @@
     </div>
     
     <div class="header-right">
-      <div class="header-icons">
-        <button class="icon-btn" title="ค้นหา">
-          <i class="fas fa-search"></i>
-        </button>
-        <button class="icon-btn notification-btn" title="การแจ้งเตือน">
-          <i class="fas fa-bell"></i>
-        </button>
-        <div class="profile-dropdown">
-                  <a href="/Login">
+            <div class="header-icons">
+                <button class="icon-btn" title="ค้นหา">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="icon-btn notification-btn" title="การแจ้งเตือน">
+                    <i class="fas fa-bell"></i>
+                </button>
+
+                <a href="/Login">
                     <button class="icon-btn" title="บัญชีผู้ใช้">
                         <i class="fas fa-user"></i>
                     </button>
-                  </a>
+                </a>
+
+                <div class="profile-dropdown">
+                    <button class="icon-btn" id="profileBtn" title="บัญชีผู้ใช้">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                    </button>
                     <div class="dropdown-content" id="profileDropdown">
                         <button class="dropdown-item logout" onclick="logout()">
                             <i class="fas fa-sign-out-alt"></i>
@@ -642,9 +647,10 @@
                         </button>
                     </div>
                 </div>
-      </div>
+
+            </div>
+        </div>
     </div>
-  </div>
 
   <!-- Main Content -->
   <div class="container">
@@ -817,9 +823,9 @@
         ขอบคุณสำหรับการแจ้งให้ทราบ
       </p>
       <div class="modal-buttons">
-        <button class="btn-modal btn-modal-primary" onclick="goToAppointments()">
+        <!-- <button class="btn-modal btn-modal-primary" onclick="goToAppointments()">
           ดูการนัดหมายทั้งหมด
-        </button>
+        </button> -->
         <button class="btn-modal btn-modal-secondary" onclick="closeModal()">
           ปิด
         </button>
@@ -829,8 +835,40 @@
 
   <script>
     let currentAppointment = null;
+    const profileBtn = document.getElementById('profileBtn');
+    const profileDropdown = document.getElementById('profileDropdown');
 
-// ดึง appointment ล่าสุด ทั้ง phy และ blood
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('show');
+        });
+
+        // ปิด dropdown เมื่อคลิกข้างนอก
+        window.addEventListener('click', function() {
+            if (profileDropdown.classList.contains('show')) {
+                profileDropdown.classList.remove('show');
+            }
+        });
+
+        // ป้องกันการปิด dropdown เมื่อคลิกข้างใน dropdown
+        profileDropdown.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        // ฟังก์ชัน logout
+        function logout() {
+            if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+                // เพิ่ม loading effect
+                const logoutBtn = event.target;
+                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
+                
+                setTimeout(() => {
+                    alert('ออกจากระบบเรียบร้อยแล้ว');
+                     window.location.href = "/Login";
+                }, 1500);
+            }
+        }
+    // ดึง appointment ล่าสุด ทั้ง phy และ blood
     async function fetchAppointment() {
       try {
         console.log('🔍 Fetching appointment...');
@@ -945,10 +983,10 @@
       }
     }
 
-    function goToAppointments() {
-      closeModal();
-      window.location.href = '/appointments';
-    }
+    // function goToAppointments() {
+    //   closeModal();
+    //   window.location.href = '/BookingCard';
+    // }
 
     // เรียกใช้ตอนโหลดหน้า
     document.addEventListener('DOMContentLoaded', () => {
