@@ -1398,14 +1398,17 @@
 
       const bookingList = document.getElementById('bookingList');
       let filteredBookings = bookings.filter(booking => booking.status === currentTab);
-      console.log(bookings)
+      console.log("bookings => ", bookings)
+      console.log('current tab => ', currentTab)
 
       if (currentTab === 'today') {
         const today = new Date();
+        console.log("🚀 ~ renderBookings ~ today:", today.getDate())
         const dd = String(today.getDate()).padStart(2, '0');
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const yyyy = today.getFullYear();
         const todayStr = `${dd}/${mm}/${yyyy}`;
+        console.log('today string => ', todayStr)
         const todayCount = bookings.filter(b => b.date === todayStr && b.status === 'จองแล้ว').length;
         filteredBookings = bookings.filter(booking => booking.date === todayStr && booking.status === 'จองแล้ว')
       }

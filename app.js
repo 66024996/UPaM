@@ -349,7 +349,6 @@ app.get('/api/user', async (req, res) => {
 
     const userId = req.session.userId
     const [result] = await pool.query('SELECT id, fullname, email, role, created_at, updated_at FROM users WHERE id = ?', [userId])
-    console.log("🚀 ~ result:", result)
 
     res.status(200).json(result[0])
   } catch (error) {
@@ -472,7 +471,6 @@ app.get('/api/my-appointment', isLoggedIn, async (req, res) => {
       latestAppointment.formatted_price = 'ไม่ระบุ';
     }
 
-    console.log('✅ Returning appointment:', latestAppointment);
     res.json({ success: true, appointment: latestAppointment });
 
   } catch (err) {
@@ -483,6 +481,20 @@ app.get('/api/my-appointment', isLoggedIn, async (req, res) => {
     });
   }
 });
+
+app.get('/api/doctor', requireAdmin, async (req, res) => {
+  try {
+    const [result] = await pool.query('SELECT id, role, fullname FROM users WHERE role = ?', ['doctor'])
+    res.status(200).json(result)
+
+  } catch (error) {
+    console.error('❌ Get My Appointment Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่อีกครั้ง'
+    });
+  }
+})
 
 
 app.post('/api/my-appointment/cancel', isLoggedIn, async (req, res) => {
@@ -1755,9 +1767,6 @@ app.get('/api/lab/StaffPhy', requireDoctor, async (req, res) => {
       JOIN personal_info p ON b.user_id = p.user_id
       ORDER BY b.appointment_date DESC
     `);
-
-
-    console.log('result => ', rows, rows.length)
     res.json(rows);
   } catch (err) {
     console.error('❌ Error fetching appointments:', err);

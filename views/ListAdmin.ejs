@@ -894,11 +894,11 @@
     <div class="staff-modal-content">
       <h3 class="staff-modal-title">เลือกเจ้าหน้าที่ผู้ดูแล</h3>
       <select class="staff-select" id="staffSelect">
-        <option value="">-- เลือกเจ้าหน้าที่ --</option>
-        <option value="ทนพ. กำปั่น แสงจันทร์">ทนพ. กำปั่น แสงจันทร์</option>
+        <option value="" hidden>-- เลือกเจ้าหน้าที่ --</option>
+        <!-- <option value="ทนพ. กำปั่น แสงจันทร์">ทนพ. กำปั่น แสงจันทร์</option>
         <option value="ทนพ. เชษฐา เอี่ยมจินดา">ทนพ. เชษฐา เอี่ยมจินดา</option>
         <option value="ทนพ. ขจวยศร กรรเชียง">ทนพ. ขจวยศร กรรเชียง</option>
-        <option value="ทนพ. ประสิทธิโชค กรรเชียง">ทนพ. ประสิทธิโชค กรรเชียง</option>
+        <option value="ทนพ. ประสิทธิโชค กรรเชียง">ทนพ. ประสิทธิโชค กรรเชียง</option> -->
       </select>
       <div class="staff-modal-actions">
         <button class="btn-modal btn-modal-secondary" onclick="closeModal('staffModal')">ยกเลิก</button>
@@ -986,6 +986,16 @@
       document.querySelectorAll('.status-tab').forEach(tab => tab.classList.remove('active'));
       document.querySelector(`[data-status="${status}"]`)?.classList.add('active');
       loadBookings();
+    }
+
+    async function listDoctor() {
+      const res = await fetch('/api/doctor')
+      const data = await res.json()
+
+      for (const doctor of data) {
+        console.log("🚀 ~ listDoctor ~ doctor:", doctor)
+        addStaffOption(doctor.id, doctor.fullname)
+      }
     }
 
     // Load bookings
@@ -1130,6 +1140,7 @@
       currentBookingType = b[0].type;
       document.getElementById('staffSelect').value = '';
       document.getElementById('staffModal').classList.add('show');
+      listDoctor()
       closeModal('detailModal');
     }
 
@@ -1146,6 +1157,7 @@
     // Confirm staff
     async function confirmStaffAssignment() {
       const staff = document.getElementById('staffSelect').value;
+      console.log("🚀 ~ confirmStaffAssignment ~ staff:", staff)
       if (!staff) return alert('กรุณาเลือกเจ้าหน้าที่');
       try {
         const res = await fetch(`/api/admin/appointments/${confirmAppointment}/status`, {
@@ -1164,9 +1176,15 @@
           await updateCounts();
         } else alert('❌ ' + data.message);
       } catch (err) { console.error(err); alert('เกิดข้อผิดพลาด'); }
-      console.log("📌 staff_id:", staffId);
-      console.log("📌 staff_name:", staffName);
-      
+
+    }
+
+    async function addStaffOption(id, name) {
+      const select = document.getElementById("staffSelect");
+      const option = document.createElement("option");
+      option.value = id;
+      option.textContent = name;
+      select.appendChild(option);
     }
 
     // Cancel booking
