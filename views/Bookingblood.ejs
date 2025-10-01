@@ -952,34 +952,33 @@
     </div>
     
     <div class="header-right">
+            <div class="header-right">
             <div class="header-icons">
                 <button class="icon-btn" title="ค้นหา">
-                    <i class="fas fa-search"></i>
+                <i class="fas fa-search"></i>
                 </button>
+
                 <button class="icon-btn notification-btn" title="การแจ้งเตือน">
-                    <i class="fas fa-bell"></i>
+                <i class="fas fa-bell"></i>
                 </button>
 
-                <a href="/Login">
-                    <button class="icon-btn" title="บัญชีผู้ใช้">
-                        <i class="fas fa-user"></i>
-                    </button>
-                </a>
-
+                <!-- ปุ่มโปรไฟล์ -->
                 <div class="profile-dropdown">
-                    <button class="icon-btn" id="profileBtn" title="บัญชีผู้ใช้">
-                        <i class="fa-solid fa-right-to-bracket"></i>
+                <button class="icon-btn" id="profileBtn" title="บัญชีผู้ใช้">
+                    <i class="fas fa-user"></i>
+                </button>
+                <div class="dropdown-content" id="profileDropdown">
+                    <a href="/userhistory" class="dropdown-item">
+                    <i class="fas fa-id-card"></i> โปรไฟล์
+                    </a>
+                    <button class="dropdown-item logout" onclick="logout(event)">
+                    <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
                     </button>
-                    <div class="dropdown-content" id="profileDropdown">
-                        <button class="dropdown-item logout" onclick="logout()">
-                            <i class="fas fa-sign-out-alt"></i>
-                            ออกจากระบบ
-                        </button>
-                    </div>
                 </div>
-
+                </div>
             </div>
         </div>
+        
     </div>
 
   <!-- Main -->
@@ -1262,18 +1261,26 @@
         });
 
         // ฟังก์ชัน logout
-        function logout() {
-            if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
-                // เพิ่ม loading effect
-                const logoutBtn = event.target;
-                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
-                
-                setTimeout(() => {
-                    alert('ออกจากระบบเรียบร้อยแล้ว');
-                     window.location.href = "/Login";
-                }, 1500);
+        document.querySelector('.logout').addEventListener('click', async function(event) {
+        if (!confirm('คุณต้องการออกจากระบบหรือไม่?')) return;
+
+        const btn = event.currentTarget;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
+
+        try {
+            const res = await fetch('/logout', { method: 'GET' });
+            if (res.ok) {
+            window.location.href = '/login';
+            } else {
+            alert('ออกจากระบบไม่สำเร็จ');
+            btn.innerHTML = 'ออกจากระบบ';
             }
+        } catch (err) {
+            console.error(err);
+            alert('เกิดข้อผิดพลาด');
+            btn.innerHTML = 'ออกจากระบบ';
         }
+        });
     let currentStep = 1;
     let bookingData = {
       services: [], // Array of selected services

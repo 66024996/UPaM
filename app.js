@@ -222,6 +222,10 @@ app.get('/register', (req, res) => {
   res.render('register');
 });
 
+app.get('/userhistory', isLoggedIn, (req, res) => {
+  res.render('userhistory');
+});
+
 app.post('/bookingphy', isLoggedIn, async (req, res) => {
   const { service_id, appointment_date, time_slot, total_price } = req.body;
 
@@ -331,17 +335,19 @@ app.post('/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ success: false, message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
 
+    
     req.session.userId = user.id;
     req.session.email = user.email;
     req.session.role = user.role;
 
     if (user.role === 'admin') return res.redirect('/admin/listadmin');
-    res.redirect('/home');
+    res.redirect('/home'); 
   } catch (err) {
     console.error('Login Error:', err);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
   }
 });
+
 
 app.get('/api/user', async (req, res) => {
   try {
@@ -1870,10 +1876,284 @@ app.get('/api/appointments/download-result/:appointmentId', requireDoctor, async
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("Hello from Express on Vercel 🚀");
+app.get('/userhistory', (req, res) => {
+  res.render('userhistory');
 });
-//  Start Server
+
+
+function formatDate(d) {
+  if (!d) return null;
+  const dt = new Date(d);
+  const yyyy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, '0');
+  const dd = String(dt.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+
+
+
+app.get('/api/ping', (req, res) => res.json({ ok: true }));
+
+// Get user profile (joins personal_info if exists)
+app.get('/api/me/profile', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ' });
+    }
+
+    const userId = req.session.userId;
+
+    const [uRows] = await pool.query(
+      'SELECT id, email, role, fullname, created_at, updated_at FROM users WHERE id = ?',
+      [userId]
+    );
+    if (uRows.length === 0) return res.status(404).json({ error: 'User not found' });
+    const user = uRows[0];
+
+    const [pRows] = await pool.query('SELECT * FROM personal_info WHERE user_id = ? LIMIT 1', [userId]);
+    const personal = pRows[0] || null;
+
+    res.json({ user, personal });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+
+app.get('/api/me/appointments', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ' });
+
+  const userId = req.session.userId;
+  const { page = 1, limit = 20, search, dateFrom, dateTo, status } = req.query;
+  const offset = (page - 1) * limit;
+
+  let conditions = ['user_id = ?'];
+  const params = [userId];
+
+  if (status) { conditions.push('status = ?'); params.push(status); }
+  if (dateFrom) { conditions.push('appointment_date >= ?'); params.push(dateFrom); }
+  if (dateTo) { conditions.push('appointment_date <= ?'); params.push(dateTo); }
+  if (search) {
+    conditions.push('(service_id IN (SELECT id FROM services WHERE name LIKE ?) OR cancel_reason LIKE ? OR reschedule_reason LIKE ?)');
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  const where = conditions.length ? ('WHERE ' + conditions.join(' AND ')) : '';
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT SQL_CALC_FOUND_ROWS a.*, s.name AS service_name 
+       FROM appointments a 
+       LEFT JOIN services s ON a.service_id = s.id 
+       ${where} 
+       ORDER BY appointment_date DESC, time_slot DESC 
+       LIMIT ? OFFSET ?`,
+      [...params, parseInt(limit), parseInt(offset)]
+    );
+    const [countRows] = await pool.query('SELECT FOUND_ROWS() as total');
+    const total = countRows[0].total || 0;
+
+    res.json({ total, page: Number(page), limit: Number(limit), data: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+app.get('/api/me/blood-appointments', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ' });
+
+  const userId = req.session.userId;
+  const { page = 1, limit = 20, search, dateFrom, dateTo, status } = req.query;
+  const offset = (page - 1) * limit;
+
+  let conditions = ['user_id = ?'];
+  const params = [userId];
+
+  if (status) { conditions.push('status = ?'); params.push(status); }
+  if (dateFrom) { conditions.push('appointment_date >= ?'); params.push(dateFrom); }
+  if (dateTo) { conditions.push('appointment_date <= ?'); params.push(dateTo); }
+  if (search) { conditions.push('(services LIKE ? OR problem LIKE ? OR email LIKE ?)'); params.push(`%${search}%`, `%${search}%`, `%${search}%`); }
+
+  const where = 'WHERE ' + conditions.join(' AND ');
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT SQL_CALC_FOUND_ROWS * 
+       FROM blood_appointments 
+       ${where} 
+       ORDER BY appointment_date DESC, created_at DESC 
+       LIMIT ? OFFSET ?`,
+      [...params, parseInt(limit), parseInt(offset)]
+    );
+    const [countRows] = await pool.query('SELECT FOUND_ROWS() as total');
+    const total = countRows[0].total || 0;
+
+    res.json({ total, page: Number(page), limit: Number(limit), data: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+app.get('/api/blood-appointments/:id', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ' });
+
+  const { id } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const [rows] = await pool.query('SELECT * FROM blood_appointments WHERE id = ? AND user_id = ?', [id, userId]);
+    if (!rows.length) return res.status(404).json({ error: 'ไม่พบข้อมูล หรือไม่มีสิทธิ์เข้าถึง' });
+
+    const appt = rows[0];
+    const [results] = await pool.query('SELECT * FROM blood_results WHERE appointment_id = ? ORDER BY id', [id]);
+
+    res.json({ appointment: appt, results });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+
+app.post('/api/blood-appointments/:id/upload-result-file', upload.single('file'), async (req, res) => {
+  const { id } = req.params;
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  try {
+    const filePath = `/uploads/${req.file.filename}`;
+    await pool.query('UPDATE blood_appointments SET result_file = ?, result_uploaded_at = ? WHERE id = ?', [req.file.filename, new Date(), id]);
+    res.json({ success: true, file: { path: filePath, original: req.file.originalname } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+app.post('/api/blood-appointments/:id/results', async (req, res) => {
+  const { id } = req.params;
+  const { test_name, result, unit, reference_min, reference_max, status } = req.body;
+  try {
+    const [r] = await pool.query('INSERT INTO blood_results (appointment_id, test_name, result, unit, reference_min, reference_max, status, uploaded_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())', [id, test_name, result, unit, reference_min, reference_max, status || null]);
+    res.json({ success: true, insertedId: r.insertId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+app.get('/api/blood-appointments/:id/download-file', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query('SELECT result_file FROM blood_appointments WHERE id = ?', [id]);
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    const f = rows[0].result_file;
+    if (!f) return res.status(404).json({ error: 'No file attached' });
+    const filePath = path.join(UPLOAD_DIR, f);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File missing on server' });
+    res.download(filePath, f);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+app.get('/api/appointments/:id/download-all', async (req, res) => {
+  const { id } = req.params;
+  try {
+    
+    const [brows] = await pool.query('SELECT result_file FROM blood_appointments WHERE id = ?', [id]);
+    const files = brows.map(r => r.result_file).filter(Boolean);
+    if (!files.length) return res.status(404).json({ error: 'No files found' });
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename=appointment_${id}_files.zip`);
+
+    const archive = archiver('zip');
+    archive.on('error', err => { throw err; });
+    archive.pipe(res);
+
+    files.forEach(fname => {
+      const filePath = path.join(UPLOAD_DIR, fname);
+      if (fs.existsSync(filePath)) archive.file(filePath, { name: fname });
+    });
+
+    archive.finalize();
+  } catch (err) {
+    console.error(err);
+    if (!res.headersSent) res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+app.get('/api/lab/tests', async (req, res) => {
+  const { category_id } = req.query;
+  try {
+    let sql = 'SELECT t.*, c.name AS category_name FROM lab_tests t LEFT JOIN lab_test_categories c ON t.category_id = c.id';
+    const params = [];
+    if (category_id) { sql += ' WHERE t.category_id = ?'; params.push(category_id); }
+    const [rows] = await pool.query(sql, params);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/lab/reference-range/:testId', async (req, res) => {
+  const { testId } = req.params;
+  try {
+    const [rows] = await pool.query('SELECT * FROM lab_reference_range WHERE test_id = ?', [testId]);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+app.patch('/api/appointments/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status, cancel_reason, cancel_status, reschedule_reason } = req.body;
+  try {
+    await pool.query('UPDATE appointments SET status = ?, cancel_reason = ?, cancel_status = ?, reschedule_reason = ? WHERE id = ?', [status || null, cancel_reason || null, cancel_status || null, reschedule_reason || null, id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/user/history', async (req, res) => {
+  try {
+    const userId = req.user.id; // <-- ดึงจาก token/session
+    const [appointments] = await pool.query(
+      'SELECT * FROM appointments WHERE user_id = ?',
+      [userId]
+    );
+    const [bloodAppointments] = await pool.query(
+      'SELECT * FROM blood_appointments WHERE user_id = ?',
+      [userId]
+    );
+
+    res.json({
+      appointments,
+      bloodAppointments
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'server error' });
+  }
+});
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
