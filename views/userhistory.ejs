@@ -826,33 +826,28 @@
     </div>
 
     <div class="header-right">
-      <div class="header-right">
-            <div class="header-icons">
-                <button class="icon-btn" title="ค้นหา">
-                <i class="fas fa-search"></i>
-                </button>
-
-                <button class="icon-btn notification-btn" title="การแจ้งเตือน">
-                <i class="fas fa-bell"></i>
-                </button>
-
-                <!-- ปุ่มโปรไฟล์ -->
-                <div class="profile-dropdown">
-                <button class="icon-btn" id="profileBtn" title="บัญชีผู้ใช้">
-                    <i class="fas fa-user"></i>
-                </button>
-                <div class="dropdown-content" id="profileDropdown">
-                    <a href="/userhistory" class="dropdown-item">
-                    <i class="fas fa-id-card"></i> โปรไฟล์
-                    </a>
-                    <button class="dropdown-item logout" onclick="logout(event)">
-                    <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
-                    </button>
-                </div>
-                </div>
-            </div>
+      <div class="header-icons">
+        <button class="icon-btn" title="ค้นหา">
+          <i class="fas fa-search"></i>
+        </button>
+        <button class="icon-btn notification-btn" title="การแจ้งเตือน">
+          <i class="fas fa-bell"></i>
+        </button>
+        <div class="profile-dropdown">
+          <a href="/userhistory">
+            <button class="icon-btn" title="บัญชีผู้ใช้">
+              <i class="fas fa-user"></i>
+            </button>
+          </a>
+          <div class="dropdown-content" id="profileDropdown">
+            <button class="dropdown-item logout" onclick="logout(event)">
+              <i class="fas fa-sign-out-alt"></i>
+              ออกจากระบบ
+            </button>
+          </div>
         </div>
-    
+      </div>
+    </div>
   </div>
 
   <!-- Main Content -->
@@ -996,7 +991,6 @@
             btn.innerHTML = 'ออกจากระบบ';
         }
         });
-    
     function formatDateDisplay(isoDate) {
       if (!isoDate) return '';
       if (isoDate.includes('/')) return isoDate;
@@ -1053,7 +1047,6 @@
       }
     }
 
-    // ================= History =================
     async function fetchAndRenderHistory() {
       try {
         const [apptsResp, bloodResp] = await Promise.all([
@@ -1102,7 +1095,6 @@
       }
     }
 
-    // ================= Render & Summary =================
     function renderHistory(filteredData=historyData){
       const timeline = document.getElementById('historyTimeline');
       if(!timeline) return;
@@ -1150,7 +1142,6 @@
       if(elTotal) elTotal.textContent = total;
     }
 
-    // ================= Event Listeners =================
     function setupEventListeners(){
       document.getElementById('searchInput')?.addEventListener('input',handleFilter);
       document.getElementById('dateFrom')?.addEventListener('change',handleFilter);
@@ -1176,7 +1167,6 @@
       updateSummaryCards();
     }
 
-    // ================= Modal =================
     async function openDetailModal(id, source){
       const modal = document.getElementById('detailModal');
       const content = document.getElementById('detailContent');
@@ -1206,7 +1196,6 @@
       if(modal) modal.style.display='none';
     }
 
-    // ================= Initialize =================
     document.addEventListener('DOMContentLoaded',()=>{
       loadCurrentPatient();
       fetchAndRenderHistory();

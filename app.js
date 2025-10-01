@@ -341,6 +341,7 @@ app.post('/login', async (req, res) => {
     req.session.role = user.role;
 
     if (user.role === 'admin') return res.redirect('/admin/listadmin');
+    if (user.role === 'doctor') return res.redirect('/Staffphy');
     res.redirect('/home'); 
   } catch (err) {
     console.error('Login Error:', err);
