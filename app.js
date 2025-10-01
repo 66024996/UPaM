@@ -13,6 +13,7 @@ const requireisLoggedIn = require('./middleware/isLoggedIn');
 const upload = multer({ dest: "uploads/" });
 const xlsx = require("xlsx");
 const fs = require('fs');
+const mime = require('mime-types');
 
 require('dotenv').config();
 
@@ -40,22 +41,13 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = "uploads/blood_tests";
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = Date.now() + "_" + file.originalname;
-    cb(null, uniqueName);
-  }
-});
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = path.join(__dirname, 'uploads', 'appointment_results');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
     cb(null, dir);
   },
   filename: (req, file, cb) => {
@@ -830,7 +822,7 @@ app.get('/api/my-appointments', isLoggedIn, async (req, res) => {
 });
 
 
-app.get('/admin/Listadmin', isLoggedIn, isAdmin, async (req, res) => {
+app.get('/admin/Listadmin', isAdmin, async (req, res) => {
   try {
 
     const [physicalAppointments] = await pool.execute(`
@@ -1715,65 +1707,103 @@ app.post('/api/Staffblood/upload-result', async (req, res) => {
   }
 });
 
-app.get('/api/lab/Staffblood', requireDoctor, async (req, res) => {
+app.get('/api/staff/blood-appointments', requireDoctor, async (req, res) => {
   try {
-    const [rows] = await pool.query(`
-      SELECT 
-        b.id,
-        CONCAT(p.title, p.first_name, ' ', p.last_name) AS patientName,
-        b.services,
-        b.total_price AS price,
-        DATE_FORMAT(b.appointment_date, '%d/%m/%Y') AS date,
-        b.time_slot AS time,
-        b.status,
-        b.lab_staff AS labStaff,
-        b.results
-      FROM blood_appointments b
-      JOIN personal_info p ON b.user_id = p.user_id
-      ORDER BY b.appointment_date DESC
-    `);
+    const userId = req.session.userId;
+    console.log('🔍 User ID from session:', userId);
 
+    const [doctorRows] = await pool.query(
+      `SELECT id FROM doctors WHERE user_id = ?`,
+      [userId]
+    );
 
-    rows.forEach(row => {
-      try {
-        const servicesArr = JSON.parse(row.services);
-        row.testType = Array.isArray(servicesArr) ? servicesArr.join(', ') : row.services;
-      } catch {
-        row.testType = row.services;
-      }
+    console.log('👨‍⚕️ Doctor rows:', doctorRows);
 
-      if (typeof row.results === 'string') {
-        try {
-          row.results = JSON.parse(row.results);
-        } catch {
-          row.results = [];
-        }
-      }
-    });
+    if (doctorRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลหมอ' });
+    }
 
-    res.json(rows);
+    const doctorId = doctorRows[0].id;
+    console.log('🆔 Doctor ID:', doctorId);
+
+    // ดึงข้อมูลพร้อมชื่อจาก users หรือ personal_info
+    const [rows] = await pool.query(
+      `SELECT 
+        a.*,
+        COALESCE(
+          CONCAT(p.title, p.first_name, ' ', p.last_name),
+          u.fullname,
+          'ผู้ป่วย'
+        ) as patient_name
+       FROM blood_appointments a
+       LEFT JOIN personal_info p ON a.user_id = p.user_id
+       LEFT JOIN users u ON a.user_id = u.id
+       WHERE a.doctor_id = ?
+         AND a.status IN ('จองแล้ว','ยืนยันแล้ว','เสร็จสิ้น')
+       ORDER BY a.appointment_date DESC, a.time_slot`,
+      [doctorId]
+    );
+
+    console.log('📋 All appointments:', rows.length);
+
+    res.json({ success: true, appointments: rows });
   } catch (err) {
-    console.error('❌ Error fetching appointments:', err);
-    res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลได้' });
+    console.error('❌ Error:', err);
+    res.status(500).json({ success: false, message: 'โหลดข้อมูลล้มเหลว' });
   }
 });
 
 app.get('/api/lab/StaffPhy', requireDoctor, async (req, res) => {
   try {
+    const userId = req.session.userId;
+    
+    const [doctorRows] = await pool.query(
+      `SELECT id FROM doctors WHERE user_id = ?`,
+      [userId]
+    );
+
+    if (doctorRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลหมอ' });
+    }
+
+    const doctorId = doctorRows[0].id;
+
     const [rows] = await pool.query(`
-     SELECT 
+      SELECT 
         b.id,
-        CONCAT(p.title, " ",  p.first_name, ' ', p.last_name) AS patientName,
+        COALESCE(
+          CONCAT(p.title, ' ', p.first_name, ' ', p.last_name),
+          u.fullname,
+          'ผู้ป่วย'
+        ) AS patientName,
         b.total_price AS price,
         DATE_FORMAT(b.appointment_date, '%d/%m/%Y') AS date,
+        DATE_FORMAT(b.appointment_date, '%Y-%m-%d') AS date_compare,
         b.time_slot AS time,
-        b.status,
-        s.name
+        b.status AS original_status,
+        s.name,
+        b.result_file,
+        'เจ้าหน้าที่' AS assignedStaff,
+        CASE 
+          WHEN b.appointment_date = CURDATE() AND (b.result_file IS NULL OR b.result_file = '') THEN 'today'
+          WHEN b.result_file IS NOT NULL AND b.result_file != '' THEN 'completed'
+          ELSE 'history'
+        END AS status
       FROM appointments b
       JOIN services s ON b.service_id = s.id
-      JOIN personal_info p ON b.user_id = p.user_id
-      ORDER BY b.appointment_date DESC
-    `);
+      LEFT JOIN personal_info p ON b.user_id = p.user_id
+      LEFT JOIN users u ON b.user_id = u.id
+      WHERE b.doctor_id = ?
+        AND b.status IN ('จองแล้ว', 'ยืนยันแล้ว', 'เสร็จสิ้น')
+      ORDER BY b.appointment_date DESC, b.time_slot
+    `, [doctorId]);
+
+    // Debug log
+    console.log(`✅ Found ${rows.length} appointments for doctor ${doctorId}`);
+    rows.forEach(row => {
+      console.log(`  - ID: ${row.id}, Date: ${row.date}, Status: ${row.status}, Result: ${row.result_file || 'NULL'}`);
+    });
+
     res.json(rows);
   } catch (err) {
     console.error('❌ Error fetching appointments:', err);
@@ -1810,70 +1840,147 @@ app.get('/api/blood-appointments/:id', requireDoctor, async (req, res) => {
 
 
 app.post('/api/Staffblood/upload', requireDoctor, async (req, res) => {
-  const { testId, results } = req.body;
-
-  if (!testId || !results) {
-    return res.status(400).json({ success: false, message: 'ข้อมูลไม่ครบ' });
-  }
-
   try {
+    const { testId, results } = req.body;
+    
+    console.log('📤 Upload request:', { testId, resultsCount: results?.length });
 
-    await pool.execute(
+    // ✅ แปลง 'BT004' เป็น 4
+    const numericId = parseInt(testId.replace(/\D/g, ''));
+    
+    if (!numericId || !results) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'ข้อมูลไม่ครบถ้วน' 
+      });
+    }
+
+    // บันทึกผลตรวจ
+    const [updateResult] = await pool.query(
       `UPDATE blood_appointments 
-       SET status = 'completed', results = ? 
+       SET status = 'เสร็จสิ้น', results = ? 
        WHERE id = ?`,
-      [JSON.stringify(results), testId]
+      [JSON.stringify(results), numericId]
     );
 
-    res.json({ success: true, message: 'อัปโหลดผลตรวจสำเร็จ' });
+    console.log('✅ Update result:', updateResult);
+
+    if (updateResult.affectedRows === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'ไม่พบรายการนัดหมาย' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'อัปโหลดผลตรวจสำเร็จ' 
+    });
+
   } catch (err) {
     console.error('❌ Error uploading results:', err);
-    res.status(500).json({ success: false, message: 'บันทึกผลตรวจไม่สำเร็จ' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'บันทึกผลตรวจไม่สำเร็จ ' + err.message 
+    });
   }
 });
-app.post('/api/appointments/upload-result/:appointmentId', requireDoctor, uploadResultFile.single('file'), async (req, res) => {
-  const { appointmentId } = req.params;
-  if (!req.file) return res.status(400).json({ success: false, message: 'กรุณาเลือกไฟล์' });
 
-  console.log('📁 File info:', req.file);
-  console.log('🆔 Appointment ID:', appointmentId);
-
+app.post('/api/appointments/upload-result/:id',requireDoctor, uploadResultFile.single('file'), async (req, res) => {
   try {
-    const [result] = await pool.execute(
+    const appointmentId = req.params.id;
+    
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'กรุณาเลือกไฟล์' 
+      });
+    }
+
+    console.log('Uploaded file:', req.file.filename);
+
+    // อัปเดตฐานข้อมูล - เก็บชื่อไฟล์เต็ม
+    await pool.query(
       `UPDATE appointments 
-       SET result_file = ?, result_uploaded_at = NOW(), status = 'อัปโหลดแล้ว', updated_at = NOW() 
+       SET result_file = ?, 
+           status = 'เสร็จสิ้น',
+           updated_at = NOW()
        WHERE id = ?`,
       [req.file.filename, appointmentId]
     );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'ไม่พบการจองนี้' });
-    }
+    res.json({ 
+      success: true, 
+      message: 'อัปโหลดสำเร็จ',
+      filename: req.file.filename 
+    });
 
-    res.json({ success: true, message: 'อัปโหลดไฟล์ผลตรวจสำเร็จ', file: req.file.filename });
-  } catch (err) {
-    console.error('❌ Upload file error:', err);
-    res.status(500).json({ success: false, message: 'บันทึกไฟล์ไม่สำเร็จ' });
+  } catch (error) {
+    console.error('Upload error:', error);
+    
+    // ลบไฟล์ถ้า error
+    if (req.file) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (e) {
+        console.error('Error deleting file:', e);
+      }
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'เกิดข้อผิดพลาดในการอัปโหลด',
+      error: error.message 
+    });
   }
 });
+
 // API ดาวน์โหลดไฟล์ผลตรวจ
-app.get('/api/appointments/download-result/:appointmentId', requireDoctor, async (req, res) => {
-  const { appointmentId } = req.params;
+app.get('/api/appointments/download-result/:id',requireDoctor, async (req, res) => {
   try {
+    const appointmentId = req.params.id;
+    
     const [rows] = await pool.query(
-      `SELECT result_file FROM appointments WHERE id = ?`, [appointmentId]
+      'SELECT result_file FROM appointments WHERE id = ?',
+      [appointmentId]
     );
-    if (!rows.length || !rows[0].result_file) {
-      return res.status(404).json({ success: false, message: 'ไม่พบไฟล์ผลตรวจ' });
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลการนัด' });
     }
-    const filePath = path.join(__dirname, 'uploads', 'appointment_results', rows[0].result_file);
+
+    const resultFile = rows[0].result_file;
+
+    if (!resultFile || resultFile.trim() === '') {
+      return res.status(404).json({ success: false, message: 'ยังไม่มีไฟล์ผลการตรวจ' });
+    }
+
+    // ลอง path ใหม่ก่อน (appointment_results)
+    let filePath = path.join(__dirname, 'uploads', 'appointment_results', resultFile);
+    
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ success: false, message: 'ไฟล์ไม่อยู่ในระบบ' });
+      // ถ้าไม่เจอ ลอง path เก่า (uploads)
+      filePath = path.join(__dirname, 'uploads', resultFile);
     }
-    res.download(filePath, rows[0].result_file);
-  } catch (err) {
-    console.error('❌ Download file error:', err);
-    res.status(500).json({ success: false, message: 'ดาวน์โหลดไฟล์ไม่สำเร็จ' });
+    
+    if (!fs.existsSync(filePath)) {
+      console.error('File not found:', filePath);
+      return res.status(404).json({ 
+        success: false, 
+        message: 'ไม่พบไฟล์ผลการตรวจ' 
+      });
+    }
+
+    console.log('Downloading file:', filePath);
+    res.download(filePath);
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'เกิดข้อผิดพลาด',
+      error: error.message 
+    });
   }
 });
 
@@ -2158,4 +2265,3 @@ app.get('/api/user/history', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
-

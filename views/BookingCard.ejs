@@ -648,7 +648,7 @@
                 </div>
             </div>
         </div>
-        
+    </div>
     </div>
 
   <!-- Main Content -->
@@ -910,20 +910,43 @@
     }
 
     // Mapping ข้อมูลจาก API -> ใช้ render
-    function mapAppointment(appointment) {
-      console.log('🔄 Mapping appointment:', appointment);
+    // เพิ่มฟังก์ชันนี้ก่อน loadAppointments()
+    function mapAppointmentStatus(appt) {
+      const today = new Date();
+      const apptDate = parseThaiDate(appt.date);
+      const todayStr = today.toISOString().split('T')[0];
+      const apptStr = apptDate.toISOString().split('T')[0];
       
-      return {
-        id: appointment.id,
-        patientName: appointment.patientName || appointment.fullname || '-',
-        problem: appointment.problem || '-',
-        time: appointment.time_slot || appointment.time || '-',
-        service: appointment.service || 'ไม่ระบุ',
-        date: appointment.appointment_date || appointment.date || '-',
-        total_price: appointment.total_price || '0',
-        status: appointment.status || 'จองแล้ว',
-        type: appointment.service === 'ตรวจเลือด' ? 'blood' : 'phy' // เพิ่ม type
-      };
+      // ถ้ามีไฟล์ผลแล้ว หรือ status = 'เสร็จสิ้น'
+      if (appt.status === 'เสร็จสิ้น' || appt.result_file) {
+        return 'completed';
+      }
+      
+      // ถ้าเป็นวันนี้และยังไม่เสร็จ
+      if (apptStr === todayStr && (appt.status === 'จองแล้ว' || appt.status === 'ยืนยันแล้ว')) {
+        return 'today';
+      }
+      
+      // อื่นๆ เป็น history
+      return 'history';
+    }
+
+    async function loadAppointments() {
+      const res = await fetch('/api/lab/StaffPhy');
+      const rawBookings = await res.json();
+      
+      // แปลง status ให้ตรงกับ tab
+      bookings = rawBookings.map(appt => ({
+        ...appt,
+        originalStatus: appt.status, // เก็บ status เดิมไว้
+        status: mapAppointmentStatus(appt) // status ใหม่สำหรับกรอง
+      }));
+      
+      console.log('✅ Loaded bookings:', bookings.length);
+      updateCounts();
+      renderAppointments(bookings);
+      renderBookings();
+      initializePage();
     }
     
     function updateAppointmentDisplay() {

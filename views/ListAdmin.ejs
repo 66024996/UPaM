@@ -1080,9 +1080,16 @@
           case 'confirmed':
             statusClass = 'status-confirmed'; statusText = 'ยืนยัน'; actionsHtml = '';
             break;
+
+          case 'completed':
+            statusClass = 'status-completed'; 
+            statusText = 'เสร็จสิ้น';
+            actionsHtml = ''; // ไม่ต้องมีปุ่มแล้ว (รอหมออัปโหลด)
+            break;
           case 'cancelled':
             statusClass = 'status-cancelled'; statusText = 'ยกเลิกแล้ว'; actionsHtml = '';
             break;
+
         }
 
         html += `<div class="booking-card ${b.status}" onclick="openDetailModal('${b.id}')">
@@ -1106,6 +1113,16 @@
       });
 
       bookingList.innerHTML = html;
+    }
+
+    async function listDoctor() {
+      const select = document.getElementById("staffSelect");
+      select.innerHTML = '<option value="">-- เลือกหมอ --</option>'; // reset
+      const res = await fetch('/api/doctor');
+      const data = await res.json();
+      for (const doctor of data) {
+        addStaffOption(doctor.id, doctor.fullname);
+      }
     }
 
     // Update counts

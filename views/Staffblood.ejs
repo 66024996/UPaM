@@ -940,7 +940,7 @@
                 </div>
             </div>
         </div>
-    
+    </div>
   </div>
 
   <!-- Main Content -->
@@ -1123,13 +1123,98 @@
         });
 
     async function loadBloodTests() {
-      const res = await fetch('/api/lab/Staffblood');
-      bloodTests = await res.json();
-      renderTests();
-      updateCounts();
-      initializePage();
-      getUserProfile()
-      renderAppointments(bloodTests); // <-- เพิ่มบรรทัดนี้
+      try {
+        console.log('🔄 Loading blood tests...');
+        const res = await fetch('/api/staff/blood-appointments');
+        const data = await res.json();
+        
+        console.log('📥 Response:', data);
+        
+        if (data.success && data.appointments) {
+          // แปลงข้อมูลจาก Backend ให้ตรงกับ Frontend
+          bloodTests = data.appointments.map(appt => {
+            // แปลง services
+            let services = appt.services;
+            if (typeof services === 'string') {
+              try {
+                services = JSON.parse(services);
+              } catch (e) {
+                services = [services];
+              }
+            }
+            const serviceText = Array.isArray(services) ? services.join(', ') : services;
+            
+            // แปลง results
+            let results = null;
+            if (appt.results) {
+              try {
+                results = typeof appt.results === 'string' 
+                  ? JSON.parse(appt.results) 
+                  : appt.results;
+              } catch (e) {
+                console.error('Error parsing results for appt', appt.id, e);
+              }
+            }
+            
+            return {
+              id: `BT${String(appt.id).padStart(3, '0')}`,
+              patientName: appt.patient_name || 'ไม่ระบุชื่อ',
+              testType: serviceText || 'ไม่ระบุ',
+              date: appt.appointment_date ? formatDate(appt.appointment_date) : '-',
+              time: appt.time_slot || '-',
+              price: appt.total_price || '0',
+              labStaff: 'เจ้าหน้าที่',
+              status: determineAppointmentStatus(appt),
+              results: results,
+              rawData: appt
+            };
+          });
+          
+          console.log('✅ Processed tests:', bloodTests.length);
+          console.log('📋 Sample test:', bloodTests[0]);
+          
+          renderTests();
+          updateCounts();
+        } else {
+          console.error('❌ Invalid response format:', data);
+          bloodTests = [];
+        }
+      } catch (err) {
+        console.error('❌ Load failed:', err);
+        bloodTests = [];
+      }
+    }
+    
+    // ฟังก์ชันแปลงวันที่
+    function formatDate(dateString) {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      const dd = String(date.getDate()).padStart(2, '0');
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const yyyy = date.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    }
+    
+    // ฟังก์ชันกำหนด status
+    function determineAppointmentStatus(appt) {
+      const today = new Date();
+      const apptDate = new Date(appt.appointment_date);
+      const todayStr = today.toISOString().split('T')[0];
+      const apptStr = apptDate.toISOString().split('T')[0];
+      
+      // ถ้ามีผลตรวจแล้ว หรือ status = 'เสร็จสิ้น'
+      if (appt.status === 'เสร็จสิ้น' || 
+          (appt.results && (Array.isArray(appt.results) ? appt.results.length > 0 : true))) {
+        return 'completed';
+      }
+      
+      // ถ้าเป็นวันนี้และยังไม่มีผล
+      if (apptStr === todayStr && (appt.status === 'จองแล้ว' || appt.status === 'ยืนยันแล้ว')) {
+        return 'today';
+      }
+      
+      // อื่นๆ เป็น history
+      return 'history';
     }
 
     async function getUserProfile() {
