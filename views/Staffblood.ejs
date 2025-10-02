@@ -1124,15 +1124,23 @@
 
     async function loadBloodTests() {
       try {
-        console.log('🔄 Loading blood tests...');
+        console.log('Loading blood tests...');
         const res = await fetch('/api/staff/blood-appointments');
         const data = await res.json();
         
-        console.log('📥 Response:', data);
+        console.log('API Response:', data);
         
         if (data.success && data.appointments) {
-          // แปลงข้อมูลจาก Backend ให้ตรงกับ Frontend
           bloodTests = data.appointments.map(appt => {
+            // Debug แต่ละ appointment
+            console.log(`\nAppointment ${appt.id}:`);
+            console.log('  Date:', appt.appointment_date);
+            console.log('  Status:', appt.status);
+            console.log('  Results:', appt.results);
+            
+            const calculatedStatus = determineAppointmentStatus(appt);
+            console.log('  Calculated status:', calculatedStatus);
+            
             // แปลง services
             let services = appt.services;
             if (typeof services === 'string') {
@@ -1144,18 +1152,6 @@
             }
             const serviceText = Array.isArray(services) ? services.join(', ') : services;
             
-            // แปลง results
-            let results = null;
-            if (appt.results) {
-              try {
-                results = typeof appt.results === 'string' 
-                  ? JSON.parse(appt.results) 
-                  : appt.results;
-              } catch (e) {
-                console.error('Error parsing results for appt', appt.id, e);
-              }
-            }
-            
             return {
               id: `BT${String(appt.id).padStart(3, '0')}`,
               patientName: appt.patient_name || 'ไม่ระบุชื่อ',
@@ -1164,24 +1160,24 @@
               time: appt.time_slot || '-',
               price: appt.total_price || '0',
               labStaff: 'เจ้าหน้าที่',
-              status: determineAppointmentStatus(appt),
-              results: results,
+              status: calculatedStatus,
+              results: appt.results,
               rawData: appt
             };
           });
           
-          console.log('✅ Processed tests:', bloodTests.length);
-          console.log('📋 Sample test:', bloodTests[0]);
+          console.log('\nProcessed tests:', bloodTests.length);
+          console.log('Status breakdown:', {
+            today: bloodTests.filter(t => t.status === 'today').length,
+            completed: bloodTests.filter(t => t.status === 'completed').length,
+            history: bloodTests.filter(t => t.status === 'history').length
+          });
           
           renderTests();
           updateCounts();
-        } else {
-          console.error('❌ Invalid response format:', data);
-          bloodTests = [];
         }
       } catch (err) {
-        console.error('❌ Load failed:', err);
-        bloodTests = [];
+        console.error('Load failed:', err);
       }
     }
     
@@ -1227,6 +1223,11 @@
       profileName.textContent = data.fullname
       profileRole.textContent = data.role
     }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await getUserProfile(); // เรียกก่อน
+      await loadBloodTests(); // แล้วค่อยโหลดข้อมูล
+    });
 
     window.addEventListener('DOMContentLoaded', () => loadBloodTests());
     // Profile dropdown functionality
@@ -1403,19 +1404,17 @@
     // Render tests based on current tab
     function renderTests(filtered = null) {
       const testList = document.getElementById('testList');
-      let list = filtered || bloodTests.filter(t => t.status === currentTab);
+      let list;
 
-      if (currentTab === 'today') {
-        const today = new Date();
-        const dd = String(today.getDate()).padStart(2, '0');
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const yyyy = today.getFullYear();
-        const todayStr = `${dd}/${mm}/${yyyy}`;
-        // แสดงเฉพาะรายการที่ "วันที่" ตรงกับวันนี้ และ status เป็น "จองแล้ว"
-        list = bloodTests.filter(t => t.date === todayStr && t.status === 'จองแล้ว');
+      if (filtered) {
+        list = filtered;
       } else {
+        // ใช้ status ที่คำนวณจาก determineAppointmentStatus() แล้ว
         list = bloodTests.filter(t => t.status === currentTab);
       }
+
+      console.log('Current tab:', currentTab);
+      console.log('Filtered tests:', list.length);
 
       if (!list.length) {
         testList.innerHTML = `
@@ -1434,35 +1433,39 @@
         const statusText = test.status === 'today' ? 'วันนี้' :
           test.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
 
+        const hasResults = Array.isArray(test.results) 
+          ? test.results.length > 0 
+          : !!test.results;
+
         html += `
-            <div class="test-card ${test.status}" onclick="openDetailModal('${test.id}')">
-              <div class="test-header">
-                <div class="test-id">รหัส ${test.id}</div>
-                <div class="test-status ${statusClass}">${statusText}</div>
+          <div class="test-card ${test.status}" onclick="openDetailModal('${test.id}')">
+            <div class="test-header">
+              <div class="test-id">รหัส ${test.id}</div>
+              <div class="test-status ${statusClass}">${statusText}</div>
+            </div>
+            
+            <div class="test-info">
+              <div class="info-item">
+                <div class="info-label">ชื่อผู้ป่วย</div>
+                <div class="info-value">${test.patientName}</div>
               </div>
               
-              <div class="test-info">
-                <div class="info-item">
-                  <div class="info-label">ชื่อผู้ป่วย</div>
-                  <div class="info-value">${test.patientName}</div>
-                </div>
-                
-                <div class="info-item">
-                  <div class="info-label">ประเภทการตรวจ</div>
-                  <div class="info-value">${test.testType}</div>
-                </div>
-                
-                <div class="info-item">
-                  <div class="info-label">วันที่</div>
-                  <div class="info-value">${test.date}</div>
-                </div>
-                
-                <div class="info-item">
-                  <div class="info-label">เวลา</div>
-                  <div class="info-value">${test.time} น.</div>
-                </div>
-                
-                <div class="info-item">
+              <div class="info-item">
+                <div class="info-label">ประเภทการตรวจ</div>
+                <div class="info-value">${test.testType}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">วันที่</div>
+                <div class="info-value">${test.date}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">เวลา</div>
+                <div class="info-value">${test.time} น.</div>
+              </div>
+              
+              <div class="info-item">
                 <div class="info-label">ค่าบริการ</div>
                 <div class="info-value price-value">${test.price} บาท</div>
               </div>
@@ -1478,22 +1481,18 @@
                 <i class="fas fa-eye"></i> ดูรายละเอียด
               </button>
               
-              ${!(
-            Array.isArray(test.results)
-              ? test.results.length > 0
-              : !!test.results
-          ) ? `
+              ${test.status === 'today' && !hasResults ? `
                 <button class="btn btn-upload" onclick="openUploadModal('${test.id}')">
                   <i class="fas fa-upload"></i> อัปโหลดผล
                 </button>
-              ` : `
+              ` : hasResults ? `
                 <button class="btn btn-download" onclick="downloadResult('${test.id}')">
                   <i class="fas fa-download"></i> ดาวน์โหลด
                 </button>
-              `}
+              ` : ''}
             </div>
           </div>
-          `;
+        `;
       });
 
       testList.innerHTML = html;
@@ -1501,14 +1500,11 @@
 
     // Update counts for each tab
     function updateCounts() {
+      const todayCount = bloodTests.filter(b => b.status === 'today').length;
       const completedCount = bloodTests.filter(b => b.status === 'completed').length;
       const historyCount = bloodTests.filter(b => b.status === 'history').length;
-      const today = new Date();
-      const dd = String(today.getDate()).padStart(2, '0');
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const yyyy = today.getFullYear();
-      const todayStr = `${dd}/${mm}/${yyyy}`;
-      const todayCount = bloodTests.filter(b => b.date === todayStr && b.status === 'จองแล้ว').length;
+
+      console.log('Counts:', { todayCount, completedCount, historyCount });
 
       document.getElementById('todayCount').textContent = todayCount;
       document.getElementById('completedCount').textContent = completedCount;

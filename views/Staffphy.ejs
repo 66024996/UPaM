@@ -1081,81 +1081,50 @@
     let currentTab = 'today';
     let selectedFile = null;
     let bookings = [];
-    // Profile dropdown functionality
+    let currentBookingId = null;
+
+    // Profile dropdown
     const profileBtn = document.getElementById('profileBtn');
     const profileDropdown = document.getElementById('profileDropdown');
 
-    profileBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      profileDropdown.classList.toggle('show');
-    });
+    if (profileBtn && profileDropdown) {
+      profileBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        profileDropdown.classList.toggle('show');
+      });
+      
+      window.addEventListener('click', () => {
+        if (profileDropdown.classList.contains('show')) {
+          profileDropdown.classList.remove('show');
+        }
+      });
+      
+      profileDropdown.addEventListener('click', e => e.stopPropagation());
+    }
 
-    // ปิด dropdown เมื่อคลิกข้างนอก
-    window.addEventListener('click', function () {
-      if (profileDropdown.classList.contains('show')) {
-        profileDropdown.classList.remove('show');
+    // Logout
+    document.querySelector('.logout')?.addEventListener('click', async function(event) {
+      if (!confirm('คุณต้องการออกจากระบบหรือไม่?')) return;
+      
+      const btn = event.currentTarget;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
+      
+      try {
+        const res = await fetch('/logout', { method: 'GET' });
+        if (res.ok) {
+          window.location.href = '/login';
+        } else {
+          alert('ออกจากระบบไม่สำเร็จ');
+          btn.innerHTML = 'ออกจากระบบ';
+        }
+      } catch (err) {
+        console.error(err);
+        alert('เกิดข้อผิดพลาด');
+        btn.innerHTML = 'ออกจากระบบ';
       }
     });
 
-    // ป้องกันการปิด dropdown เมื่อคลิกข้างใน dropdown
-    profileDropdown.addEventListener('click', function (e) {
-      e.stopPropagation();
-    });
-
-    // ฟังก์ชัน logout
-    document.querySelector('.logout').addEventListener('click', async function(event) {
-        if (!confirm('คุณต้องการออกจากระบบหรือไม่?')) return;
-
-        const btn = event.currentTarget;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังออกจากระบบ...';
-
-        try {
-            const res = await fetch('/logout', { method: 'GET' });
-            if (res.ok) {
-            window.location.href = '/login';
-            } else {
-            alert('ออกจากระบบไม่สำเร็จ');
-            btn.innerHTML = 'ออกจากระบบ';
-            }
-        } catch (err) {
-            console.error(err);
-            alert('เกิดข้อผิดพลาด');
-            btn.innerHTML = 'ออกจากระบบ';
-        }
-        });
-
-    function bookService(service, event) { // เพิ่ม event parameter
-      const card = event.currentTarget;
-      card.style.transform = 'scale(0.95)';
-
-      setTimeout(() => {
-        card.style.transform = '';
-        
-        if (service === 'physiotherapy') {
-          window.location.href = "/Bookingphy";
-        } else if (service === 'blood-test') {
-          window.location.href = "/Bookingblood";
-        }
-      }, 150);
-    }
-
-    // Header button interactions (ยกเว้น profile button ที่มี dropdown)
-    document.querySelectorAll('.icon-btn:not(#profileBtn)').forEach(btn => {
-      btn.addEventListener('click', function () {
-        console.log('Clicked:', this.title || 'Header button');
-        // สร้าง ripple effect
-        this.style.transform = 'scale(0.9)';
-        setTimeout(() => {
-          this.style.transform = '';
-        }, 150);
-      });
-    });
-    // Sample data
-
-
-    // let bookings = [];
-
-
+    // Load appointments
     async function loadAppointments() {
       try {
         console.log('🔄 Loading appointments...');
@@ -1167,273 +1136,97 @@
         
         bookings = await res.json();
         
-        console.log('📥 Loaded bookings:', bookings.length);
-        console.log('📋 All bookings data:', bookings);
+        console.log('📥 Raw response:', bookings);
+        console.log('📊 Total bookings:', bookings.length);
+        
+        // แสดงข้อมูลแต่ละ booking
+        bookings.forEach(b => {
+          console.log(`ID ${b.id}: date=${b.date}, status=${b.status}, result=${b.result_file || 'NULL'}`);
+        });
+        
         console.log('📊 Status breakdown:', {
           today: bookings.filter(b => b.status === 'today').length,
           completed: bookings.filter(b => b.status === 'completed').length,
           history: bookings.filter(b => b.status === 'history').length
         });
         
-        // เช็ควันที่
-        const today = new Date().toISOString().split('T')[0];
-        console.log('📅 Today is:', today);
-        bookings.forEach(b => {
-          if (b.date_compare) {
-            console.log(`  - Booking ${b.id}: ${b.date_compare} === ${today}? ${b.date_compare === today}`);
-          }
-        });
-        
         updateCounts();
         renderBookings();
-        initializePage();
       } catch (error) {
         console.error('❌ Error loading appointments:', error);
         showNotification('ไม่สามารถโหลดข้อมูลได้', 'error');
       }
     }
 
-    window.addEventListener('DOMContentLoaded', loadAppointments);
-
-    function renderAppointments(list) {
-      console.log('list => ', list)
-      const tbody = document.getElementById('bookingList');
-      tbody.innerHTML = "";
-      list.forEach(appt => {
-        const tr = document.createElement('tr');
-        console.log('appointment => ', appt)
-        tr.innerHTML = `
-          <td>${appt.id}</td>
-          <td>${appt.name}</td>
-          <td>${appt.price}</td>
-          <td>${appt.date}</td>
-          <td>${appt.time}</td>
-          <td>${appt.status}</td>
-          <td>
-            <button class="detail-btn" data-id="${appt.id}">รายละเอียด</button>
-            <button class="upload-btn" data-id="${appt.id}">อัปโหลดผล</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      // bind ปุ่มรายละเอียด
-      document.querySelectorAll('.detail-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const apptId = btn.dataset.id;
-          openDetailModal(apptId);
-        });
-      });
-
-      // bind ปุ่มอัปโหลดผล
-      document.querySelectorAll('.upload-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const testId = btn.dataset.id;
-          openUploadModal(testId);
-        });
-      });
-    }
-
-
-    // Render tests based on current tab
-    function renderTests(filtered = null) {
-      const testList = document.getElementById('bookingList');
-      let list;
-
-      if (filtered) {
-        list = filtered;
-      } else if (currentTab === 'today') {
-        // เปรียบเทียบวันที่แบบเต็ม
-        const today = new Date();
-        const dd = String(today.getDate()).padStart(2, '0');
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const yyyy = today.getFullYear();
-        const todayStr = `${dd}/${mm}/${yyyy}`;
-        list = bookings.filter(t => t.date === todayStr);
-      } else {
-        list = bookings.filter(t => t.status === currentTab);
-      }
-
-      if (!list.length) {
-        testList.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon"><i class="fas fa-vial"></i></div>
-            <div class="empty-title">ไม่มีรายการในสถานะนี้</div>
-            <div class="empty-message">ยังไม่มีรายการตรวจเลือดที่ต้องจัดการ</div>
-          </div>`;
-        return;
-      }
-
-      let html = '';
-      list.forEach(test => {
-        const statusClass = test.status === 'today' ? 'status-today' :
-          test.status === 'completed' ? 'status-completed' : 'status-past';
-        const statusText = test.status === 'today' ? 'วันนี้' :
-          test.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
-
-        html += `
-          <div class="booking-card ${test.status}" onclick="openDetailModal('${test.id}')">
-            <div class="booking-header">
-              <div class="booking-id">รหัส ${test.id}</div>
-              <div class="booking-status ${statusClass}">${statusText}</div>
-            </div>
-            
-            <div class="booking-info">
-              <div class="info-item">
-                <div class="info-label">ชื่อผู้ป่วย</div>
-                <div class="info-value">${test.patientName}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">ประเภทการกายภาพ</div>
-                <div class="info-value">${test.name}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">วันที่</div>
-                <div class="info-value">${test.date}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">เวลา</div>
-                <div class="info-value">${test.time} น.</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">ค่าบริการ</div>
-                <div class="info-value price-value">${test.price} บาท</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">เจ้าหน้าที่</div>
-                <div class="info-value">${test.labStaff}</div>
-              </div>
-            </div>
-            
-            <div class="booking-actions" onclick="event.stopPropagation()">
-              <button class="btn btn-view" onclick="openDetailModal('${test.id}')">
-                <i class="fas fa-eye"></i> ดูรายละเอียด
-              </button>
-              ${test.status === 'today' && !test.result ? `
-                <button class="btn btn-upload" onclick="openUploadModal('${test.id}')">
-                  <i class="fas fa-upload"></i> อัปโหลดผล
-                </button>
-              ` : test.result ? `
-                <button class="btn btn-download" onclick="downloadResult('${test.id}')">
-                  <i class="fas fa-download"></i> ดาวน์โหลด
-                </button>
-              ` : ''}
-            </div>
-          </div>
-        `;
-      });
-
-      testList.innerHTML = html;
-    }
-
-
-    // Initialize page
+    // Initialize
     function initializePage() {
       setTodayDate();
-      renderBookings();
-      updateCounts();
       setupEventListeners();
-      getUserProfile()
+      getUserProfile();
+      loadAppointments();
     }
-    async function downloadResult(bookingId) {
-      const booking = bookings.find(b => b.id == bookingId);
-      
-      if (!booking || !booking.result_file) {
-        showNotification('ไม่พบไฟล์', 'error');
-        return;
-      }
 
-      try {
-        showNotification('กำลังดาวน์โหลด...', 'success');
-        
-        const response = await fetch(`/api/appointments/download-result/${bookingId}`);
-        
-        if (!response.ok) {
-          const error = await response.json();
-          showNotification(error.message || 'ดาวน์โหลดไม่สำเร็จ', 'error');
-          return;
-        }
-
-        // แปลงเป็น blob
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        
-        // สร้าง link ดาวน์โหลด
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `ผลการตรวจ_${bookingId}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        
-        // ทำความสะอาด
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        showNotification('ดาวน์โหลดสำเร็จ', 'success');
-        
-      } catch (error) {
-        console.error('Error:', error);
-        showNotification('เกิดข้อผิดพลาด', 'error');
-      }
-    }
+    // Get user profile
     async function getUserProfile() {
-      const res = await fetch(`/api/user`)
-      const data = await res.json()
-      const profileName = document.getElementById('profileName')
-      const profileRole = document.getElementById('profileRole')
-
-      profileName.textContent = data.fullname
-      profileRole.textContent = data.role
+      try {
+        const res = await fetch('/api/user');
+        const data = await res.json();
+        
+        document.getElementById('profileName').textContent = data.fullname || 'ผู้ใช้';
+        document.getElementById('profileRole').textContent = data.role || 'หมอ';
+      } catch (err) {
+        console.error('Error loading profile:', err);
+      }
     }
 
-    // Set today's date as default
+    // Set today's date
     function setTodayDate() {
       const today = new Date();
       const dateString = today.toISOString().split('T')[0];
-      document.getElementById('dateFilter').value = dateString;
+      const dateFilter = document.getElementById('dateFilter');
+      if (dateFilter) dateFilter.value = dateString;
     }
 
     // Setup event listeners
     function setupEventListeners() {
-      document.getElementById('searchInput').addEventListener('input', handleSearch);
-      document.getElementById('dateFilter').addEventListener('change', handleDateFilter);
-
-      // Modal event listeners
-      document.getElementById('detailModal').addEventListener('click', function (e) {
-        if (e.target === this) closeDetailModal();
-      });
-
-      document.getElementById('uploadModal').addEventListener('click', function (e) {
-        if (e.target === this) closeUploadModal();
-      });
-
-      document.getElementById('successModal').addEventListener('click', function (e) {
-        if (e.target === this) closeSuccessModal();
-      });
-
-      // File upload drag and drop
-      const uploadArea = document.getElementById('fileUploadArea');
-
-      uploadArea.addEventListener('dragover', function (e) {
-        e.preventDefault();
-        uploadArea.classList.add('dragover');
-      });
-
-      uploadArea.addEventListener('dragleave', function (e) {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-      });
-
-      uploadArea.addEventListener('drop', function (e) {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-          handleFileSelect({ target: { files: files } });
+      document.getElementById('searchInput')?.addEventListener('input', handleSearch);
+      document.getElementById('dateFilter')?.addEventListener('change', handleSearch);
+      
+      ['detailModal', 'uploadModal', 'successModal'].forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.addEventListener('click', e => {
+            if (e.target === modal) {
+              if (modalId === 'detailModal') closeDetailModal();
+              else if (modalId === 'uploadModal') closeUploadModal();
+              else closeSuccessModal();
+            }
+          });
         }
       });
-
-      document.addEventListener('keydown', function (e) {
+      
+      const uploadArea = document.getElementById('fileUploadArea');
+      if (uploadArea) {
+        uploadArea.addEventListener('dragover', e => {
+          e.preventDefault();
+          uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', e => {
+          e.preventDefault();
+          uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', e => {
+          e.preventDefault();
+          uploadArea.classList.remove('dragover');
+          if (e.dataTransfer.files.length > 0) {
+            handleFileSelect({ target: { files: e.dataTransfer.files } });
+          }
+        });
+      }
+      
+      document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
           closeDetailModal();
           closeUploadModal();
@@ -1442,203 +1235,48 @@
       });
     }
 
-    // Switch between tabs
+    // Switch tab
     function switchTab(status) {
       currentTab = status;
-
-      // Update tab appearance
+      
       document.querySelectorAll('.status-tab').forEach(tab => {
         tab.classList.remove('active');
       });
-      document.querySelector(`[data-status="${status}"]`).classList.add('active');
-
+      document.querySelector(`[data-status="${status}"]`)?.classList.add('active');
+      
       renderBookings();
     }
 
-    // Render bookings based on current tab
+    // Render bookings
     function renderBookings() {
       const bookingList = document.getElementById('bookingList');
+      if (!bookingList) return;
+      
       let filteredBookings = bookings.filter(booking => booking.status === currentTab);
       
-      console.log("📊 Current tab:", currentTab);
-      console.log("📋 Total bookings:", bookings.length);
-      console.log("📋 Filtered bookings:", filteredBookings.length);
+      console.log('📊 Current tab:', currentTab);
+      console.log('📋 Filtered bookings:', filteredBookings.length);
       
-      // Debug: แสดงข้อมูลการจองแต่ละตัว
-      filteredBookings.forEach(b => {
-        console.log(`  - ID: ${b.id}, Status: ${b.status}, Result: ${b.result_file || 'NULL'}, Date: ${b.date}`);
-      });
-
       if (filteredBookings.length === 0) {
         bookingList.innerHTML = `
           <div class="empty-state">
-            <div class="empty-icon">
-              <i class="fas fa-calendar-times"></i>
-            </div>
+            <div class="empty-icon"><i class="fas fa-calendar-times"></i></div>
             <div class="empty-title">ไม่มีรายการในสถานะนี้</div>
             <div class="empty-message">ยังไม่มีรายการผู้ป่วยที่ต้องจัดการในขณะนี้</div>
           </div>
         `;
         return;
       }
-
+      
       let html = '';
       filteredBookings.forEach(booking => {
         const statusClass = booking.status === 'today' ? 'status-today' :
           booking.status === 'completed' ? 'status-completed' : 'status-past';
         const statusText = booking.status === 'today' ? 'วันนี้' :
           booking.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
-
-        // เช็คว่ามี result_file หรือไม่
+        
         const hasResult = booking.result_file && booking.result_file.trim() !== '';
         
-        console.log(`Rendering booking ${booking.id}: status=${booking.status}, hasResult=${hasResult}`);
-
-        html += `
-          <div class="booking-card ${booking.status}" onclick="openDetailModal(${booking.id})">
-            <div class="booking-header">
-              <div class="booking-id">รหัส ${booking.id}</div>
-              <div class="booking-status ${statusClass}">${statusText}</div>
-            </div>
-            
-            <div class="booking-info">
-              <div class="info-item">
-                <div class="info-label">ชื่อผู้ป่วย</div>
-                <div class="info-value">${booking.patientName}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">บริการ</div>
-                <div class="info-value">${booking.name}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">วันที่</div>
-                <div class="info-value">${booking.date}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">เวลา</div>
-                <div class="info-value">${booking.time} น.</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">ค่าบริการ</div>
-                <div class="info-value price-value">${booking.price} บาท</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">เจ้าหน้าที่</div>
-                <div class="info-value">${booking.assignedStaff}</div>
-              </div>
-            </div>
-            
-            <div class="booking-actions" onclick="event.stopPropagation()">
-              <button class="btn btn-view" onclick="openDetailModal(${booking.id})">
-                <i class="fas fa-eye"></i> ดูรายละเอียด
-              </button>
-              
-              ${booking.status === 'today' && !hasResult ? `
-                <button class="btn btn-upload" onclick="openUploadModal(${booking.id})">
-                  <i class="fas fa-upload"></i> อัปโหลดผล
-                </button>
-              ` : ''}
-              ${hasResult ? `
-                <button class="btn btn-download" onclick="downloadResult(${booking.id})">
-                  <i class="fas fa-download"></i> ดาวน์โหลด
-                </button>
-              ` : ''}
-            </div>
-          </div>
-        `;
-      });
-
-      bookingList.innerHTML = html;
-    }
-
-    // Update counts for each tab
-    function updateCounts() {
-  
-      const todayCount = bookings.filter(b => b.status === 'today').length;
-      const completedCount = bookings.filter(b => b.status === 'completed').length;
-      const historyCount = bookings.filter(b => b.status === 'history').length;
-
-      console.log('📊 Counts:', { todayCount, completedCount, historyCount });
-
-      document.getElementById('todayCount').textContent = todayCount;
-      document.getElementById('completedCount').textContent = completedCount;
-      document.getElementById('historyCount').textContent = historyCount;
-    }
-
-    // Search functionality
-    function handleSearch() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-      const dateFilter = document.getElementById('dateFilter').value;
-
-      console.log('Searching:', searchTerm);
-      console.log('Date filter:', dateFilter);
-
-      let filteredBookings = bookings.filter(booking => booking.status === currentTab);
-
-      if (searchTerm) {
-        filteredBookings = filteredBookings.filter(booking => {
-          // แปลง id เป็น string ก่อน
-          const idMatch = String(booking.id).includes(searchTerm);
-          const nameMatch = booking.patientName?.toLowerCase().includes(searchTerm);
-          
-          return idMatch || nameMatch;
-        });
-      }
-
-      if (dateFilter) {
-        const filterDate = new Date(dateFilter);
-        filteredBookings = filteredBookings.filter(booking => {
-          const bookingDate = parseThaiDate(booking.date);
-          return bookingDate.toDateString() === filterDate.toDateString();
-        });
-      }
-
-      console.log('Filtered results:', filteredBookings.length);
-      
-      // แสดงผลลัพธ์
-      displayFilteredBookings(filteredBookings);
-    }
-
-    function handleDateFilter() {
-      handleSearch();
-    }
-
-    function parseThaiDate(dateStr) {
-      const [day, month, year] = dateStr.split('/');
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    }
-
-    function renderBookings() {
-      const bookingList = document.getElementById('bookingList');
-      let filteredBookings = bookings.filter(booking => booking.status === currentTab);
-      
-      if (filteredBookings.length === 0) {
-        bookingList.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">
-              <i class="fas fa-calendar-times"></i>
-            </div>
-            <div class="empty-title">ไม่มีรายการในสถานะนี้</div>
-            <div class="empty-message">ยังไม่มีรายการผู้ป่วยที่ต้องจัดการในขณะนี้</div>
-          </div>
-        `;
-        return;
-      }
-
-      let html = '';
-      filteredBookings.forEach(booking => {
-        const statusClass = booking.status === 'today' ? 'status-today' :
-          booking.status === 'completed' ? 'status-completed' : 'status-past';
-        const statusText = booking.status === 'today' ? 'วันนี้' :
-          booking.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
-
-        const hasResult = booking.result_file && booking.result_file.trim() !== '';
-
         html += `
           <div class="booking-card ${booking.status}">
             <div class="booking-header">
@@ -1651,27 +1289,22 @@
                 <div class="info-label">ชื่อผู้ป่วย</div>
                 <div class="info-value">${booking.patientName}</div>
               </div>
-              
               <div class="info-item">
                 <div class="info-label">บริการ</div>
                 <div class="info-value">${booking.name}</div>
               </div>
-              
               <div class="info-item">
                 <div class="info-label">วันที่</div>
                 <div class="info-value">${booking.date}</div>
               </div>
-              
               <div class="info-item">
                 <div class="info-label">เวลา</div>
                 <div class="info-value">${booking.time} น.</div>
               </div>
-              
               <div class="info-item">
                 <div class="info-label">ค่าบริการ</div>
                 <div class="info-value price-value">${booking.price} บาท</div>
               </div>
-              
               <div class="info-item">
                 <div class="info-label">เจ้าหน้าที่</div>
                 <div class="info-value">${booking.assignedStaff}</div>
@@ -1682,13 +1315,11 @@
               <button class="btn btn-view" data-action="view" data-id="${booking.id}">
                 <i class="fas fa-eye"></i> ดูรายละเอียด
               </button>
-              
               ${booking.status === 'today' && !hasResult ? `
                 <button class="btn btn-upload" data-action="upload" data-id="${booking.id}">
                   <i class="fas fa-upload"></i> อัปโหลดผล
                 </button>
               ` : ''}
-              
               ${hasResult ? `
                 <button class="btn btn-download" data-action="download" data-id="${booking.id}">
                   <i class="fas fa-download"></i> ดาวน์โหลด
@@ -1698,124 +1329,41 @@
           </div>
         `;
       });
-
+      
       bookingList.innerHTML = html;
       
-      // เพิ่ม event listeners
+      // Attach event listeners
       document.querySelectorAll('.booking-actions button').forEach(btn => {
         btn.addEventListener('click', function(e) {
           e.stopPropagation();
           const action = this.getAttribute('data-action');
           const id = parseInt(this.getAttribute('data-id'));
           
-          console.log('Button clicked:', action, id);
-          
-          if (action === 'view') {
-            openDetailModal(id);
-          } else if (action === 'upload') {
-            openUploadModal(id);
-          } else if (action === 'download') {
-            downloadResult(id);
-          }
+          if (action === 'view') openDetailModal(id);
+          else if (action === 'upload') openUploadModal(id);
+          else if (action === 'download') downloadResult(id);
         });
       });
     }
-    function displayFilteredBookings(filteredBookings) {
-      const bookingList = document.getElementById('bookingList');
 
-      if (filteredBookings.length === 0) {
-        bookingList.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">
-              <i class="fas fa-search"></i>
-            </div>
-            <div class="empty-title">ไม่พบรายการที่ค้นหา</div>
-            <div class="empty-message">ลองเปลี่ยนคำค้นหาหรือกรองข้อมูลใหม่</div>
-          </div>
-        `;
-        return;
-      }
-
-      let html = '';
-      filteredBookings.forEach(booking => {
-        const statusClass = booking.status === 'today' ? 'status-today' :
-          booking.status === 'completed' ? 'status-completed' : 'status-past';
-        const statusText = booking.status === 'today' ? 'วันนี้' :
-          booking.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
-
-        const hasResult = booking.result_file && booking.result_file.trim() !== '';
-
-        html += `
-          <div class="booking-card ${booking.status}">
-            <div class="booking-header">
-              <div class="booking-id">รหัส ${booking.id}</div>
-              <div class="booking-status ${statusClass}">${statusText}</div>
-            </div>
-            
-            <div class="booking-info">
-              <div class="info-item">
-                <div class="info-label">ชื่อผู้ป่วย</div>
-                <div class="info-value">${booking.patientName}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">บริการ</div>
-                <div class="info-value">${booking.name}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">วันที่</div>
-                <div class="info-value">${booking.date}</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">เวลา</div>
-                <div class="info-value">${booking.time} น.</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">ค่าบริการ</div>
-                <div class="info-value price-value">${booking.price} บาท</div>
-              </div>
-              
-              <div class="info-item">
-                <div class="info-label">เจ้าหน้าที่</div>
-                <div class="info-value">${booking.assignedStaff}</div>
-              </div>
-            </div>
-            
-            <div class="booking-actions">
-              <button class="btn btn-view" onclick="openDetailModal(${booking.id})">
-                <i class="fas fa-eye"></i> ดูรายละเอียด
-              </button>
-              
-              ${booking.status === 'today' && !hasResult ? `
-                <button class="btn btn-upload" onclick="openUploadModal(${booking.id})">
-                  <i class="fas fa-upload"></i> อัปโหลดผล
-                </button>
-              ` : ''}
-              
-              ${hasResult ? `
-                <button class="btn btn-download" onclick="downloadResult(${booking.id})">
-                  <i class="fas fa-download"></i> ดาวน์โหลด
-                </button>
-              ` : ''}
-            </div>
-          </div>
-        `;
-      });
-
-      bookingList.innerHTML = html;
+    // Update counts
+    function updateCounts() {
+      const todayCount = bookings.filter(b => b.status === 'today').length;
+      const completedCount = bookings.filter(b => b.status === 'completed').length;
+      const historyCount = bookings.filter(b => b.status === 'history').length;
+      
+      document.getElementById('todayCount').textContent = todayCount;
+      document.getElementById('completedCount').textContent = completedCount;
+      document.getElementById('historyCount').textContent = historyCount;
     }
+
+    // Search
     function handleSearch() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-      const dateFilter = document.getElementById('dateFilter').value;
-
-      console.log('Searching:', searchTerm);
-      console.log('Date filter:', dateFilter);
-
+      const searchTerm = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
+      const dateFilter = document.getElementById('dateFilter')?.value;
+      
       let filteredBookings = bookings.filter(booking => booking.status === currentTab);
-
+      
       if (searchTerm) {
         filteredBookings = filteredBookings.filter(booking => {
           const idMatch = String(booking.id).includes(searchTerm);
@@ -1823,120 +1371,140 @@
           return idMatch || nameMatch;
         });
       }
-
+      
       if (dateFilter) {
         const filterDate = new Date(dateFilter);
         filteredBookings = filteredBookings.filter(booking => {
-          const bookingDate = parseThaiDate(booking.date);
+          const [day, month, year] = booking.date.split('/');
+          const bookingDate = new Date(year, month - 1, day);
           return bookingDate.toDateString() === filterDate.toDateString();
         });
       }
-
-      console.log('Filtered results:', filteredBookings.length);
+      
       displayFilteredBookings(filteredBookings);
     }
 
-    function uploadFile() {
-      console.log('uploadFile called');
-      console.log("selectedFile", selectedFile);
-      console.log("currentBookingId", currentBookingId);
-      if (!selectedFile || !currentBookingId) return;
-
-      if (!selectedFile) {
-        showNotification('กรุณาเลือกไฟล์ก่อนอัปโหลด', 'error');
+    function displayFilteredBookings(filteredBookings) {
+      const bookingList = document.getElementById('bookingList');
+      if (!bookingList) return;
+      
+      if (filteredBookings.length === 0) {
+        bookingList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-search"></i></div>
+            <div class="empty-title">ไม่พบรายการที่ค้นหา</div>
+            <div class="empty-message">ลองเปลี่ยนคำค้นหาหรือกรองข้อมูลใหม่</div>
+          </div>
+        `;
         return;
       }
-      if (!currentBookingId) {
-        showNotification('ไม่พบรหัสการจอง กรุณาลองใหม่', 'error');
-        return;
-      }
-
-      const uploadBtn = document.getElementById('uploadBtn');
-      uploadBtn.classList.add('loading');
-      uploadBtn.textContent = 'กำลังอัปโหลด...';
-      uploadBtn.disabled = true;
-
-      // สร้าง FormData สำหรับอัปโหลดไฟล์
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
-      // เรียก API อัปโหลดไฟล์ (เปลี่ยน endpoint ตาม backend จริง)
-      fetch(`/api/appointments/upload-result/${currentBookingId}`, {
-        method: 'POST',
-        body: formData
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            closeUploadModal();
-
-            // โหลดข้อมูลใหม่แบบ real-time
-            return fetch('/api/lab/StaffPhy')
-              .then(res => res.json())
-              .then(newBookings => {
-                bookings = newBookings;
-                updateCounts();
-                renderBookings();
-
-                // แสดง success modal
-                document.getElementById('successMessage').innerHTML = `
-                  ไฟล์ผลการตรวจสำหรับผู้ป่วยรหัส <strong>${currentBookingId}</strong><br>
-                  ได้ถูกอัปโหลดเรียบร้อยแล้ว
-                `;
-                document.getElementById('successModal').classList.add('show');
-              });
-          } else {
-            showNotification(data.message || 'อัปโหลดไม่สำเร็จ', 'error');
-          }
-        })
-        .catch(err => {
-          showNotification('เกิดข้อผิดพลาดในการอัปโหลด', 'error');
-        })
-        .finally(() => {
-          uploadBtn.classList.remove('loading');
-          uploadBtn.textContent = 'อัปโหลด';
-          uploadBtn.disabled = false;
+      
+      // Use same rendering logic as renderBookings
+      let html = '';
+      filteredBookings.forEach(booking => {
+        const statusClass = booking.status === 'today' ? 'status-today' :
+          booking.status === 'completed' ? 'status-completed' : 'status-past';
+        const statusText = booking.status === 'today' ? 'วันนี้' :
+          booking.status === 'completed' ? 'อัปโหลดแล้ว' : 'ประวัติ';
+        
+        const hasResult = booking.result_file && booking.result_file.trim() !== '';
+        
+        html += `
+          <div class="booking-card ${booking.status}">
+            <div class="booking-header">
+              <div class="booking-id">รหัส ${booking.id}</div>
+              <div class="booking-status ${statusClass}">${statusText}</div>
+            </div>
+            <div class="booking-info">
+              <div class="info-item">
+                <div class="info-label">ชื่อผู้ป่วย</div>
+                <div class="info-value">${booking.patientName}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">บริการ</div>
+                <div class="info-value">${booking.name}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">วันที่</div>
+                <div class="info-value">${booking.date}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">เวลา</div>
+                <div class="info-value">${booking.time} น.</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">ค่าบริการ</div>
+                <div class="info-value price-value">${booking.price} บาท</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">เจ้าหน้าที่</div>
+                <div class="info-value">${booking.assignedStaff}</div>
+              </div>
+            </div>
+            <div class="booking-actions">
+              <button class="btn btn-view" data-action="view" data-id="${booking.id}">
+                <i class="fas fa-eye"></i> ดูรายละเอียด
+              </button>
+              ${booking.status === 'today' && !hasResult ? `
+                <button class="btn btn-upload" data-action="upload" data-id="${booking.id}">
+                  <i class="fas fa-upload"></i> อัปโหลดผล
+                </button>
+              ` : ''}
+              ${hasResult ? `
+                <button class="btn btn-download" data-action="download" data-id="${booking.id}">
+                  <i class="fas fa-download"></i> ดาวน์โหลด
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      });
+      
+      bookingList.innerHTML = html;
+      
+      document.querySelectorAll('.booking-actions button').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const action = this.getAttribute('data-action');
+          const id = parseInt(this.getAttribute('data-id'));
+          
+          if (action === 'view') openDetailModal(id);
+          else if (action === 'upload') openUploadModal(id);
+          else if (action === 'download') downloadResult(id);
         });
+      });
     }
 
-    // Modal functions
+    // Modal: Detail
     function openDetailModal(bookingId) {
       const booking = bookings.find(b => b.id === bookingId);
       if (!booking) return;
-
+      
       currentBookingId = bookingId;
-
+      
       document.getElementById('modalBookingId').textContent = booking.id;
       document.getElementById('modalPatientName').textContent = booking.patientName;
-      document.getElementById('modalService').textContent = booking.service;
+      document.getElementById('modalService').textContent = booking.name;
       document.getElementById('modalDate').textContent = booking.date;
       document.getElementById('modalTime').textContent = booking.time + ' น.';
       document.getElementById('modalPrice').textContent = booking.price + ' บาท';
-      document.getElementById('modalProblem').textContent = booking.problem;
-
-      // Show result if available
-      const resultSection = document.getElementById('resultSection');
-      if (booking.result) {
-        document.getElementById('modalResult').textContent = booking.result;
-        resultSection.style.display = 'block';
-      } else {
-        resultSection.style.display = 'none';
-      }
-
-      // Update modal actions based on status
+      document.getElementById('modalProblem').textContent = '-';
+      
       const modalActions = document.getElementById('modalActions');
-      if (booking.status === 'today' && !booking.result) {
+      const hasResult = booking.result_file && booking.result_file.trim() !== '';
+      
+      if (booking.status === 'today' && !hasResult) {
         modalActions.innerHTML = `
-          <button class="btn btn-upload" onclick="openUploadModal('${booking.id}')">
+          <button class="btn btn-upload" onclick="openUploadModal(${booking.id})">
             <i class="fas fa-upload"></i> อัปโหลดผลการตรวจ
           </button>
           <button class="btn btn-view" onclick="closeDetailModal()">
             <i class="fas fa-times"></i> ปิด
           </button>
         `;
-      } else if (booking.result) {
+      } else if (hasResult) {
         modalActions.innerHTML = `
-          <button class="btn btn-download" onclick="downloadResult('${booking.id}')">
+          <button class="btn btn-download" onclick="downloadResult(${booking.id})">
             <i class="fas fa-download"></i> ดาวน์โหลดผล
           </button>
           <button class="btn btn-view" onclick="closeDetailModal()">
@@ -1950,18 +1518,19 @@
           </button>
         `;
       }
-
+      
       document.getElementById('detailModal').classList.add('show');
     }
 
     function closeDetailModal() {
-      document.getElementById('detailModal').classList.remove('show');
+      document.getElementById('detailModal')?.classList.remove('show');
     }
 
+    // Modal: Upload
     function openUploadModal(bookingId) {
-      console.log("openUploadModal called with bookingId:", bookingId);
       currentBookingId = bookingId;
       selectedFile = null;
+      
       document.getElementById('selectedFile').style.display = 'none';
       document.getElementById('uploadBtn').disabled = true;
       document.getElementById('uploadModal').classList.add('show');
@@ -1969,7 +1538,7 @@
     }
 
     function closeUploadModal() {
-      document.getElementById('uploadModal').classList.remove('show');
+      document.getElementById('uploadModal')?.classList.remove('show');
       selectedFile = null;
       currentBookingId = null;
     }
@@ -1977,8 +1546,7 @@
     function handleFileSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
-
-      // Validate file type
+      
       const allowedTypes = [
         'application/pdf',
         'application/msword',
@@ -1987,22 +1555,21 @@
         'image/jpg',
         'image/png'
       ];
+      
       if (!allowedTypes.includes(file.type)) {
         showNotification('ประเภทไฟล์ไม่ถูกต้อง กรุณาเลือกไฟล์ PDF, DOC, DOCX, JPG หรือ PNG', 'error');
         return;
       }
-
-      // Validate file size (10MB)
+      
       if (file.size > 10 * 1024 * 1024) {
         showNotification('ไฟล์มีขนาดใหญ่เกินไป (สูงสุด 10MB)', 'error');
         return;
       }
-
+      
       selectedFile = file;
       document.getElementById('fileName').textContent = file.name;
       document.getElementById('selectedFile').style.display = 'flex';
-      document.getElementById('uploadBtn').disabled = false; // <-- สำคัญ!
-      
+      document.getElementById('uploadBtn').disabled = false;
     }
 
     function removeFile() {
@@ -2012,103 +1579,102 @@
       document.getElementById('fileInput').value = '';
     }
 
+    function uploadFile() {
+      if (!selectedFile || !currentBookingId) {
+        showNotification('กรุณาเลือกไฟล์', 'error');
+        return;
+      }
+      
+      const uploadBtn = document.getElementById('uploadBtn');
+      uploadBtn.classList.add('loading');
+      uploadBtn.textContent = 'กำลังอัปโหลด...';
+      uploadBtn.disabled = true;
+      
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      
+      fetch(`/api/appointments/upload-result/${currentBookingId}`, {
+        method: 'POST',
+        body: formData
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            closeUploadModal();
+            return loadAppointments().then(() => {
+              document.getElementById('successMessage').innerHTML = `
+                ไฟล์ผลการตรวจสำหรับผู้ป่วยรหัส <strong>${currentBookingId}</strong><br>
+                ได้ถูกอัปโหลดเรียบร้อยแล้ว
+              `;
+              document.getElementById('successModal').classList.add('show');
+            });
+          } else {
+            showNotification(data.message || 'อัปโหลดไม่สำเร็จ', 'error');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          showNotification('เกิดข้อผิดพลาดในการอัปโหลด', 'error');
+        })
+        .finally(() => {
+          uploadBtn.classList.remove('loading');
+          uploadBtn.textContent = 'อัปโหลด';
+          uploadBtn.disabled = false;
+        });
+    }
+
     function closeSuccessModal() {
-      document.getElementById('successModal').classList.remove('show');
-      currentBookingId = null;
+      document.getElementById('successModal')?.classList.remove('show');
     }
 
+    // Download
     function downloadResult(bookingId) {
-      console.log('Download function called with ID:', bookingId);
-      console.log('Current bookings:', bookings);
-      
       const booking = bookings.find(b => b.id == bookingId);
-      console.log('Found booking:', booking);
       
-      if (!booking) {
-        alert('ไม่พบข้อมูลการจอง');
+      if (!booking || !booking.result_file || booking.result_file.trim() === '') {
+        showNotification('ไม่พบไฟล์ผลการตรวจ', 'error');
         return;
       }
-
-      if (!booking.result_file || booking.result_file.trim() === '') {
-        alert('ยังไม่มีไฟล์ผลการตรวจ');
-        return;
-      }
-
-      console.log('Opening download URL...');
-      const downloadUrl = `/api/appointments/download-result/${bookingId}`;
-      window.location.href = downloadUrl;
+      
+      window.location.href = `/api/appointments/download-result/${bookingId}`;
     }
 
-    // Show notification
+    // Notification
     function showNotification(message, type = 'success') {
       const notification = document.createElement('div');
       notification.className = `notification ${type}`;
       notification.innerHTML = `
-        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
         ${message}
       `;
-
+      
       notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#3B82F6'};
-        color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 2000;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 500;
-        animation: slideIn 0.3s ease-out;
-        max-width: 300px;
+        position: fixed; top: 20px; right: 20px;
+        background: ${type === 'success' ? '#10B981' : '#EF4444'};
+        color: white; padding: 12px 20px; border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 2000;
+        display: flex; align-items: center; gap: 8px; font-weight: 500;
+        animation: slideIn 0.3s ease-out; max-width: 300px;
       `;
-
+      
       document.body.appendChild(notification);
-
+      
       setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease-in forwards';
-        setTimeout(() => {
-          if (document.body.contains(notification)) {
-            document.body.removeChild(notification);
-          }
-        }, 300);
+        setTimeout(() => notification.remove(), 300);
       }, 4000);
     }
 
-    // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', function () {
-      initializePage();
-    });
-
-    // Add CSS for notification animations
+    // CSS animations
     const style = document.createElement('style');
     style.textContent = `
-      @keyframes slideIn {
-        from {
-          transform: translateX(100%);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
-      }
-      
-      @keyframes slideOut {
-        from {
-          transform: translateX(0);
-          opacity: 1;
-        }
-        to {
-          transform: translateX(100%);
-          opacity: 0;
-        }
-      }
+      @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+      @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
     `;
     document.head.appendChild(style);
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', initializePage);
   </script>
 </body>
 

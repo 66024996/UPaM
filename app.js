@@ -219,21 +219,19 @@ app.get('/userhistory', isLoggedIn, (req, res) => {
 });
 
 app.post('/bookingphy', isLoggedIn, async (req, res) => {
-  const { service_id, appointment_date, time_slot, total_price } = req.body;
+  const { service_id, appointment_date, time_slot, problem, total_price } = req.body; // เพิ่ม problem
 
   if (!req.session || !req.session.userId || !req.session.email) {
     return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบก่อนทำการจอง' });
   }
 
   const user_id = req.session.userId;
-  const user_email = req.session.email;
 
-  if (!service_id || !appointment_date || !time_slot) {
+  if (!service_id || !appointment_date || !time_slot || !problem) { // เพิ่ม validation
     return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
   }
 
   try {
-
     const [existing] = await pool.execute(
       `SELECT id FROM appointments 
        WHERE appointment_date = ? AND time_slot = ? AND status = 'จองแล้ว'`,
@@ -244,12 +242,11 @@ app.post('/bookingphy', isLoggedIn, async (req, res) => {
       return res.status(400).json({ success: false, message: 'เวลานี้ถูกจองแล้ว' });
     }
 
-
     const [result] = await pool.execute(
       `INSERT INTO appointments 
-       (user_id, service_id, appointment_date, time_slot, total_price, status, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, ?,'จองแล้ว', NOW(), NOW())`,
-      [user_id, service_id, appointment_date, time_slot, total_price]
+       (user_id, service_id, appointment_date, time_slot, problem, total_price, status, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, 'จองแล้ว', NOW(), NOW())`,
+      [user_id, service_id, appointment_date, time_slot, problem, total_price] // เพิ่ม problem
     );
 
     const bookingId = result.insertId.toString().padStart(5, '0');
@@ -262,11 +259,10 @@ app.post('/bookingphy', isLoggedIn, async (req, res) => {
     });
 
   } catch (err) {
-    console.error('❌ Booking Error:', err);
+    console.error('Booking Error:', err);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
   }
 });
-
 
 app.post('/bookingblood', isLoggedIn, async (req, res) => {
   if (!req.session || !req.session.userId || !req.session.email) {
@@ -403,24 +399,24 @@ app.get('/api/my-appointment', isLoggedIn, async (req, res) => {
     const [appointments] = await pool.execute(`
       (
         SELECT 
-          a.id,
-          'physical' as appointment_type,
-          CONCAT(p.title, p.first_name, ' ', p.last_name) AS patientName,
-          p.email,
-          s.name AS service,
-          NULL as problem,
-          DATE_FORMAT(a.appointment_date, '%d/%m/%Y') AS appointment_date,
-          a.time_slot,
-          a.status,
-          COALESCE(a.total_price, 0) as total_price,
-          a.created_at,
-          a.updated_at
-        FROM appointments a
-        JOIN personal_info p ON a.user_id = p.user_id
-        LEFT JOIN services s ON a.service_id = s.id
-        WHERE a.user_id = ? 
-          AND a.status IN ('จองแล้ว', 'ยืนยันแล้ว', 'confirmed')
-          AND a.appointment_date >= CURDATE() - INTERVAL 7 DAY
+        a.id,
+        'physical' as appointment_type,
+        CONCAT(p.title, p.first_name, ' ', p.last_name) AS patientName,
+        p.email,
+        s.name AS service,
+        a.problem,  -- เปลี่ยนจาก NULL as problem
+        DATE_FORMAT(a.appointment_date, '%d/%m/%Y') AS appointment_date,
+        a.time_slot,
+        a.status,
+        COALESCE(a.total_price, 0) as total_price,
+        a.created_at,
+        a.updated_at
+      FROM appointments a
+      JOIN personal_info p ON a.user_id = p.user_id
+      LEFT JOIN services s ON a.service_id = s.id
+      WHERE a.user_id = ? 
+        AND a.status IN ('จองแล้ว', 'ยืนยันแล้ว', 'confirmed')
+        AND a.appointment_date >= CURDATE() - INTERVAL 7 DAY
       )
       UNION ALL
       (
@@ -481,19 +477,42 @@ app.get('/api/my-appointment', isLoggedIn, async (req, res) => {
   }
 });
 
-app.get('/api/doctor', requireAdmin, async (req, res) => {
+app.get('/api/doctor', async (req, res) => {
   try {
-    const [result] = await pool.query('SELECT id, role, fullname FROM users WHERE role = ?', ['doctor'])
-    res.status(200).json(result)
+    const serviceType = req.query.type;
+
+    let query = `
+      SELECT 
+        d.id,
+        CONCAT(d.first_name, ' ', d.last_name) AS fullname,
+        d.specialty,
+        d.department,
+        d.phone,
+        d.license_number
+      FROM doctors d
+      WHERE 1=1
+    `;
+
+    if (serviceType === 'physiotherapy') {
+      query += ` AND d.department = 'ทันตกรรม'`;  
+    } else if (serviceType === 'blood') {
+      query += ` AND d.department = 'ห้องปฏิบัติการ'`;
+    }
+
+    query += ` ORDER BY fullname`;
+
+    const [doctors] = await pool.query(query);
+
+    console.log(`✅ Found ${doctors.length} doctors for type: ${serviceType || 'all'}`);
+    res.json(doctors);
 
   } catch (error) {
-    console.error('❌ Get My Appointment Error:', err);
-    res.status(500).json({
-      success: false,
-      message: 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่อีกครั้ง'
-    });
+    console.error('❌ Error in /api/doctor:', error); // log full error
+    res.status(500).json({ error: 'Server error', message: error.message });
   }
-})
+});
+
+
 
 
 app.post('/api/my-appointment/cancel', isLoggedIn, async (req, res) => {
@@ -917,7 +936,7 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
           DATE_FORMAT(a.appointment_date, '%d/%m/%Y') AS appointment_date,
           a.time_slot,
           a.status,
-          a.problem,
+          COALESCE(a.problem, '') as problem,
           COALESCE(a.total_price, 0) AS total_price,
           CONCAT(d.first_name, ' ', d.last_name) as assignedStaff,
           a.created_at,
@@ -953,9 +972,23 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
         } else {
           [physicalRows] = await pool.query(physicalQuery);
         }
+        
+        console.log('📊 Physical appointments found:', physicalRows.length);
         appointments.push(...physicalRows);
       } catch (err) {
         console.error('Error fetching physical appointments:', err);
+        // ถ้า column problem ไม่มีจริงๆ ให้ลองใหม่โดยไม่ใช้ column นั้น
+        if (err.code === 'ER_BAD_FIELD_ERROR' && err.message.includes('problem')) {
+          physicalQuery = physicalQuery.replace('COALESCE(a.problem, \'\') as problem,', '\'\' as problem,');
+          let physicalRows;
+          if (params.length > 0) {
+            [physicalRows] = await pool.execute(physicalQuery, params);
+          } else {
+            [physicalRows] = await pool.query(physicalQuery);
+          }
+          console.log('📊 Physical appointments found (retry):', physicalRows.length);
+          appointments.push(...physicalRows);
+        }
       }
     }
 
@@ -1006,6 +1039,7 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
         } else {
           [bloodRows] = await pool.query(bloodQuery);
         }
+        console.log('📊 Blood appointments found:', bloodRows.length);
         appointments.push(...bloodRows);
       } catch (err) {
         console.error('Error fetching blood appointments:', err);
@@ -1018,6 +1052,8 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
     }));
 
     appointments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    console.log('✅ Total appointments:', appointments.length);
 
     res.json({ success: true, appointments, total: appointments.length });
 
@@ -1398,42 +1434,6 @@ app.get('/api/admin/appointments-debug', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
-  try {
-    const { status, type, date, limit = 1000, offset = 0 } = req.query;
-    const appointments = await getAppointments({ status, type, date, limit, offset });
-
-    // นับ status + type
-    const statusCounts = appointments.reduce((acc, a) => {
-      acc[a.status] = (acc[a.status] || 0) + 1;
-      return acc;
-    }, {});
-    const typeCounts = appointments.reduce((acc, a) => {
-      acc[a.appointment_type] = (acc[a.appointment_type] || 0) + 1;
-      return acc;
-    }, {});
-
-    res.json({
-      success: true,
-      appointments,
-      total: appointments.length,
-      statusCounts,
-      typeCounts,
-      summary: {
-        pending: statusCounts.pending || 0,
-        confirmed: statusCounts.confirmed || 0,
-        cancelled: statusCounts.cancelled || 0,
-        completed: statusCounts.completed || 0,
-        physical: typeCounts.physical || 0,
-        blood: typeCounts.blood || 0
-      }
-    });
-  } catch (err) {
-    console.error('Error fetching appointments:', err);
-    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
-  }
-});
-
 
 async function createAdminUser() {
   try {
@@ -1758,20 +1758,32 @@ app.get('/api/staff/blood-appointments', requireDoctor, async (req, res) => {
   }
 });
 
-app.get('/api/lab/StaffPhy', requireDoctor, async (req, res) => {
+app.get('/api/lab/StaffPhy', async (req, res) => {
   try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ' });
+    }
+
     const userId = req.session.userId;
-    
+
+    // ดึงชื่อหมอแบบ CONCAT
     const [doctorRows] = await pool.query(
-      `SELECT id FROM doctors WHERE user_id = ?`,
+      `SELECT 
+        id, 
+        CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS fullname
+      FROM doctors 
+      WHERE user_id = ?`,
       [userId]
     );
 
     if (doctorRows.length === 0) {
-      return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลหมอ' });
+      return res.status(404).json({ error: 'ไม่พบข้อมูลหมอ' });
     }
 
     const doctorId = doctorRows[0].id;
+    const doctorName = doctorRows[0].fullname.trim() || 'หมอ';
+
+    console.log('Doctor:', doctorId, doctorName);
 
     const [rows] = await pool.query(`
       SELECT 
@@ -1779,69 +1791,58 @@ app.get('/api/lab/StaffPhy', requireDoctor, async (req, res) => {
         COALESCE(
           CONCAT(p.title, ' ', p.first_name, ' ', p.last_name),
           u.fullname,
-          'ผู้ป่วย'
+          'ไม่ระบุชื่อ'
         ) AS patientName,
         b.total_price AS price,
         DATE_FORMAT(b.appointment_date, '%d/%m/%Y') AS date,
         DATE_FORMAT(b.appointment_date, '%Y-%m-%d') AS date_compare,
+        DATE_FORMAT(NOW(), '%Y-%m-%d') AS today_compare,
         b.time_slot AS time,
         b.status AS original_status,
         s.name,
-        b.result_file,
-        'เจ้าหน้าที่' AS assignedStaff,
-        CASE 
-          WHEN b.appointment_date = CURDATE() AND (b.result_file IS NULL OR b.result_file = '') THEN 'today'
-          WHEN b.result_file IS NOT NULL AND b.result_file != '' THEN 'completed'
-          ELSE 'history'
-        END AS status
+        b.result_file
       FROM appointments b
       JOIN services s ON b.service_id = s.id
-      LEFT JOIN personal_info p ON b.user_id = p.user_id
       LEFT JOIN users u ON b.user_id = u.id
+      LEFT JOIN personal_info p ON b.user_id = p.user_id
       WHERE b.doctor_id = ?
-        AND b.status IN ('จองแล้ว', 'ยืนยันแล้ว', 'เสร็จสิ้น')
       ORDER BY b.appointment_date DESC, b.time_slot
     `, [doctorId]);
 
-    // Debug log
-    console.log(`✅ Found ${rows.length} appointments for doctor ${doctorId}`);
-    rows.forEach(row => {
-      console.log(`  - ID: ${row.id}, Date: ${row.date}, Status: ${row.status}, Result: ${row.result_file || 'NULL'}`);
+    const results = rows.map(row => {
+      const hasResult = row.result_file && row.result_file.trim() !== '';
+      const isToday = row.date_compare === row.today_compare;
+
+      let status;
+      if (isToday && !hasResult && ['จองแล้ว', 'ยืนยันแล้ว'].includes(row.original_status)) {
+        status = 'today';
+      } else if (hasResult) {
+        status = 'completed';
+      } else {
+        status = 'history';
+      }
+
+      return {
+        id: row.id,
+        patientName: row.patientName,
+        price: row.price,
+        date: row.date,
+        time: row.time,
+        name: row.name,
+        result_file: row.result_file,
+        assignedStaff: doctorName,
+        status: status
+      };
     });
 
-    res.json(rows);
+    res.json(results);
+
   } catch (err) {
-    console.error('❌ Error fetching appointments:', err);
-    res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลได้' });
+    console.error('Error:', err);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาด' });
   }
 });
 
-
-app.get('/api/blood-appointments/:id', requireDoctor, async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const [testIds] = await pool.query(
-      "SELECT id FROM lab_tests WHERE category_id = 1"
-    );
-    const idsArray = testIds.map(t => t.id);
-
-    const [rows] = await pool.query(
-      `SELECT * FROM blood_appointments
-       WHERE id = ? AND (${idsArray.map(id => `JSON_CONTAINS(services, '["${id}"]')`).join(' OR ')})`,
-      [id]
-    );
-
-    if (rows.length === 0) {
-      return res.json({ success: false, message: 'ไม่พบนัดตรวจหรือไม่ใช่การตรวจเลือด' });
-    }
-
-    res.json({ success: true, data: rows[0] });
-  } catch (err) {
-    console.error('❌ Error fetching appointment:', err);
-    res.status(500).json({ success: false, message: 'โหลดข้อมูลล้มเหลว' });
-  }
-});
 
 
 app.post('/api/Staffblood/upload', requireDoctor, async (req, res) => {
@@ -2093,48 +2094,143 @@ app.get('/api/me/profile', async (req, res) => {
 
 
 
-app.get('/api/me/appointments', async (req, res) => {
-  if (!req.session.userId) return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ' });
-
-  const userId = req.session.userId;
-  const { page = 1, limit = 20, search, dateFrom, dateTo, status } = req.query;
-  const offset = (page - 1) * limit;
-
-  let conditions = ['user_id = ?'];
-  const params = [userId];
-
-  if (status) { conditions.push('status = ?'); params.push(status); }
-  if (dateFrom) { conditions.push('appointment_date >= ?'); params.push(dateFrom); }
-  if (dateTo) { conditions.push('appointment_date <= ?'); params.push(dateTo); }
-  if (search) {
-    conditions.push('(service_id IN (SELECT id FROM services WHERE name LIKE ?) OR cancel_reason LIKE ? OR reschedule_reason LIKE ?)');
-    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
-  }
-
-  const where = conditions.length ? ('WHERE ' + conditions.join(' AND ')) : '';
-
+app.get('/api/me/appointments',isLoggedIn, async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `SELECT SQL_CALC_FOUND_ROWS a.*, s.name AS service_name 
-       FROM appointments a 
-       LEFT JOIN services s ON a.service_id = s.id 
-       ${where} 
-       ORDER BY appointment_date DESC, time_slot DESC 
-       LIMIT ? OFFSET ?`,
-      [...params, parseInt(limit), parseInt(offset)]
-    );
-    const [countRows] = await pool.query('SELECT FOUND_ROWS() as total');
-    const total = countRows[0].total || 0;
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ' });
+    }
 
-    res.json({ total, page: Number(page), limit: Number(limit), data: rows });
+    const userId = req.session.userId;
+    const userRole = req.session.role;
+    const limit = parseInt(req.query.limit) || 50;
+
+    let query, params;
+
+    if (userRole === 'doctor') {
+      // ถ้าเป็นหมอ ให้ดึงตารางการรักษาที่หมอดูแล
+      query = `
+        SELECT 
+          a.id,
+          CONCAT('A-', a.id) as appointment_code,
+          a.appointment_date,
+          a.time_slot,
+          a.status,
+          a.total_price,
+          s.name as service_name,
+          s.id as service_id,
+          CONCAT(COALESCE(p.title, ''), ' ', COALESCE(p.first_name, ''), ' ', COALESCE(p.last_name, '')) as patient_name,
+          u.fullname as patient_fullname
+        FROM appointments a
+        LEFT JOIN services s ON a.service_id = s.id
+        LEFT JOIN personal_info p ON a.user_id = p.user_id
+        LEFT JOIN users u ON a.user_id = u.id
+        WHERE a.doctor_id = (SELECT id FROM doctors WHERE user_id = ? LIMIT 1)
+        ORDER BY a.appointment_date DESC, a.time_slot DESC
+        LIMIT ?
+      `;
+      params = [userId, limit];
+      
+    } else {
+      // ถ้าเป็น user ธรรมดา ให้ดึงตารางการรักษาของตัวเอง
+      query = `
+        SELECT 
+          a.id,
+          CONCAT('A-', a.id) as appointment_code,
+          a.appointment_date,
+          a.time_slot,
+          a.status,
+          a.total_price,
+          s.name as service_name,
+          s.id as service_id,
+          d.fullname as doctor_name
+        FROM appointments a
+        LEFT JOIN services s ON a.service_id = s.id
+        LEFT JOIN doctors doc ON a.doctor_id = doc.id
+        LEFT JOIN users d ON doc.user_id = d.id
+        WHERE a.user_id = ?
+        ORDER BY a.appointment_date DESC, a.time_slot DESC
+        LIMIT ?
+      `;
+      params = [userId, limit];
+    }
+
+    const [rows] = await pool.query(query, params);
+
+    res.json({ success: true, data: rows, role: userRole });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error in /api/me/appointments:', err);
+    res.status(500).json({ error: 'Server error', message: err.message });
   }
 });
 
+app.get('/api/appointments/:id',isLoggedIn, async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ' });
+    }
 
-app.get('/api/me/blood-appointments', async (req, res) => {
+    const appointmentId = req.params.id;
+    const userId = req.session.userId;
+    const userRole = req.session.role;
+
+    console.log(`Loading appointment ${appointmentId} for user ${userId} (${userRole})`);
+
+    let query, params;
+
+    if (userRole === 'doctor') {
+      query = `
+        SELECT 
+          a.*,
+          s.name as service_name,
+          s.description as service_description,
+          CONCAT(COALESCE(p.title, ''), ' ', COALESCE(p.first_name, ''), ' ', COALESCE(p.last_name, '')) as patient_name,
+          p.phone as patient_phone,
+          p.birth_date,
+          u.email as patient_email
+        FROM appointments a
+        LEFT JOIN services s ON a.service_id = s.id
+        LEFT JOIN personal_info p ON a.user_id = p.user_id
+        LEFT JOIN users u ON a.user_id = u.id
+        WHERE a.id = ?
+        LIMIT 1
+      `;
+      params = [appointmentId];
+      
+    } else {
+      query = `
+        SELECT 
+        a.*,
+        s.name as service_name,
+        s.description as service_description,
+        CONCAT(doc.first_name, ' ', doc.last_name) as doctor_name,
+        doc.specialization as doctor_specialization
+      FROM appointments a
+      LEFT JOIN services s ON a.service_id = s.id
+      LEFT JOIN doctors doc ON a.doctor_id = doc.id
+      WHERE a.id = ? AND a.user_id = ?
+      `;
+      params = [appointmentId, userId];
+    }
+
+    const [rows] = await pool.query(query, params);
+
+    if (rows.length === 0) {
+      console.log(`Appointment ${appointmentId} not found or no access`);
+      return res.status(404).json({ error: 'ไม่พบข้อมูลการนัดหมาย' });
+    }
+
+    console.log('Appointment loaded successfully');
+    res.json({ success: true, data: rows[0] });
+
+  } catch (err) {
+    console.error('Error in /api/appointments/:id:', err.message);
+    console.error(err.stack);
+    res.status(500).json({ error: 'Server error', message: err.message });
+  }
+});
+
+app.get('/api/me/blood-appointments',isLoggedIn, async (req, res) => {
   if (!req.session.userId) return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ' });
 
   const userId = req.session.userId;
@@ -2171,23 +2267,73 @@ app.get('/api/me/blood-appointments', async (req, res) => {
 });
 
 
-app.get('/api/blood-appointments/:id', async (req, res) => {
-  if (!req.session.userId) return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ' });
-
-  const { id } = req.params;
-  const userId = req.session.userId;
-
+app.get('/api/blood-appointments/:id', isLoggedIn, async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM blood_appointments WHERE id = ? AND user_id = ?', [id, userId]);
-    if (!rows.length) return res.status(404).json({ error: 'ไม่พบข้อมูล หรือไม่มีสิทธิ์เข้าถึง' });
+    const bloodId = req.params.id;
+    const userId = req.session.userId;
+    const userRole = req.session.role;
 
-    const appt = rows[0];
-    const [results] = await pool.query('SELECT * FROM blood_results WHERE appointment_id = ? ORDER BY id', [id]);
+    // Debug logs
+    console.log('🔍 Blood Detail Request:', {
+      bloodId,
+      userId,
+      userRole,
+      sessionId: req.sessionID
+    });
 
-    res.json({ appointment: appt, results });
+    if (!userId) {
+      return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ' });
+    }
+
+    let query, params;
+
+    if (userRole === 'doctor') {
+      query = `
+        SELECT 
+          b.*,
+          CONCAT(COALESCE(p.title, ''), ' ', COALESCE(p.first_name, ''), ' ', COALESCE(p.last_name, '')) as patient_name,
+          p.phone as patient_phone,
+          u.email as patient_email
+        FROM blood_appointments b
+        LEFT JOIN personal_info p ON b.user_id = p.user_id
+        LEFT JOIN users u ON b.user_id = u.id
+        WHERE b.id = ?
+        LIMIT 1
+      `;
+      params = [bloodId];
+      
+    } else {
+      query = `
+        SELECT 
+          b.*,
+          CONCAT(COALESCE(p.title, ''), ' ', COALESCE(p.first_name, ''), ' ', COALESCE(p.last_name, '')) as patient_name,
+          p.phone as patient_phone,
+          u.email as patient_email
+        FROM blood_appointments b
+        LEFT JOIN personal_info p ON b.user_id = p.user_id
+        LEFT JOIN users u ON b.user_id = u.id
+        WHERE b.id = ? AND b.user_id = ?
+        LIMIT 1
+      `;
+      params = [bloodId, userId];
+    }
+
+    const [rows] = await pool.query(query, params);
+
+    console.log('📊 Query result:', rows.length > 0 ? 'Found' : 'Not found');
+
+    if (rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'ไม่พบข้อมูลการตรวจเลือด',
+        debug: { bloodId, userId, userRole }
+      });
+    }
+
+    res.json({ success: true, data: rows[0] });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('❌ Error in /api/blood-appointments/:id:', err);
+    res.status(500).json({ error: 'Server error', message: err.message });
   }
 });
 

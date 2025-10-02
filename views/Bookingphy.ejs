@@ -1224,24 +1224,7 @@
       });
     }
 
-    function loadServiceFromStorage() {
-      const serviceType = localStorage.getItem('serviceType');
 
-      if (serviceType === 'physiotherapy') {
-        currentAppointment.service = 'กายภาพบำบัด';
-        currentAppointment.problem = 'กล้ามเนื้อขาอ่อนแรง';
-        currentAppointment.price = '1,250';
-      } else if (serviceType === 'blood-test') {
-        currentAppointment.service = 'ตรวจเลือดทั่วไป';
-        currentAppointment.problem = 'ตรวจค่าความสมบูรณ์ของเลือด';
-        currentAppointment.price = '850';
-      } else {
-        // default
-        currentAppointment.service = 'กายภาพบำบัด';
-        currentAppointment.problem = 'กล้ามเนื้อขาอ่อนแรง';
-        currentAppointment.price = '1,250';
-      }
-    }
     // Initialize page
     // Initialize page
     function initializePage() {
@@ -1264,17 +1247,7 @@
       document.getElementById('modalBookingId').textContent = id.toString().padStart(5, '0');
     }
 
-    function updateAppointmentDisplay() {
-      document.getElementById('bookingId').textContent = currentAppointment.id;
-      document.getElementById('serviceName').textContent = currentAppointment.service;
-      document.getElementById('healthProblem').textContent = currentAppointment.problem;
-      document.getElementById('appointmentDate').textContent = currentAppointment.date;
-      document.getElementById('appointmentTime').textContent = currentAppointment.time;
-      document.getElementById('servicePrice').textContent = currentAppointment.price + ' บาท';
-      
-      updateStatusBadge(currentAppointment.status);
-    }
-
+  
     // Update steps display
     function updateStepsDisplay() {
       const step1 = document.getElementById('step1');
@@ -1340,7 +1313,7 @@
       });
 
       problemTextarea.addEventListener('input', function() {
-        bookingData.problem = this.value;
+        bookingData.problem = this.value.trim(); // เพิ่ม .trim()
         updateNextButton1();
       });
 
@@ -1576,6 +1549,10 @@
     }
     // Booking confirmation
     function confirmBooking() {
+      if (!bookingData.problem || bookingData.problem.trim() === '') {
+        alert('กรุณากรอกปัญหาสุขภาพ');
+        return;
+      }
       const btn = document.querySelector('.btn-primary');
       btn.classList.add('loading');
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังดำเนินการ...';

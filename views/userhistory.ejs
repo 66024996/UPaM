@@ -894,10 +894,6 @@
           <div class="info-label">เบอร์โทรศัพท์</div>
           <div class="info-value">081-234-5678</div>
         </div>
-        <div class="info-item">
-          <div class="info-label">อาการหลัก</div>
-          <div class="info-value">กล้ามเนื้อขาอ่อนแรง</div>
-        </div>
       </div>
     </div>
 
@@ -1085,8 +1081,15 @@
       const map = {
         patientName: currentPatient.name,
         patientId: currentPatient.id,
-        patientAvatar: currentPatient.name.charAt(0) || 'P'
+        patientAvatarText: currentPatient.name.charAt(0) || 'P',
+        age: currentPatient.age,
+        gender: currentPatient.gender,
+        phone: currentPatient.phone,
+        firstVisit: currentPatient.firstVisit,
+        lastVisit: currentPatient.lastVisit,
+        status: currentPatient.status
       };
+      
       for (let id in map) {
         const el = document.getElementById(id);
         if (el) el.textContent = map[id];
@@ -1096,24 +1099,39 @@
     async function fetchAndRenderHistory() {
       try {
         const [apptsResp, bloodResp] = await Promise.all([
-          fetch(`${API_BASE}/api/me/appointments?limit=200`, { credentials: 'include' }).then(r => r.ok?r.json():({data:[]})).catch(()=>({data:[]})),
-          fetch(`${API_BASE}/api/me/blood-appointments?limit=200`, { credentials: 'include' }).then(r => r.ok?r.json():({data:[]})).catch(()=>({data:[]}))
+          fetch(`${API_BASE}/api/me/appointments?limit=200`, { credentials: 'include' })
+            .then(r => r.ok ? r.json() : ({data:[], role:'user'}))
+            .catch(()=>({data:[], role:'user'})),
+          fetch(`${API_BASE}/api/me/blood-appointments?limit=200`, { credentials: 'include' })
+            .then(r => r.ok ? r.json() : ({data:[]}))
+            .catch(()=>({data:[]}))
         ]);
 
         const appts = apptsResp.data || [];
         const bloods = bloodResp.data || [];
+        const userRole = apptsResp.role || 'user';
 
-        const mappedA = appts.map(a=>({
-          id: a.appointment_code||`A-${a.id}`,
+        console.log('User role:', userRole);
+        console.log('Appointments:', appts.length);
+        console.log('Blood tests:', bloods.length);
+
+        // แปลงข้อมูล appointments
+        const mappedA = appts.map(a => ({
+          id: a.appointment_code || `A-${a.id}`,
           appointment_id: a.id,
           date: formatDateDisplay(a.appointment_date),
-          time: a.time_slot||'',
-          service: a.service_name||(a.service_id?`#${a.service_id}`:''),
-          status: a.status||'',
-          source: 'appointment'
+          time: a.time_slot || '',
+          service: a.service_name || (a.service_id ? `#${a.service_id}` : ''),
+          status: a.status || '',
+          patient_name: a.patient_name || a.patient_fullname || '-',
+          doctor_name: a.doctor_name || '-',
+          source: 'appointment',
+          role: userRole
         }));
-        const mappedB = bloods.map(b=>{
-          const files=[];
+
+        // แปลงข้อมูล blood tests
+        const mappedB = bloods.map(b => {
+          const files = [];
           if(b.result_file) files.push({id:null, filename:b.result_file, original_name:b.result_file});
           return {
             id:`B-${b.id}`,
@@ -1122,15 +1140,18 @@
             time: b.time_slot||'',
             service: b.services||'',
             status: b.status||'',
-            files, source:'blood', raw:b
+            files, 
+            source:'blood', 
+            raw:b,
+            role: userRole
           };
         });
 
-        historyData = [...mappedA,...mappedB].sort((x,y)=>{
+        historyData = [...mappedA, ...mappedB].sort((x, y) => {
           const dx = parseIsoOrThaiToDate(x.date);
           const dy = parseIsoOrThaiToDate(y.date);
-          if(!dx||!dy) return 0;
-          return dx>dy?-1:dx<dy?1:0;
+          if(!dx || !dy) return 0;
+          return dx > dy ? -1 : dx < dy ? 1 : 0;
         });
 
         updateSummaryCards();
@@ -1141,33 +1162,56 @@
       }
     }
 
-    function renderHistory(filteredData=historyData){
+    function renderHistory(filteredData = historyData){
       const timeline = document.getElementById('historyTimeline');
       if(!timeline) return;
+      
       if(!filteredData.length){
-        timeline.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-history"></i></div><div class="empty-title">ไม่พบประวัติการรักษา</div><div class="empty-message">ไม่มีข้อมูลที่ตรงกับเงื่อนไขการค้นหา</div></div>`;
+        timeline.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-history"></i></div>
+            <div class="empty-title">ไม่พบประวัติการรักษา</div>
+            <div class="empty-message">ไม่มีข้อมูลที่ตรงกับเงื่อนไขการค้นหา</div>
+          </div>`;
         return;
       }
 
       let html='';
-      filteredData.forEach(item=>{
-        const statusClass = item.status==='เสร็จสิ้น'?'completed':(item.status==='ยกเลิกแล้ว'?'cancelled':'pending');
-        html+=`<div class="timeline-item ${statusClass}">
-          <div class="timeline-header">
-            <div class="timeline-date"><div class="date-main">${item.date}</div><div class="date-time">${item.time}</div></div>
-            <div class="timeline-content">
-              <div class="timeline-title">รหัส ${item.id}</div>
-              <div class="timeline-service">${escapeHtml(item.service)}</div>
-              <button class="btn-detail" data-id="${item.appointment_id}" data-source="${item.source}" style="margin-top:5px; padding:5px 10px; border:none; background:#3B82F6; color:#fff; border-radius:4px; cursor:pointer;">ดูรายละเอียด</button>
+      filteredData.forEach(item => {
+        const statusClass = item.status === 'เสร็จสิ้น' ? 'completed' : 
+                            (item.status === 'ยกเลิกแล้ว' ? 'cancelled' : 'pending');
+        
+        // แสดงชื่อผู้ป่วยถ้าเป็นหมอ, แสดงชื่อหมอถ้าเป็น user
+        const personInfo = item.role === 'doctor' && item.patient_name 
+          ? `<div class="timeline-patient">ผู้ป่วย: ${escapeHtml(item.patient_name)}</div>`
+          : (item.doctor_name ? `<div class="timeline-doctor">แพทย์: ${escapeHtml(item.doctor_name)}</div>` : '');
+        
+        html += `
+          <div class="timeline-item ${statusClass}">
+            <div class="timeline-header">
+              <div class="timeline-date">
+                <div class="date-main">${item.date}</div>
+                <div class="date-time">${item.time}</div>
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-title">รหัส ${item.id}</div>
+                <div class="timeline-service">${escapeHtml(item.service)}</div>
+                ${personInfo}
+                <button class="btn-detail" data-id="${item.appointment_id}" data-source="${item.source}">
+                  ดูรายละเอียด
+                </button>
+              </div>
+              <div class="timeline-status status-${statusClass}">${escapeHtml(item.status)}</div>
             </div>
-            <div class="timeline-status status-${statusClass}">${escapeHtml(item.status)}</div>
-          </div>
-        </div>`;
+          </div>`;
       });
 
       timeline.innerHTML = html;
-      document.querySelectorAll('.btn-detail').forEach(btn=>{
-        btn.addEventListener('click',()=>{openDetailModal(btn.dataset.id, btn.dataset.source)});
+      
+      document.querySelectorAll('.btn-detail').forEach(btn => {
+        btn.addEventListener('click', () => {
+          openDetailModal(btn.dataset.id, btn.dataset.source);
+        });
       });
     }
 
@@ -1261,24 +1305,91 @@
     async function openDetailModal(id, source){
       const modal = document.getElementById('detailModal');
       const content = document.getElementById('detailContent');
-      if(!modal||!content) return;
+      if(!modal || !content) return;
 
-      try{
+      content.innerHTML = '<p style="text-align:center;">กำลังโหลด...</p>';
+      modal.style.display = 'flex';
+
+      try {
         let data;
-        if(source==='appointment'){
-          const resp = await fetch(`${API_BASE}/api/appointments/${id}`, {credentials:'include'});
-          if(!resp.ok) throw new Error('ไม่พบข้อมูลการนัดหมาย');
-          data = await resp.json();
-        } else if(source==='blood'){
-          const resp = await fetch(`${API_BASE}/api/blood-appointments/${id}`, {credentials:'include'});
-          if(!resp.ok) throw new Error('ไม่พบข้อมูลตรวจเลือด');
-          data = await resp.json();
+        const url = source === 'appointment' 
+          ? `${API_BASE}/api/appointments/${id}` 
+          : `${API_BASE}/api/blood-appointments/${id}`;
+        
+        console.log('🔍 Fetching:', url);
+        
+        const resp = await fetch(url, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('📡 Response status:', resp.status);
+        
+        if (resp.status === 403) {
+          throw new Error('ไม่มีสิทธิ์เข้าถึงข้อมูลนี้ กรุณาเข้าสู่ระบบใหม่');
         }
-        content.innerHTML = `<pre style="white-space:pre-wrap;">${JSON.stringify(data,null,2)}</pre>`;
-        modal.style.display='flex';
-      }catch(err){
-        content.innerHTML = `<p style="color:red;">เกิดข้อผิดพลาด: ${err.message}</p>`;
-        modal.style.display='flex';
+        
+        if (resp.status === 404) {
+          throw new Error('ไม่พบข้อมูล');
+        }
+        
+        if (!resp.ok) {
+          const errorData = await resp.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP ${resp.status}`);
+        }
+        
+        const result = await resp.json();
+        data = result.data || result;
+
+        console.log('✅ Data loaded:', data);
+
+        // แสดงข้อมูลในรูปแบบที่อ่านง่าย
+        let html = '<div style="padding:20px;">';
+        
+        if (source === 'appointment') {
+          html += `
+            <h3 style="margin-top:0;">รายละเอียดการนัดหมาย</h3>
+            <div style="line-height:2;">
+              <p><strong>รหัส:</strong> A-${data.id}</p>
+              <p><strong>วันที่:</strong> ${formatDateDisplay(data.appointment_date)}</p>
+              <p><strong>เวลา:</strong> ${data.time_slot}</p>
+              <p><strong>บริการ:</strong> ${data.service_name || '-'}</p>
+              <p><strong>สถานะ:</strong> ${data.status}</p>
+              <p><strong>ราคา:</strong> ${data.total_price} บาท</p>
+              ${data.patient_name ? `<p><strong>ผู้ป่วย:</strong> ${data.patient_name}</p>` : ''}
+              ${data.doctor_name ? `<p><strong>แพทย์:</strong> ${data.doctor_name}</p>` : ''}
+            </div>
+          `;
+        } else {
+          html += `
+            <h3 style="margin-top:0;">รายละเอียดการตรวจเลือด</h3>
+            <div style="line-height:2;">
+              <p><strong>รหัส:</strong> B-${data.id}</p>
+              <p><strong>วันที่:</strong> ${formatDateDisplay(data.appointment_date)}</p>
+              <p><strong>เวลา:</strong> ${data.time_slot}</p>
+              <p><strong>รายการตรวจ:</strong> ${data.services || '-'}</p>
+              <p><strong>สถานะ:</strong> ${data.status}</p>
+              ${data.result_file ? `<p><strong>ไฟล์ผล:</strong> มี</p>` : ''}
+              ${data.patient_name ? `<p><strong>ผู้ป่วย:</strong> ${data.patient_name}</p>` : ''}
+            </div>
+          `;
+        }
+        
+        html += '</div>';
+        content.innerHTML = html;
+        
+      } catch(err) {
+        console.error('❌ Error loading detail:', err);
+        content.innerHTML = `
+          <div style="padding:20px;">
+            <p style="color:red; margin-bottom:10px;">เกิดข้อผิดพลาด: ${err.message}</p>
+            ${err.message.includes('เข้าสู่ระบบ') ? 
+              '<button onclick="window.location.href=\'/login\'" style="padding:10px 20px; cursor:pointer;">กลับไปหน้าเข้าสู่ระบบ</button>' : 
+              ''}
+          </div>
+        `;
       }
     }
 

@@ -1106,10 +1106,7 @@
     }
 
     // เรียก fetch ตอนโหลดหน้า
-    document.addEventListener('DOMContentLoaded', () => {
-      initializePage();
-      fetchAppointment();
-    });
+
 
     // ฟังก์ชัน logout
     function logout() {
@@ -1179,7 +1176,70 @@
     function printAppointment() {
       window.print();
     }
-    
+    // แปลงข้อมูลจาก API ให้พร้อมใช้งาน
+    function mapAppointment(appt) {
+      // แปลง services ถ้าเป็น JSON string
+      let serviceText = appt.service || appt.services || '-';
+      if (typeof serviceText === 'string' && serviceText.startsWith('[')) {
+        try {
+          const servicesArray = JSON.parse(serviceText);
+          serviceText = Array.isArray(servicesArray) ? servicesArray.join(', ') : serviceText;
+        } catch (e) {
+          // ถ้า parse ไม่ได้ใช้ค่าเดิม
+        }
+      }
+
+      return {
+        id: appt.id || '-',
+        patientName: appt.patientName || 'ไม่ระบุ',
+        service: serviceText,
+        date: appt.appointment_date || appt.date || '-',
+        time: appt.time_slot || appt.time || '-',
+        total_price: appt.total_price || appt.price || '-',
+        status: appt.status || '-',
+        problem: appt.problem || '-',
+        type: appt.appointment_type || appt.type || 'physical'
+      };
+    }
+
+    // ฟังก์ชัน parseThaiDate ที่ขาดหายไป
+    function parseThaiDate(dateStr) {
+      if (!dateStr) return new Date();
+      const [day, month, year] = dateStr.split('/');
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+
+    async function fetchAppointment() {
+      try {
+        console.log('🔍 Fetching appointment...');
+        const res = await fetch('/api/my-appointment');
+        const data = await res.json();
+        
+        console.log('📊 API Response:', data);
+        
+        if (data.success && data.appointment) {
+          currentAppointment = mapAppointment(data.appointment);
+          updateAppointmentDisplay();
+          console.log('✅ Appointment loaded:', currentAppointment);
+        } else {
+          currentAppointment = null;
+          document.getElementById('appointmentCard').style.display = 'none';
+          console.log('❌ No appointment found:', data.message);
+          
+          const appointmentCard = document.getElementById('appointmentCard');
+          appointmentCard.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #666;">
+              <i class="fas fa-calendar-times" style="font-size: 48px; margin-bottom: 10px;"></i>
+              <p>${data.message || 'ไม่พบข้อมูลการจอง'}</p>
+            </div>
+          `;
+          appointmentCard.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('❌ Fetch error:', error);
+        document.getElementById('appointmentCard').style.display = 'none';
+      }
+    }
     // เลื่อนหรือยกเลิก appointment (admin + user reason)
     async function manageAppointment(action) {
       if (!currentAppointment) return alert('ไม่พบการจอง');
