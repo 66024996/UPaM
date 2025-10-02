@@ -1146,13 +1146,30 @@
 
     // Modal
     function openDetailModal(id) {
-      const b = bookings.find(x => x.id === id);
-      if (!b) return;
+      console.log('🔍 Opening modal for ID:', id);
+      
+      const b = bookings.find(x => x.id == id);
+      
+      if (!b) {
+        console.error('❌ Booking not found!');
+        return;
+      }
+      
       currentBookingId = b.id;
       currentBookingType = b.type;
+      
+      // แปลง services JSON string
+      let serviceText = b.service;
+      try {
+        const servicesArray = JSON.parse(b.service);
+        serviceText = Array.isArray(servicesArray) ? servicesArray.join(', ') : b.service;
+      } catch (e) {
+        // ถ้า parse ไม่ได้ใช้ค่าเดิม
+      }
+      
       document.getElementById('modalBookingId').textContent = b.id;
       document.getElementById('modalPatientName').textContent = b.patientName;
-      document.getElementById('modalService').textContent = b.service;
+      document.getElementById('modalService').textContent = serviceText; // ใช้ค่าที่แปลงแล้ว
       document.getElementById('modalDate').textContent = b.date;
       document.getElementById('modalTime').textContent = b.time + ' น.';
       document.getElementById('modalPrice').textContent = b.price + ' บาท';
@@ -1160,9 +1177,19 @@
 
       const actions = document.getElementById('modalActions');
       if (b.status === 'pending') {
-        actions.innerHTML = `<button class="btn btn-confirm" onclick="openStaffModal('${b.id}')"><i class="fas fa-check"></i> ยืนยันการจอง</button>
-                            <button class="btn btn-cancel" onclick="cancelBooking('${b.id}')"><i class="fas fa-times"></i> ยกเลิกการจอง</button>`;
-      } else actions.innerHTML = `<button class="btn btn-view" onclick="closeModal('detailModal')"><i class="fas fa-times"></i> ปิด</button>`;
+        actions.innerHTML = `
+          <button class="btn btn-confirm" onclick="openStaffModal('${b.id}')">
+            <i class="fas fa-check"></i> ยืนยันการจอง
+          </button>
+          <button class="btn btn-cancel" onclick="cancelBooking('${b.id}', '${b.type}')">
+            <i class="fas fa-times"></i> ยกเลิกการจอง
+          </button>`;
+      } else {
+        actions.innerHTML = `
+          <button class="btn btn-view" onclick="closeModal('detailModal')">
+            <i class="fas fa-times"></i> ปิด
+          </button>`;
+      }
 
       document.getElementById('detailModal').classList.add('show');
     }

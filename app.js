@@ -878,8 +878,7 @@ app.get('/admin/Listadmin', isAdmin, async (req, res) => {
 
 app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
   try {
-    const { status, type, date, limit = 1000, offset = 0 } = req.query; // เพิ่ม default limit
-
+    const { status, type, date, limit = 1000, offset = 0 } = req.query;
 
     const mapStatusToDB = (status) => {
       switch (status) {
@@ -906,7 +905,6 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
 
     let appointments = [];
 
-
     if (!type || type === 'physical') {
       let physicalQuery = `
         SELECT 
@@ -919,12 +917,15 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
           DATE_FORMAT(a.appointment_date, '%d/%m/%Y') AS appointment_date,
           a.time_slot,
           a.status,
+          a.problem,
           COALESCE(a.total_price, 0) AS total_price,
+          CONCAT(d.first_name, ' ', d.last_name) as assignedStaff,
           a.created_at,
           a.updated_at
         FROM appointments a
         JOIN personal_info p ON a.user_id = p.user_id
         LEFT JOIN services s ON a.service_id = s.id
+        LEFT JOIN doctors d ON a.doctor_id = d.id
       `;
 
       let conditions = [];
@@ -958,7 +959,6 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
       }
     }
 
-
     if (!type || type === 'blood') {
       let bloodQuery = `
         SELECT 
@@ -967,15 +967,18 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
           CONCAT(p.title, p.first_name, ' ', p.last_name) AS patientName,
           p.email,
           p.phone,
-          'ตรวจเลือด' AS service,
+          a.services AS service,
           DATE_FORMAT(a.appointment_date, '%d/%m/%Y') AS appointment_date,
           a.time_slot,
           a.status,
+          '' as problem,
           COALESCE(a.total_price, 0) AS total_price,
+          CONCAT(d.first_name, ' ', d.last_name) as assignedStaff,
           a.created_at,
           a.updated_at
         FROM blood_appointments a
         JOIN personal_info p ON a.user_id = p.user_id
+        LEFT JOIN doctors d ON a.doctor_id = d.id
       `;
 
       let conditions = [];
@@ -1009,12 +1012,10 @@ app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
       }
     }
 
-
     appointments = appointments.map(a => ({
       ...a,
       status: normalizeStatus(a.status)
     }));
-
 
     appointments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -1216,45 +1217,49 @@ app.get('/api/admin/manangeBookingCount', requireAdmin, async (req, res) => {
 app.put('/api/admin/appointments/:id/status', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("🚀 ~ req.params:", req.params)
-    const { status, type } = req.body;
-    console.log("🚀 ~ req.body:", req.body)
-
+    const { status, type, staffName } = req.body; // เพิ่ม staffName
+    
+    console.log("🚀 ~ req.params:", req.params);
+    console.log("🚀 ~ req.body:", req.body);
 
     if (!['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
       return res.status(400).json({ success: false, message: 'สถานะไม่ถูกต้อง' });
     }
 
-    const dbStatus = (() => {
-      switch (status) {
-        case 'pending': return 'จองแล้ว';
-        case 'confirmed': return 'ยืนยันแล้ว';
-        case 'cancelled': return 'ยกเลิกแล้ว';
-        case 'conpleted': return 'เสร็จสิ้น';
-        default: return status;
-      }
-    })();
-
     const mapStatus = {
       pending: 'จองแล้ว',
-      confirmed: "ยืนยันแล้ว",
+      confirmed: 'ยืนยันแล้ว',
       cancelled: 'ยกเลิกแล้ว',
       completed: 'เสร็จสิ้น'
-    }
-
+    };
+    
+    const dbStatus = mapStatus[status];
     const table = type === 'blood' ? 'blood_appointments' : 'appointments';
 
-    const [result] = await pool.execute(
-      `UPDATE ${table} SET status = ?, updated_at = NOW() WHERE id = ?`,
-      [dbStatus, id]
-    );
+    let query, params;
+    
+    // ถ้ายืนยัน ให้อัปเดตทั้ง status และ doctor_id
+    if (status === 'confirmed' && staffName) {
+      query = `UPDATE ${table} SET status = ?, doctor_id = ?, updated_at = NOW() WHERE id = ?`;
+      params = [dbStatus, staffName, id];
+    } else {
+      query = `UPDATE ${table} SET status = ?, updated_at = NOW() WHERE id = ?`;
+      params = [dbStatus, id];
+    }
 
+    const [result] = await pool.execute(query, params);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลการจอง' });
     }
 
-    res.json({ success: true, message: 'อัปเดตสถานะเรียบร้อย' });
+    const message = status === 'confirmed' 
+      ? 'ยืนยันการจองสำเร็จ' 
+      : status === 'cancelled' 
+        ? 'ยกเลิกการจองสำเร็จ'
+        : 'อัปเดตสถานะเรียบร้อย';
+
+    res.json({ success: true, message });
 
   } catch (error) {
     console.error('Error updating appointment status:', error);
@@ -2011,21 +2016,78 @@ app.get('/api/me/profile', async (req, res) => {
     }
 
     const userId = req.session.userId;
+    const userRole = req.session.role;
 
+    console.log('Loading profile for user:', userId, 'role:', userRole);
+
+    // ดึงข้อมูลผู้ใช้
     const [uRows] = await pool.query(
       'SELECT id, email, role, fullname, created_at, updated_at FROM users WHERE id = ?',
       [userId]
     );
-    if (uRows.length === 0) return res.status(404).json({ error: 'User not found' });
+    
+    if (uRows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
     const user = uRows[0];
+    let personal = null;
 
-    const [pRows] = await pool.query('SELECT * FROM personal_info WHERE user_id = ? LIMIT 1', [userId]);
-    const personal = pRows[0] || null;
+    // ถ้าเป็นหมอ
+    if (userRole === 'doctor') {
+      try {
+        const [dRows] = await pool.query(
+          'SELECT * FROM doctors WHERE user_id = ? LIMIT 1',
+          [userId]
+        );
+        
+        if (dRows.length > 0) {
+          const doc = dRows[0];
+          personal = {
+            fullname: doc.fullname,
+            phone: doc.phone,
+            email: doc.email,
+            age: '-',
+            gender: '-',
+            mainProblem: doc.specialization || 'แพทย์'
+          };
+        }
+      } catch (err) {
+        console.error('Error loading doctor info:', err);
+      }
+      
+    } else {
+      // ถ้าเป็น user ธรรมดา
+      try {
+        const [pRows] = await pool.query(
+          'SELECT * FROM personal_info WHERE user_id = ? LIMIT 1', 
+          [userId]
+        );
+        
+        if (pRows.length > 0) {
+          const p = pRows[0];
+          personal = {
+            fullname: `${p.title || ''} ${p.first_name || ''} ${p.last_name || ''}`.trim(),
+            phone: p.phone,
+            email: p.email,
+            age: p.birth_date ? new Date().getFullYear() - new Date(p.birth_date).getFullYear() : '-',
+            gender: p.title === 'นาย' ? 'ชาย' : (p.title === 'นาง' || p.title === 'นางสาว' ? 'หญิง' : '-'),
+            mainProblem: p.congenital_disease || '-'
+          };
+        }
+      } catch (err) {
+        console.error('Error loading personal info:', err);
+      }
+    }
 
-    res.json({ user, personal });
+    console.log('Profile loaded:', { user: user.fullname, personal: personal ? 'Found' : 'Not found' });
+
+    res.json({ user, personal, role: userRole });
+    
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error in /api/me/profile:', err.message);
+    console.error(err.stack);
+    res.status(500).json({ error: 'Server error', message: err.message });
   }
 });
 
